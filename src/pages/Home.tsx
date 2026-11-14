@@ -6,6 +6,7 @@ import Button from '../components/Button'
 import ResourceBar from '../components/ResourceBar'
 import ResourceLab from '../components/labComponents/ResourceLab'
 import EmergencyLab from '../components/labComponents/EmergencyLab'
+import AdvancedSystemsLab from '../components/labComponents/AdvancedSystemsLab'
 import { Droplet, AlertTriangle, Cpu, BookOpen, ArrowLeft } from 'lucide-react'
 
 export default function Home() {
@@ -13,7 +14,7 @@ export default function Home() {
   // 'labHub' -> 4 Labın seçileceği ana menü kartları
   // 'resourceLab' -> Kaynak Labı
   // 'emergencyLab' -> Acil Durum Labı
-  const [activeView, setActiveView] = useState<'home' | 'labHub' | 'resourceLab' | 'emergencyLab'>('home');
+  const [activeView, setActiveView] = useState<'home' | 'labHub' | 'resourceLab' | 'emergencyLab' | 'advancedLab'>('home');
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-4">
@@ -23,7 +24,7 @@ export default function Home() {
       {/* Geri Dön Butonu (Eğer ana sayfa dışında bir lab içindeysek görünür) */}
       {activeView !== 'home' && (
         <button
-          onClick={() => setActiveView(activeView === 'resourceLab' || activeView === 'emergencyLab' ? 'labHub' : 'home')}
+          onClick={() => setActiveView(activeView === 'labHub' ? 'home' : 'labHub')}
           className="flex items-center gap-2 mt-6 mb-4 px-4 py-2 bg-slate-900 border border-slate-700 hover:border-cyan-500 text-slate-300 rounded-xl font-semibold text-sm transition"
         >
           <ArrowLeft className="w-4 h-4" /> Geri Dön
@@ -94,19 +95,23 @@ export default function Home() {
               <p className="text-slate-400 text-sm">Train against solar flares, CME storms, hull breaches, and hydroponics mold contamination.</p>
             </div>
 
-            {/* Lab 3: Arkadaşının modülü için yer tutucu (İleride eklenecek) */}
-            <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl opacity-60">
+            {/* Lab 3: Space Science */}
+            <button
+              type="button"
+              onClick={() => setActiveView('advancedLab')}
+              className="p-6 bg-slate-900/90 border border-violet-500/30 hover:border-violet-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-400 rounded-2xl shadow-xl cursor-pointer transition-all hover:scale-[1.02] group text-left"
+            >
               <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-slate-800 rounded-xl text-slate-500">
+                <div className="p-3 bg-violet-500/10 border border-violet-500/30 rounded-xl text-violet-300 group-hover:bg-violet-500/20 transition">
                   <Cpu className="w-8 h-8" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-slate-400">Advanced Systems Lab</h3>
-                  <span className="text-xs font-mono text-slate-500">Module 03 • Coming Soon</span>
+                  <h3 className="text-xl font-bold text-white group-hover:text-violet-200 transition">Space Science Lab</h3>
+                  <span className="text-xs font-mono text-violet-300">Module 03 • Active Experiments</span>
                 </div>
               </div>
-              <p className="text-slate-500 text-sm">Reserved for upcoming telemetry and hardware automation training protocols.</p>
-            </div>
+              <p className="text-slate-400 text-sm">Explore gravity, radiation shielding, solar energy, and spacecraft thermal control.</p>
+            </button>
 
             {/* Lab 4: Build Lab */}
             <Link
@@ -133,6 +138,9 @@ export default function Home() {
 
       {/* 4. GÖRÜNÜM: EMERGENCY LAB İÇERİĞİ */}
       {activeView === 'emergencyLab' && <EmergencyLab />}
+
+      {/* 5. GÖRÜNÜM: ADVANCED SYSTEMS LAB */}
+      {activeView === 'advancedLab' && <AdvancedSystemsLab />}
     </div>
   )
 }
