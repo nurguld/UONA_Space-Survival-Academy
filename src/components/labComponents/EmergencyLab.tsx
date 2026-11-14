@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ShieldAlert, CheckCircle2, AlertTriangle, BookOpen, Play, Info } from 'lucide-react';
+import SpaceTransition from '../SpaceTransition';
 
 export default function EmergencyLab() {
   const [activeTab, setActiveTab] = useState<'guide' | 'simulation'>('guide');
@@ -60,6 +61,7 @@ export default function EmergencyLab() {
 
   return (
     <div className="p-6 bg-slate-950 text-cyan-400 rounded-xl border border-cyan-500/30 shadow-2xl max-w-4xl mx-auto">
+      <SpaceTransition transitionKey={`${activeTab}-${selectedScenario}`} />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-cyan-800/50 pb-4 gap-4">
         <div>
           <h2 className="text-xl font-bold tracking-wider text-white">🚨 EMERGENCY RESPONSE LAB</h2>

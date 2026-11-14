@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Droplet, Zap, Wind, Utensils, AlertTriangle, ShieldCheck, PlusCircle, BookOpen, Play, Info } from 'lucide-react';
+import SpaceTransition from '../SpaceTransition';
 
 export default function ResourceLab() {
   const [activeTab, setActiveTab] = useState<'guide' | 'simulation'>('guide');
@@ -67,6 +68,7 @@ export default function ResourceLab() {
 
   return (
     <div className="p-6 bg-slate-950 text-cyan-400 rounded-xl border border-cyan-500/30 shadow-2xl">
+      <SpaceTransition transitionKey={activeTab} />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-cyan-800/50 pb-4 gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-wider text-white">💧 RESOURCE MANAGEMENT LAB</h2>

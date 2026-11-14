@@ -14,6 +14,7 @@ import {
   validateBuild,
   type ValidationResult
 } from "../../game/buildValidation";
+import SpaceTransition from "../../components/SpaceTransition";
 
 import "./BuildLab.css";
 
@@ -22,8 +23,6 @@ const GRID_SIZE = 25;
 export default function BuildLab() {
   const [view, setView] = useState<"briefing" | "construction">("briefing");
   const [infoModule, setInfoModule] = useState<ModuleId | null>(null);
-  const [launching, setLaunching] = useState(false);
-  const [reducedLaunchMotion, setReducedLaunchMotion] = useState(false);
   const [selected, setSelected] =
     useState<ModuleId | null>(null);
 
@@ -55,22 +54,6 @@ export default function BuildLab() {
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, [infoModule]);
-
-  useEffect(() => {
-    if (!launching) return;
-
-    const launchTimer = window.setTimeout(() => {
-      setView("construction");
-      setLaunching(false);
-    }, reducedLaunchMotion ? 160 : 1400);
-
-    return () => window.clearTimeout(launchTimer);
-  }, [launching, reducedLaunchMotion]);
-
-  function launchHabitat() {
-    setReducedLaunchMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    setLaunching(true);
-  }
 
   function placeModule(index: number) {
     if (moveMode) {
@@ -132,6 +115,7 @@ export default function BuildLab() {
 
   return (
     <main className="build-lab">
+      <SpaceTransition transitionKey={view} />
       <div className="build-container">
 
         <nav className="build-navbar">
@@ -144,20 +128,48 @@ export default function BuildLab() {
           </span>
         </nav>
 
+        <section className="build-lab-panel">
         <header className="build-header">
-          <p className="build-eyebrow">LUNAR OUTPOST <span>·</span> ENGINEERING SIMULATION</p>
-
-          <h1>{view === "briefing" ? "Mission Briefing" : "Habitat Construction"}</h1>
-
-          <p className="build-description">
-            {view === "briefing"
-              ? "Review the systems your crew needs before starting the build."
-              : "Place the required systems, connect each module, and balance power."}
-          </p>
+          <div className="build-lab-heading">
+            <p className="build-eyebrow">LUNAR OUTPOST <span>·</span> ENGINEERING SIMULATION</p>
+            <h1>Lunar Habitat Build Lab</h1>
+            <p className="build-description">
+              Explore habitat systems, then build and validate your lunar outpost.
+            </p>
+          </div>
+          <div className="build-mode-tabs" role="tablist" aria-label="Build Lab sections">
+            <button
+              type="button"
+              id="build-guide-tab"
+              role="tab"
+              aria-controls="build-guide-panel"
+              aria-selected={view === "briefing"}
+              className={view === "briefing" ? "active" : ""}
+              onClick={() => setView("briefing")}
+            >
+              <span aria-hidden="true">▤</span> LAB GUIDE &amp; OVERVIEW
+            </button>
+            <button
+              type="button"
+              id="build-simulation-tab"
+              role="tab"
+              aria-controls="build-simulation-panel"
+              aria-selected={view === "construction"}
+              className={view === "construction" ? "active" : ""}
+              onClick={() => setView("construction")}
+            >
+              <span aria-hidden="true">▶</span> INTERACTIVE SIMULATION
+            </button>
+          </div>
         </header>
 
         {view === "briefing" ? (
-          <section className="module-briefing" aria-labelledby="module-briefing-title">
+          <section
+            id="build-guide-panel"
+            className="module-briefing"
+            role="tabpanel"
+            aria-labelledby="build-guide-tab"
+          >
             <div className="briefing-heading">
               <div>
                 <p className="build-eyebrow">01 / SYSTEMS OVERVIEW</p>
@@ -262,20 +274,14 @@ export default function BuildLab() {
             <p className="module-source-note">
               Science notes are summarized from the NASA sources linked on each card. Energy values and panel shadows are simplified game rules, not real mission or engineering specifications.
             </p>
-
-            <div className="briefing-cta">
-              <div>
-                <span>READY FOR YOUR MISSION?</span>
-                <strong>Your crew is counting on you. Build a safe lunar habitat.</strong>
-              </div>
-              <button type="button" className="build-primary-button habitat-cta" onClick={launchHabitat}>
-                JOURNEY TO YOUR HABITAT <span aria-hidden="true">→</span>
-                <small>BEGIN CONSTRUCTION</small>
-              </button>
-            </div>
           </section>
         ) : (
-        <div className="build-workspace">
+        <div
+          id="build-simulation-panel"
+          className="build-workspace"
+          role="tabpanel"
+          aria-labelledby="build-simulation-tab"
+        >
 
           <aside className="build-sidebar">
             <h2>MODULES</h2>
@@ -480,24 +486,7 @@ export default function BuildLab() {
 
         </div>
         )}
-        {launching && (
-          <div className="habitat-launch" role="status" aria-live="polite">
-            <div className="launch-stars" aria-hidden="true" />
-            <div className="launch-moon" aria-hidden="true" />
-            <div className="launch-countdown" aria-hidden="true">
-              <span>3</span>
-              <span>2</span>
-              <span>1</span>
-            </div>
-            <div className="launch-rocket-wrap" aria-hidden="true">
-              <span className="launch-flame" />
-              <span className="launch-rocket">🚀</span>
-            </div>
-            <p className="build-eyebrow">LUNAR TRANSFER / 03… 02… 01…</p>
-            <strong>Launching your habitat mission</strong>
-            <span className="launch-progress"><i /></span>
-          </div>
-        )}
+        </section>
       </div>
     </main>
   );
