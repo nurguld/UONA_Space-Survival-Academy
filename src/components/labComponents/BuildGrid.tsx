@@ -10,7 +10,7 @@ type Props = {
 
 export default function BuildGrid({ grid, onPlace, movingIndex = null }: Props) {
   return (
-    <div className="build-grid" role="grid" aria-label="5'e 5 üs inşa alanı">
+    <div className="build-grid" role="grid" aria-label="5 by 5 habitat build area">
       {grid.map((cell, index) => {
         const module = cell ? getBuildModule(cell) : null;
         const row = Math.floor(index / 5) + 1;
@@ -25,8 +25,8 @@ export default function BuildGrid({ grid, onPlace, movingIndex = null }: Props) 
             type="button"
             className={`grid-cell${module ? " occupied" : ""}${solarIsSunlit ? " sunlit" : ""}${cell === "solar-array" && !solarIsSunlit ? " shadowed" : ""}${movingIndex === index ? " moving" : ""}`}
             role="gridcell"
-            aria-label={`${row}. satır ${column}. sütun${module ? `, ${module.name}` : ", boş"}`}
-            title={module ? `${module.name}${cell === "solar-array" ? solarIsSunlit ? " · Güneş alıyor" : " · Gölgede" : ""}` : `Konum ${index + 1}`}
+            aria-label={`Row ${row}, column ${column}${module ? `, ${module.name}` : ", empty"}`}
+            title={module ? `${module.name}${cell === "solar-array" ? solarIsSunlit ? " · In sunlight" : " · In shadow" : ""}` : `Position ${index + 1}`}
             onClick={() => onPlace(index)}
           >
             {module ? (
@@ -38,7 +38,7 @@ export default function BuildGrid({ grid, onPlace, movingIndex = null }: Props) 
             ) : (
               <span className="grid-cell-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
             )}
-            {movingIndex === index && <span className="moving-label">TAŞINIYOR</span>}
+            {movingIndex === index && <span className="moving-label">MOVING</span>}
           </button>
         );
       })}

@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
+import SpaceTransition from '../components/SpaceTransition'
 import Button from '../components/Button'
 import ResourceBar from '../components/ResourceBar'
 import ResourceLab from '../components/labComponents/ResourceLab'
@@ -15,6 +17,7 @@ export default function Home() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-4">
+      <SpaceTransition transitionKey={activeView} />
       <Navbar />
 
       {/* Geri Dön Butonu (Eğer ana sayfa dışında bir lab içindeysek görünür) */}
@@ -105,19 +108,22 @@ export default function Home() {
               <p className="text-slate-500 text-sm">Reserved for upcoming telemetry and hardware automation training protocols.</p>
             </div>
 
-            {/* Lab 4: Arkadaşının modülü için yer tutucu (İleride eklenecek) */}
-            <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl opacity-60">
+            {/* Lab 4: Build Lab */}
+            <Link
+              to="/build-lab"
+              className="block p-6 bg-slate-900/90 border border-cyan-500/30 hover:border-cyan-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400 rounded-2xl shadow-xl cursor-pointer transition-all hover:scale-[1.02] group text-left no-underline"
+            >
               <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-slate-800 rounded-xl text-slate-500">
+                <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-cyan-400 group-hover:bg-cyan-500/20 transition">
                   <BookOpen className="w-8 h-8" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-slate-400">Outpost Architecture Lab</h3>
-                  <span className="text-xs font-mono text-slate-500">Module 04 • Coming Soon</span>
+                  <h3 className="text-xl font-bold text-white group-hover:text-cyan-300 transition">Build Lab / Outpost Architecture</h3>
+                  <span className="text-xs font-mono text-cyan-500">Module 04 • Active Simulation</span>
                 </div>
               </div>
-              <p className="text-slate-500 text-sm">Reserved for structural evolution and habitat upgrade simulations.</p>
-            </div>
+              <p className="text-slate-400 text-sm">Ay üssünü kur, sistem modüllerini yerleştir ve görevini doğrula.</p>
+            </Link>
           </div>
         </div>
       )}

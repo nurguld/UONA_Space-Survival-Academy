@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ModuleSelector from "../../components/labComponents/ModuleSelector";
+import ModuleIllustration from "../../components/labComponents/ModuleIllustration";
 import BuildGrid, {
   type GridCell
 } from "../../components/labComponents/BuildGrid";
-import type { ModuleId } from "../../data/buildModules";
 import {
+  BUILD_MODULES,
+  MODULE_CONNECTION_RULES,
+  type ModuleId
+} from "../../data/buildModules";
+import {
+  getModuleConnectionChecks,
   validateBuild,
   type ValidationResult
 } from "../../game/buildValidation";
@@ -14,6 +20,10 @@ import "./BuildLab.css";
 const GRID_SIZE = 25;
 
 export default function BuildLab() {
+  const [view, setView] = useState<"briefing" | "construction">("briefing");
+  const [infoModule, setInfoModule] = useState<ModuleId | null>(null);
+  const [launching, setLaunching] = useState(false);
+  const [reducedLaunchMotion, setReducedLaunchMotion] = useState(false);
   const [selected, setSelected] =
     useState<ModuleId | null>(null);
 
@@ -27,6 +37,40 @@ export default function BuildLab() {
   const [movingIndex, setMovingIndex] = useState<number | null>(null);
 
   const placedCount = grid.filter(Boolean).length;
+  const liveConnectionChecks = getModuleConnectionChecks(grid);
+
+  useEffect(() => {
+    if (!infoModule) return;
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setInfoModule(null);
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [infoModule]);
+
+  useEffect(() => {
+    if (!launching) return;
+
+    const launchTimer = window.setTimeout(() => {
+      setView("construction");
+      setLaunching(false);
+    }, reducedLaunchMotion ? 160 : 1400);
+
+    return () => window.clearTimeout(launchTimer);
+  }, [launching, reducedLaunchMotion]);
+
+  function launchHabitat() {
+    setReducedLaunchMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    setLaunching(true);
+  }
 
   function placeModule(index: number) {
     if (moveMode) {
@@ -101,26 +145,143 @@ export default function BuildLab() {
         </nav>
 
         <header className="build-header">
-          <p className="build-eyebrow">
-            ASTRONAUT TRAINING / ENGINEERING
-          </p>
+          <p className="build-eyebrow">LUNAR OUTPOST <span>·</span> ENGINEERING SIMULATION</p>
 
-          <h1>Ay Üssü İnşası</h1>
+          <h1>{view === "briefing" ? "Mission Briefing" : "Habitat Construction"}</h1>
 
           <p className="build-description">
-            Astronotların Ay'da güvenle yaşayabilmesi
-            için gerekli modülleri seç ve kendi
-            uzay üssünü tasarla.
+            {view === "briefing"
+              ? "Review the systems your crew needs before starting the build."
+              : "Place the required systems, connect each module, and balance power."}
           </p>
         </header>
 
+        {view === "briefing" ? (
+          <section className="module-briefing" aria-labelledby="module-briefing-title">
+            <div className="briefing-heading">
+              <div>
+                <p className="build-eyebrow">01 / SYSTEMS OVERVIEW</p>
+                <h2 id="module-briefing-title">Explore habitat systems</h2>
+                <p>Select a module to discover its NASA connection and role in your build mission.</p>
+              </div>
+              <span className="briefing-count">07 MODULES</span>
+            </div>
+
+            <div className="module-card-grid">
+              {BUILD_MODULES.map((module, index) => (
+                <button
+                  type="button"
+                  key={module.id}
+                  className={`module-info-card${infoModule === module.id ? " active" : ""}`}
+                  aria-pressed={infoModule === module.id}
+                  onClick={() => setInfoModule(module.id)}
+                >
+                  <ModuleIllustration moduleId={module.id} name={module.name} />
+                  <span className="module-card-index">SYSTEM 0{index + 1}</span>
+                  <strong>{module.name}</strong>
+                  <span className="module-card-summary">{module.description}</span>
+                  <span className="module-card-energy">
+                    {module.energyOutput > 0
+                      ? `+${module.energyOutput} ENERGY OUTPUT`
+                      : `${module.energyDemand} ENERGY USE`}
+                  </span>
+                  <span className="module-card-open">VIEW DETAILS →</span>
+                </button>
+              ))}
+            </div>
+
+            {infoModule && (() => {
+              const module = BUILD_MODULES.find((item) => item.id === infoModule)!;
+              const relatedConnections = MODULE_CONNECTION_RULES.filter(
+                (rule) => rule.moduleId === module.id || rule.adjacentTo.includes(module.id)
+              );
+              return (
+                <div
+                  className="module-modal-backdrop"
+                  onClick={() => setInfoModule(null)}
+                  role="presentation"
+                >
+                  <section
+                    className="module-detail-panel"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="module-dialog-title"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      className="module-modal-close"
+                      aria-label="Close module information"
+                      autoFocus
+                      onClick={() => setInfoModule(null)}
+                    >
+                      ×
+                    </button>
+                    <div className="module-modal-art">
+                      <span className="module-modal-orbit" aria-hidden="true" />
+                      <ModuleIllustration moduleId={module.id} name={module.name} />
+                      <span className="module-modal-scanline" aria-hidden="true" />
+                    </div>
+                    <div className="module-modal-copy">
+                      <p className="build-eyebrow">MODULE BRIEF / NASA SOURCE</p>
+                      <h3 id="module-dialog-title">{module.icon} {module.name} — {module.label}</h3>
+                      <p className="module-science-copy">{module.science}</p>
+                      <a href={module.sourceUrl} target="_blank" rel="noreferrer">
+                        Explore {module.source} ↗
+                      </a>
+                      <div className="module-connections">
+                        <strong>REQUIRED ADJACENCIES</strong>
+                        {relatedConnections.map((rule) => (
+                          <article key={rule.id}>
+                            <b>{rule.label}</b>
+                            <p>{rule.explanation}</p>
+                            <a href={rule.sourceUrl} target="_blank" rel="noreferrer">
+                              Source: {rule.source} ↗
+                            </a>
+                          </article>
+                        ))}
+                        <small>
+                          These tile connections are simplified gameplay rules. NASA sources describe real system functions and interfaces, not this grid layout.
+                        </small>
+                      </div>
+                      <div className="module-game-note">
+                        <strong>ROLE IN THIS BUILD MISSION</strong>
+                        <p>{module.gameRule}</p>
+                        <small>
+                          {module.energyOutput > 0
+                            ? `SIMULATION: +${module.energyOutput} ENERGY OUTPUT`
+                            : `SIMULATION: ${module.energyDemand} ENERGY USE`}
+                        </small>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              );
+            })()}
+
+            <p className="module-source-note">
+              Science notes are summarized from the NASA sources linked on each card. Energy values and panel shadows are simplified game rules, not real mission or engineering specifications.
+            </p>
+
+            <div className="briefing-cta">
+              <div>
+                <span>READY FOR YOUR MISSION?</span>
+                <strong>Your crew is counting on you. Build a safe lunar habitat.</strong>
+              </div>
+              <button type="button" className="build-primary-button habitat-cta" onClick={launchHabitat}>
+                JOURNEY TO YOUR HABITAT <span aria-hidden="true">→</span>
+                <small>BEGIN CONSTRUCTION</small>
+              </button>
+            </div>
+          </section>
+        ) : (
         <div className="build-workspace">
 
           <aside className="build-sidebar">
-            <h2>MODÜLLER</h2>
+            <h2>MODULES</h2>
 
             <p className="build-hint">
-              Yerleştirmek istediğin modülü seç.
+              Select a module to place in your habitat.
             </p>
 
             <ModuleSelector
@@ -131,7 +292,7 @@ export default function BuildLab() {
 
           <section className="build-main">
             <div className="build-section-header">
-              <h2>İNŞA ALANI</h2>
+              <h2>BUILD AREA</h2>
 
               <span className="build-counter">
                 {placedCount} / {GRID_SIZE}
@@ -139,8 +300,7 @@ export default function BuildLab() {
             </div>
 
             <p className="build-hint">
-              Bir modül seç ve haritadaki
-              karelerden birine tıkla.
+              Select a module, then an empty tile. Place modules edge to edge to connect them.
             </p>
 
             <div className="build-grid-wrapper">
@@ -161,7 +321,7 @@ export default function BuildLab() {
                   setSelected(null);
                 }}
               >
-                {moveMode ? "TAŞIMAYI İPTAL ET" : "MODÜLÜ TAŞI"}
+                {moveMode ? "CANCEL MOVE" : "MOVE MODULE"}
               </button>
               <button
                 className="build-primary-button"
@@ -169,66 +329,86 @@ export default function BuildLab() {
                   setResult(validateBuild(grid))
                 }
               >
-                HABITATI KONTROL ET
+                VALIDATE HABITAT
               </button>
 
               <button
                 className="build-secondary-button"
                 onClick={resetBuild}
               >
-                SIFIRLA
+                RESET
               </button>
             </div>
             <p className="build-hint" aria-live="polite">
               {moveMode
                 ? movingIndex === null
-                  ? "Taşımak için dolu bir kareye, ardından boş hedef kareye tıkla."
-                  : "Modül seçildi; yeni konumu için boş bir kareye tıkla."
-                : "Modülleri döndürmek yerine TAŞI aracıyla yeni bir kareye taşı."}
+                ? "Select an occupied tile, then choose an empty destination."
+                : "Module selected. Choose an empty tile for its new position."
+                : "Use MOVE MODULE to reposition a module instead of rotating it."}
             </p>
 
             <div className="build-mission-panel">
-              <h3>GÖREV BİLGİSİ</h3>
+              <h3>MISSION BRIEF</h3>
 
               <p>
-                Görev: Astronotların yaşaması
-                için gerekli sistemleri kur.
+                Mission: Build the systems your crew needs to live safely on the Moon.
               </p>
 
               <p>
-                Zorunlu sistemler: Habitat,
-                Life Support, Power, Airlock
-                ve Radiation Shelter.
+                Required: Habitat, Life Support, Power, Airlock, and Radiation Shelter.
               </p>
             </div>
 
             {result && (
-              <div
-                className={
-                  result.success
-                    ? "build-result success"
-                    : "build-result warning"
-                }
-              >
+              <div className={`build-result ${result.success ? "success" : "blocked"}`}>
                 <h3>
                   {result.success
-                    ? "✓ GÖREV TAMAMLANDI"
-                    : "⚠ HABITAT EKSİK"}
+                    ? "✓ VALIDATION PASSED"
+                    : "× BUILD BLOCKED"}
                 </h3>
 
-                <p>Başarı puanı: {result.score} / 100</p>
-                {result.messages.map((message) => (
-                  <p key={message}>{message}</p>
-                ))}
+                {result.success ? (
+                  <>
+                    <p>{result.messages[0]}</p>
+                    <p className="mission-score">
+                      Mission score: <strong>{result.score} / 100</strong>
+                      <small>Optional Water Recycler and Greenhouse modules add bonus points.</small>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="blocking-summary">
+                      {result.blockingErrors.length} critical issue{result.blockingErrors.length === 1 ? "" : "s"} must be fixed before scoring.
+                    </p>
+                    <ul className="blocking-error-list">
+                      {result.blockingErrors.map((error) => (
+                        <li key={error}>{error}</li>
+                      ))}
+                    </ul>
+                    <p className="score-locked">Score locked until all critical checks pass.</p>
+                  </>
+                )}
+                <ul className="connection-check-list" aria-label="System connection checks">
+                  {result.connectionChecks.map((check) => (
+                    <li className={`connection-check ${check.status}`} key={check.id}>
+                      <span aria-hidden="true">
+                        {check.status === "passed" ? "✓" : check.status === "failed" ? "!" : check.status === "optional" ? "—" : "·"}
+                      </span>
+                      <div>
+                        <strong>{check.label}</strong>
+                        <small>{check.detail}</small>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
             {grid.some(Boolean) && (
               <div className="build-tools">
-                <h3>MODÜL KALDIR</h3>
+                <h3>REMOVE MODULE</h3>
                 <p className="build-hint">
-                  Bir modülü kaldırmak için
-                  aşağıdaki konum numarasını seç.
+                  Select a position below to remove its module.
                 </p>
 
                 <div className="build-remove-list">
@@ -249,35 +429,75 @@ export default function BuildLab() {
           </section>
 
           <aside className="build-info-sidebar">
-            <h2>GÖREV HEDEFLERİ</h2>
+            <h2>MISSION OBJECTIVES</h2>
 
             <div className="build-objective">
               <span>01</span>
-              <p>Yaşam alanı oluştur.</p>
+              <p>Build a habitat.</p>
             </div>
 
             <div className="build-objective">
               <span>02</span>
-              <p>Yaşam destek sistemi ekle.</p>
+              <p>Add life support.</p>
             </div>
 
             <div className="build-objective">
               <span>03</span>
-              <p>Enerji sistemi kur.</p>
+              <p>Provide power.</p>
             </div>
 
             <div className="build-objective">
               <span>04</span>
-              <p>Güvenli giriş ve çıkış sağla.</p>
+              <p>Enable safe entry and exit.</p>
             </div>
 
             <div className="build-objective">
               <span>05</span>
-              <p>Radyasyon koruması ekle.</p>
+              <p>Add radiation protection.</p>
             </div>
+
+            <section className="live-connections" aria-live="polite">
+              <h3>SYSTEM CONNECTIONS</h3>
+              <p>Required edge-to-edge links. Green means connected; amber means place or move a module.</p>
+              <ul className="connection-check-list">
+                {liveConnectionChecks.map((check) => (
+                  <li className={`connection-check ${check.status}`} key={check.id}>
+                    <span aria-hidden="true">
+                      {check.status === "passed" ? "✓" : check.status === "failed" ? "!" : check.status === "optional" ? "—" : "·"}
+                    </span>
+                    <div>
+                      <strong>{check.label}</strong>
+                      <small>{check.detail}</small>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <small className="connection-source-note">
+                NASA sources do not prescribe these exact tile positions; adjacency is a simplified representation of system interfaces.
+              </small>
+            </section>
           </aside>
 
         </div>
+        )}
+        {launching && (
+          <div className="habitat-launch" role="status" aria-live="polite">
+            <div className="launch-stars" aria-hidden="true" />
+            <div className="launch-moon" aria-hidden="true" />
+            <div className="launch-countdown" aria-hidden="true">
+              <span>3</span>
+              <span>2</span>
+              <span>1</span>
+            </div>
+            <div className="launch-rocket-wrap" aria-hidden="true">
+              <span className="launch-flame" />
+              <span className="launch-rocket">🚀</span>
+            </div>
+            <p className="build-eyebrow">LUNAR TRANSFER / 03… 02… 01…</p>
+            <strong>Launching your habitat mission</strong>
+            <span className="launch-progress"><i /></span>
+          </div>
+        )}
       </div>
     </main>
   );

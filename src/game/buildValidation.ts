@@ -1,18 +1,31 @@
-import { getBuildModule, type ModuleId } from "../data/buildModules";
+import {
+  getBuildModule,
+  MODULE_CONNECTION_RULES,
+  type ModuleId
+} from "../data/buildModules";
 import type { GridCell } from "../components/labComponents/BuildGrid";
+
+export type ConnectionCheck = {
+  id: string;
+  label: string;
+  status: "pending" | "passed" | "failed" | "optional";
+  detail: string;
+};
 
 export type ValidationResult = {
   success: boolean;
   messages: string[];
-  score: number;
+  score: number | null;
+  blockingErrors: string[];
+  connectionChecks: ConnectionCheck[];
 };
 
-const REQUIRED_MODULES: { id: ModuleId; label: string; points: number }[] = [
-  { id: "habitat", label: "Habitat modülü eksik.", points: 20 },
-  { id: "life-support", label: "Yaşam destek sistemi eksik.", points: 20 },
-  { id: "solar-array", label: "Güneş paneli eksik.", points: 15 },
-  { id: "airlock", label: "Airlock / hava kilidi eksik.", points: 15 },
-  { id: "radiation-shield", label: "Radyasyon koruması eksik.", points: 15 }
+const REQUIRED_MODULES: { id: ModuleId; label: string }[] = [
+  { id: "habitat", label: "Habitat module is missing." },
+  { id: "life-support", label: "Life support system is missing." },
+  { id: "solar-array", label: "Solar array is missing." },
+  { id: "airlock", label: "Airlock is missing." },
+  { id: "radiation-shield", label: "Radiation shelter is missing." }
 ];
 
 function isSunlit(grid: GridCell[], index: number) {
@@ -51,8 +64,74 @@ function hasHabitatConnection(grid: GridCell[]) {
   return { connected, total: grid.filter(Boolean).length };
 }
 
+function getAdjacentCells(grid: GridCell[], index: number) {
+  const row = Math.floor(index / 5);
+  const column = index % 5;
+  return [
+    row > 0 ? index - 5 : -1,
+    row < 4 ? index + 5 : -1,
+    column > 0 ? index - 1 : -1,
+    column < 4 ? index + 1 : -1
+  ]
+    .filter((neighbor) => neighbor >= 0)
+    .map((neighbor) => grid[neighbor])
+    .filter((id): id is ModuleId => id !== null);
+}
+
+export function getModuleConnectionChecks(grid: GridCell[]): ConnectionCheck[] {
+  return MODULE_CONNECTION_RULES.map((rule) => {
+    const sourceIndices = grid.flatMap((id, index) => id === rule.moduleId ? [index] : []);
+    const source = getBuildModule(rule.moduleId);
+
+    if (sourceIndices.length === 0) {
+      const required = REQUIRED_MODULES.some(({ id }) => id === rule.moduleId);
+      return {
+        id: rule.id,
+        label: rule.label,
+        status: required ? "pending" : "optional",
+        detail: required
+          ? `Place ${source.name} to check this connection.`
+          : `${source.name} is optional and is not part of this build.`
+      };
+    }
+
+    const disconnectedSource = sourceIndices.find((index) => {
+      const adjacent = getAdjacentCells(grid, index);
+      return rule.match === "all"
+        ? !rule.adjacentTo.every((targetId) => adjacent.includes(targetId))
+        : !rule.adjacentTo.some((targetId) => adjacent.includes(targetId));
+    });
+
+    if (disconnectedSource === undefined) {
+      return {
+        id: rule.id,
+        label: rule.label,
+        status: "passed",
+        detail: "Required adjacent system connection is present."
+      };
+    }
+
+    const adjacent = getAdjacentCells(grid, disconnectedSource);
+    const missingTargets = rule.match === "all"
+      ? rule.adjacentTo.filter((targetId) => !adjacent.includes(targetId))
+      : rule.adjacentTo;
+    const targetNames = missingTargets.map((id) => getBuildModule(id).name).join(
+      rule.match === "all" ? " and " : ", "
+    );
+
+    return {
+      id: rule.id,
+      label: rule.label,
+      status: "failed",
+      detail: rule.match === "all"
+        ? `Place ${targetNames} directly next to ${source.name}.`
+        : `Place ${source.name} next to a module in the habitat system network (${targetNames}).`
+    };
+  });
+}
+
 export function validateBuild(grid: GridCell[]): ValidationResult {
-  const messages = REQUIRED_MODULES
+  const blockingErrors = REQUIRED_MODULES
     .filter(({ id }) => !grid.includes(id))
     .map(({ label }) => label);
   const sunlitPanels = grid.reduce(
@@ -66,27 +145,37 @@ export function validateBuild(grid: GridCell[]): ValidationResult {
   );
 
   if (grid.includes("solar-array") && sunlitPanels === 0) {
-    messages.push("Güneş panelleri gölgede; üzerlerindeki modülleri taşı.");
+    blockingErrors.push("All solar arrays are in shadow. Move them to a column with a clear path to sunlight.");
   }
 
   const { connected, total } = hasHabitatConnection(grid);
-  if (total > 0 && connected.size !== total) {
-    messages.push(`${total - connected.size} modül habitat sistemine bağlı değil. Modülleri kenar kenara yerleştir.`);
+  const connectionChecks = getModuleConnectionChecks(grid);
+  blockingErrors.push(...connectionChecks
+    .filter((check) => check.status === "failed")
+    .map((check) => check.detail));
+
+  const networkDisconnected = total > 0 && connected.size !== total;
+  if (networkDisconnected) {
+    blockingErrors.push(`${total - connected.size} placed module(s) are disconnected from the habitat network. Connect every module edge to edge.`);
   }
   if (energyProduction < energyDemand) {
-    messages.push(`Enerji yetersiz: ${energyProduction} üretim / ${energyDemand} ihtiyaç.`);
+    blockingErrors.push(`Power shortage: the habitat needs ${energyDemand} energy units, but sunlit arrays produce ${energyProduction}.`);
   }
 
-  const missingPoints = REQUIRED_MODULES
-    .filter(({ id }) => !grid.includes(id))
-    .reduce((totalPoints, { points }) => totalPoints + points, 0);
-  const score = Math.max(0, 100 - missingPoints
-    - (grid.includes("solar-array") && sunlitPanels === 0 ? 10 : 0)
-    - (total > 0 && connected.size !== total ? 10 : 0)
-    - (energyProduction < energyDemand ? 10 : 0));
-  const success = messages.length === 0;
+  const uniqueBlockingErrors = [...new Set(blockingErrors)];
+  const success = uniqueBlockingErrors.length === 0;
+  const score = success
+    ? 80 + (grid.includes("water-recycler") ? 10 : 0) + (grid.includes("greenhouse") ? 10 : 0)
+    : null;
+  const messages = success
+    ? [`Habitat is mission-ready. Energy balance: ${energyProduction} generated / ${energyDemand} required.`]
+    : uniqueBlockingErrors;
 
-  if (success) messages.push(`Üs göreve hazır. Enerji dengesi: ${energyProduction} üretim / ${energyDemand} ihtiyaç.`);
-
-  return { success, messages, score };
+  return {
+    success,
+    messages,
+    score,
+    blockingErrors: uniqueBlockingErrors,
+    connectionChecks
+  };
 }

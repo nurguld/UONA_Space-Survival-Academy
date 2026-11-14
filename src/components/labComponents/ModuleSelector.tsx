@@ -1,4 +1,8 @@
-import { BUILD_MODULES, type ModuleId } from "../../data/buildModules";
+import {
+  BUILD_MODULES,
+  MODULE_CONNECTION_RULES,
+  type ModuleId
+} from "../../data/buildModules";
 
 type Props = {
   selected: ModuleId | null;
@@ -6,8 +10,15 @@ type Props = {
 };
 
 export default function ModuleSelector({ selected, onSelect }: Props) {
+  const selectedModule = BUILD_MODULES.find((module) => module.id === selected);
+  const relatedConnections = selected
+    ? MODULE_CONNECTION_RULES.filter(
+        (rule) => rule.moduleId === selected || rule.adjacentTo.includes(selected)
+      )
+    : [];
+
   return (
-    <div className="module-selector" aria-label="Modül seçimi">
+    <div className="module-selector" aria-label="Module selection">
       {BUILD_MODULES.map((module) => (
         <button
           key={module.id}
@@ -22,15 +33,28 @@ export default function ModuleSelector({ selected, onSelect }: Props) {
       ))}
       {selected && (
         <section className="build-module-brief" aria-live="polite">
-          <h3>{BUILD_MODULES.find((module) => module.id === selected)?.name}</h3>
-          <p>{BUILD_MODULES.find((module) => module.id === selected)?.description}</p>
-          <p><strong>NASA teknolojilerinden esinlenen bilgi:</strong>{" "}
-            {BUILD_MODULES.find((module) => module.id === selected)?.science}
-          </p>
+          <h3>{selectedModule?.name}</h3>
+          <p>{selectedModule?.description}</p>
+          <p>{selectedModule?.gameRule}</p>
+          <div className="selector-connections">
+            <strong>REQUIRED CONNECTIONS</strong>
+            {relatedConnections.map((rule) => (
+              <details key={rule.id}>
+                <summary>{rule.label}</summary>
+                <p>{rule.explanation}</p>
+                <a href={rule.sourceUrl} target="_blank" rel="noreferrer">
+                  {rule.source} ↗
+                </a>
+              </details>
+            ))}
+          </div>
+          <a href={selectedModule?.sourceUrl} target="_blank" rel="noreferrer">
+            {selectedModule?.source} ↗
+          </a>
           <small>
-            {BUILD_MODULES.find((module) => module.id === selected)?.energyOutput
-              ? `+${BUILD_MODULES.find((module) => module.id === selected)?.energyOutput} enerji üretimi`
-              : `${BUILD_MODULES.find((module) => module.id === selected)?.energyDemand} enerji ihtiyacı`}
+            {selectedModule?.energyOutput
+              ? `+${selectedModule.energyOutput} energy output`
+              : `${selectedModule?.energyDemand} energy demand`}
           </small>
         </section>
       )}
