@@ -1,114 +1,204 @@
 import { useState } from 'react';
-import { AlertOctagon, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, CheckCircle2, AlertTriangle, BookOpen, Play, Info } from 'lucide-react';
 
 export default function EmergencyLab() {
+  const [activeTab, setActiveTab] = useState<'guide' | 'simulation'>('guide');
   const [selectedScenario, setSelectedScenario] = useState<number>(1);
-  const [simulationResult, setSimulationResult] = useState<string | null>(null);
+  const [baseLevel, setBaseLevel] = useState<number>(1);
+  const [defended, setDefended] = useState<boolean>(false);
 
   const scenarios = [
     {
       id: 1,
       title: "Solar Flare (X-Ray Shock)",
       type: "Instantaneous Light & Comms Shock",
-      solution: "Activate Blackout Mode & Optical Filters",
-      desc: "High-energy X-rays arrive in 8 minutes, blinding sensors and comms.",
-      damageLevels: { 1: "80% Damage (Systems Short-Circuited)", 2: "40% Damage (Partial Blackout)", 3: "10% Impact (Fiber Optic Shielding Active)" }
+      solution: "Activate Faraday Cage & Optical Filters",
+      desc: "High-energy X-rays arrive in 8 minutes from active solar regions, blinding external sensors and comms.",
+      damage: { 
+        1: "80% System Failure (Sensors Blinded)", 
+        2: "40% Partial Blackout (Auto-Filters Engaged)", 
+        3: "10% Minimal Impact (Protected)" 
+      }
     },
     {
       id: 2,
       title: "CME (Solar Storm)",
       type: "Plasma & Radiation Wave",
       solution: "Engage Magnetic Shield & Regolith Armor",
-      desc: "Massive particle wave traveling over days, threatening power grids.",
-      damageLevels: { 1: "90% Damage (Grid & Crops Fried)", 2: "45% Damage (Manual Shutdown Saved Base)", 3: "15% Impact (Magnetic Deflection Successful)" }
+      desc: "Coronal Mass Ejection plasma wave traveling over days, threatening lunar surface power grids.",
+      damage: { 
+        1: "90% Grid & Crops Fried", 
+        2: "45% Power Loss (Manual Isolation)", 
+        3: "15% Deflected Successfully" 
+      }
     },
     {
       id: 3,
       title: "Cabin Pressure Drop",
       type: "Micro-Meteorite Hull Breach",
-      solution: "Seal Regional Valve -> Replace Filter -> Equalize",
-      desc: "Atmosphere leaking into the vacuum through a structural puncture.",
-      damageLevels: { 1: "Critical Failure (Crew Unconscious)", 2: "40% Loss (Smart Doors Isolated Breach)", 3: "10% Minor Loss (Autonomous Foam Sealed It)" }
+      desc: "Atmosphere leaking into lunar vacuum through a high-velocity structural micrometeoroid puncture.",
+      damage: { 
+        1: "Critical Air Loss (Crew Unconscious)", 
+        2: "40% Air Loss (Smart Doors Isolated)", 
+        3: "10% Minor Loss (Auto-Sealed)" 
+      }
     },
     {
       id: 4,
       title: "Hydroponics Contamination",
       type: "Toxic Mold Outbreak",
-      solution: "Turn on UV Sterilization & Balance Humidity",
-      desc: "Moisture imbalance triggering toxic mold growth over potato crops.",
-      damageLevels: { 1: "100% Food Loss (All Crops Spoiled)", 2: "50% Food Loss (Partial Harvest Saved)", 3: "10% Loss (Auto-UV Neutralized Mold)" }
+      desc: "Closed-loop moisture imbalance triggering toxic pathogen and mold growth over crop bays.",
+      damage: { 
+        1: "100% Food Loss (All Crops Spoiled)", 
+        2: "50% Food Loss (Partial Harvest Saved)", 
+        3: "10% Loss (Auto-UV Neutralized Mold)" 
+      }
     }
   ];
 
   const currentScenario = scenarios.find(s => s.id === selectedScenario)!;
 
-  const runSimulation = () => {
-    setSimulationResult(`Simulation running for ${currentScenario.title}... Defense protocol executed successfully!`);
-  };
-
   return (
-    <div className="p-6 bg-slate-950 text-cyan-400 rounded-xl border border-cyan-500/30 shadow-2xl">
-      <div className="flex justify-between items-center mb-8 border-b border-cyan-800/50 pb-4">
+    <div className="p-6 bg-slate-950 text-cyan-400 rounded-xl border border-cyan-500/30 shadow-2xl max-w-4xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-cyan-800/50 pb-4 gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-wider text-white">🚨 EMERGENCY RESPONSE LAB</h2>
-          <p className="text-sm text-slate-400">Critical Threat Mitigation & Outpost Defense Training</p>
+          <h2 className="text-xl font-bold tracking-wider text-white">🚨 EMERGENCY RESPONSE LAB</h2>
+          <p className="text-xs text-slate-400">NASA Space Weather & Habitat Defense Protocols</p>
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {scenarios.map(sc => (
+        
+        <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
           <button
-            key={sc.id}
-            onClick={() => { setSelectedScenario(sc.id); setSimulationResult(null); }}
-            className={`p-3 rounded-xl border text-left font-semibold text-sm transition-all ${
-              selectedScenario === sc.id
-                ? 'bg-red-950/40 border-red-500 text-red-300 shadow-lg shadow-red-500/20'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-cyan-500'
+            onClick={() => setActiveTab('guide')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+              activeTab === 'guide' ? 'bg-red-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
             }`}
           >
-            <span className="block text-xs font-mono opacity-70">Scenario 0{sc.id}</span>
-            {sc.title}
+            <BookOpen className="w-4 h-4" /> Lab Guide & Overview
           </button>
-        ))}
-      </div>
-
-      <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-xl mb-6">
-        <div className="flex items-center gap-3 mb-3">
-          <ShieldAlert className="w-6 h-6 text-red-400 animate-bounce" />
-          <h3 className="text-xl font-bold text-white">{currentScenario.title}</h3>
-        </div>
-        <p className="text-sm text-slate-300 mb-4">{currentScenario.desc}</p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-slate-950/50 p-4 rounded-lg border border-slate-800">
-          <div>
-            <span className="text-slate-400 block text-xs">THREAT NATURE:</span>
-            <span className="font-semibold text-amber-300">{currentScenario.type}</span>
-          </div>
-          <div>
-            <span className="text-slate-400 block text-xs">REQUIRED PROTOCOL:</span>
-            <span className="font-semibold text-emerald-300">{currentScenario.solution}</span>
-          </div>
+          <button
+            onClick={() => setActiveTab('simulation')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+              activeTab === 'simulation' ? 'bg-red-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Play className="w-4 h-4" /> Interactive Simulation
+          </button>
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <button
-          onClick={runSimulation}
-          className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-600/30 transition flex items-center justify-center gap-2"
-        >
-          <AlertOctagon className="w-5 h-5" /> Execute Emergency Defense Protocol
-        </button>
-
-        {simulationResult && (
-          <div className="p-4 bg-emerald-950/40 border border-emerald-500/50 rounded-xl text-emerald-300 flex items-center gap-3">
-            <CheckCircle2 className="w-6 h-6 shrink-0" />
+      {activeTab === 'guide' && (
+        <div className="space-y-6">
+          <div className="p-5 bg-slate-900/80 border border-red-500/30 rounded-xl flex items-start gap-4">
+            <Info className="w-6 h-6 text-red-400 shrink-0 mt-1" />
             <div>
-              <span className="font-bold block">Protocol Verified:</span>
-              <span className="text-sm">{simulationResult}</span>
+              <h3 className="text-lg font-bold text-white mb-1">NASA Space Weather & Habitat Safety</h3>
+              <p className="text-sm text-slate-300">
+                Lunar habitats operate without Earth's magnetosphere protection, exposing crews to solar proton events, micrometeorites, and biological imbalances. Review standard NASA mitigation protocols below.
+              </p>
             </div>
           </div>
-        )}
-      </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {scenarios.map(sc => (
+              <div key={sc.id} className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShieldAlert className="w-5 h-5 text-red-400" />
+                  <h4 className="text-base font-bold text-white">{sc.title}</h4>
+                </div>
+                <p className="text-xs text-slate-400 mb-3">{sc.desc}</p>
+                <div className="p-2.5 bg-slate-950/60 rounded-lg border border-slate-800 text-xs">
+                  <span className="text-slate-400 block text-[10px]">NASA PROTOCOL:</span>
+                  <span className="font-semibold text-emerald-300">{sc.solution}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <button
+              onClick={() => setActiveTab('simulation')}
+              className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2 text-sm"
+            >
+              Proceed to Defense Simulation <Play className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'simulation' && (
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <span className="text-xs text-slate-400">Select a threat scenario and test defense protocols across outpost levels:</span>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-300 font-semibold">Level:</span>
+              {[1, 2, 3].map(lvl => (
+                <button
+                  key={lvl}
+                  onClick={() => setBaseLevel(lvl)}
+                  className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
+                    baseLevel === lvl 
+                      ? 'bg-red-500 text-white shadow-md shadow-red-500/40' 
+                      : 'bg-slate-900 text-slate-400 border border-slate-700 hover:border-red-500'
+                  }`}
+                >
+                  Lvl {lvl}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+            {scenarios.map(sc => (
+              <button
+                key={sc.id}
+                onClick={() => { setSelectedScenario(sc.id); setDefended(false); }}
+                className={`p-3 rounded-xl border text-left font-semibold text-xs transition-all ${
+                  selectedScenario === sc.id
+                    ? 'bg-red-950/40 border-red-500 text-red-300 shadow-lg'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-cyan-500'
+                }`}
+              >
+                <span className="block font-mono text-[10px] opacity-70">Threat 0{sc.id}</span>
+                {sc.title.split(' ')[0]} {sc.title.split(' ')[1]}
+              </button>
+            ))}
+          </div>
+
+          <div className="p-5 bg-slate-900/90 border border-slate-800 rounded-xl mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <ShieldAlert className="w-5 h-5 text-red-400" />
+              <h3 className="text-lg font-bold text-white">{currentScenario.title}</h3>
+            </div>
+            <p className="text-xs text-slate-300 mb-4">{currentScenario.desc}</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs mb-4">
+              <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800">
+                <span className="text-slate-400 block text-[10px]">NASA PROTOCOL:</span>
+                <span className="font-semibold text-emerald-300">{currentScenario.solution}</span>
+              </div>
+              <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800">
+                <span className="text-slate-400 block text-[10px]">PREDICTED IMPACT (Level {baseLevel}):</span>
+                <span className="font-semibold text-red-300">{currentScenario.damage[baseLevel as keyof typeof currentScenario.damage]}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setDefended(true)}
+              className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-600/30 transition flex items-center justify-center gap-2 text-sm"
+            >
+              <AlertTriangle className="w-4 h-4" /> Execute Defense Protocol
+            </button>
+
+            {defended && (
+              <div className="mt-4 p-3 bg-emerald-950/40 border border-emerald-500/50 rounded-xl text-emerald-300 flex items-center gap-2 text-xs">
+                <CheckCircle2 className="w-5 h-5 shrink-0" />
+                <span>NASA protocol successfully verified at Outpost Level {baseLevel}. Threat mitigated!</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
