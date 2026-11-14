@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Droplet, Zap, Wind, Utensils, AlertTriangle, ShieldCheck, PlusCircle, BookOpen, Play, Info } from 'lucide-react';
-import SpaceTransition from '../SpaceTransition';
+import { Droplet, Zap, Wind, Utensils, AlertTriangle, ShieldCheck, PlusCircle, BookOpen, Play, Info, Rocket } from 'lucide-react';
 
 export default function ResourceLab() {
   const [activeTab, setActiveTab] = useState<'guide' | 'simulation'>('guide');
+  const [isRocketFlying, setIsRocketFlying] = useState<boolean>(false);
 
   const [resources, setResources] = useState({
     water: 80,
@@ -14,6 +14,19 @@ export default function ResourceLab() {
 
   const [baseLevel, setBaseLevel] = useState<number>(1);
   const [systemStatus, setSystemStatus] = useState<string>("All ECLSS systems nominal. Outpost stable.");
+
+  const handleTabChange = (targetTab: 'guide' | 'simulation') => {
+    if (activeTab === targetTab) return;
+    setIsRocketFlying(true);
+    
+    setTimeout(() => {
+      setActiveTab(targetTab);
+    }, 300);
+
+    setTimeout(() => {
+      setIsRocketFlying(false);
+    }, 700);
+  };
 
   const modifyResource = (targetKey: keyof typeof resources, amount: number) => {
     setResources(prev => {
@@ -67,8 +80,16 @@ export default function ResourceLab() {
   };
 
   return (
-    <div className="p-6 bg-slate-950 text-cyan-400 rounded-xl border border-cyan-500/30 shadow-2xl">
-      <SpaceTransition transitionKey={activeTab} />
+    <div className="relative p-6 bg-slate-950 text-cyan-400 rounded-xl border border-cyan-500/30 shadow-2xl overflow-hidden">
+      {isRocketFlying && (
+        <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center bg-slate-950/40 backdrop-blur-[2px] transition-all">
+          <div className="animate-bounce text-cyan-400 drop-shadow-[0_0_20px_rgba(6,182,212,0.9)] flex items-center gap-2">
+            <Rocket className="w-16 h-16 transform -rotate-45 animate-pulse" />
+            <span className="text-white font-pixel text-lg tracking-widest">LAUNCHING LAB...</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-cyan-800/50 pb-4 gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-wider text-white">💧 RESOURCE MANAGEMENT LAB</h2>
@@ -77,7 +98,7 @@ export default function ResourceLab() {
         
         <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
           <button
-            onClick={() => setActiveTab('guide')}
+            onClick={() => handleTabChange('guide')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs transition-all ${
               activeTab === 'guide' ? 'bg-cyan-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
             }`}
@@ -85,7 +106,7 @@ export default function ResourceLab() {
             <BookOpen className="w-4 h-4" /> Lab Guide & Overview
           </button>
           <button
-            onClick={() => setActiveTab('simulation')}
+            onClick={() => handleTabChange('simulation')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs transition-all ${
               activeTab === 'simulation' ? 'bg-cyan-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
             }`}
@@ -159,15 +180,6 @@ export default function ResourceLab() {
                 NASA Standard: Space Crop Bioregeneration
               </span>
             </div>
-          </div>
-
-          <div className="flex justify-end pt-4">
-            <button
-              onClick={() => setActiveTab('simulation')}
-              className="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl shadow-lg transition flex items-center gap-2 text-sm"
-            >
-              Proceed to Interactive Simulation <Play className="w-4 h-4" />
-            </button>
           </div>
         </div>
       )}
