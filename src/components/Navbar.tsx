@@ -9,6 +9,7 @@ export default function Navbar() {
       <nav className="flex gap-7 font-pixel">
         <Link to="/">Ana sayfa</Link>
         <Link to="/oyun">Oyun</Link>
+        <Link to="/build-lab">Build Lab</Link>
         <Link to="/kaynaklar">Kaynaklar</Link>
       </nav>
     </header>
