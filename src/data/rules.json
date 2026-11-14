@@ -1,0 +1,71 @@
+{
+  "maxDays": 30,
+  "startingBudget": 4,
+  "dailyBudgetGain": 2,
+  "lunarNightStartDay": 15,
+  "lunarNightEndDay": 28,
+  "initialResources": {
+    "energy": 70,
+    "oxygen": 75,
+    "food": 65,
+    "radiation": 80,
+    "health": 85
+  },
+  "initialModules": {
+    "solar": 1,
+    "lifeSupport": 1,
+    "greenhouse": 1,
+    "shield": 1,
+    "exercise": 0
+  },
+  "baseDailyDrain": {
+    "energy": -6,
+    "oxygen": -8,
+    "food": -7,
+    "radiation": -5,
+    "health": -4
+  },
+  "modules": [
+    {
+      "id": "solar",
+      "name": "Güneş paneli",
+      "description": "Enerji üretir (Ay gecesinde durur)",
+      "cost": 2,
+      "maxLevel": 4,
+      "perDay": { "energy": 7 },
+      "affectedByLunarNight": true
+    },
+    {
+      "id": "lifeSupport",
+      "name": "Yaşam destek",
+      "description": "Oksijen ve su üretir, enerji harcar",
+      "cost": 2,
+      "maxLevel": 4,
+      "perDay": { "oxygen": 8, "energy": -3 }
+    },
+    {
+      "id": "greenhouse",
+      "name": "Sera",
+      "description": "Gıda üretir, enerji ve su harcar",
+      "cost": 3,
+      "maxLevel": 4,
+      "perDay": { "food": 8, "energy": -2, "oxygen": -1 }
+    },
+    {
+      "id": "shield",
+      "name": "Kalkan",
+      "description": "Radyasyon güvenliğini artırır",
+      "cost": 3,
+      "maxLevel": 4,
+      "perDay": { "radiation": 6, "energy": -2 }
+    },
+    {
+      "id": "exercise",
+      "name": "Egzersiz ekipmanı",
+      "description": "Mürettebat sağlığını korur",
+      "cost": 1,
+      "maxLevel": 3,
+      "perDay": { "health": 5, "oxygen": -1, "food": -1 }
+    }
+  ]
+}

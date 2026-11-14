@@ -1,0 +1,209 @@
+[
+  {
+    "id": "solar-storm",
+    "title": "Güneş Fırtınası Yaklaşıyor",
+    "description": "Yüksek enerjili güneş parçacıkları üsse ulaşıyor. Kalkan seviyeniz savunma gücünüzü belirleyecek.",
+    "options": [
+      {
+        "label": "Mürettebatı sığınağa çek",
+        "effects": { "radiation": -10, "health": -5 },
+        "explanation": "Aktif kalkan koruması olmadığı için ekip dar sığınağa çekildi; radyasyon güvenliği ve sağlık düştü."
+      },
+      {
+        "label": "Yedek panelleri elle sığınağa bağla",
+        "effects": { "radiation": -5, "energy": -12, "health": -6 },
+        "explanation": "Ekip dış müdahale ile radyasyonu azalttı ama çok enerji ve efor harcandı."
+      },
+      {
+        "label": "Koruma kalkanını aktif et",
+        "requires": { "moduleId": "shield", "minLevel": 2 },
+        "effects": { "energy": -11, "radiation": 6 },
+        "explanation": "Sv. 2 kalkan üssü korudu ancak yüksek enerji tüketti."
+      },
+      {
+        "label": "Gelişmiş manyetik kalkanla soğur",
+        "requires": { "moduleId": "shield", "minLevel": 3 },
+        "effects": { "energy": -4, "radiation": 12 },
+        "explanation": "Sv. 3 kalkan minimum enerjiyle maksimum radyasyon koruması sağladı!"
+      }
+    ]
+  },
+  {
+    "id": "micrometeoroid",
+    "title": "Mikrometeorit Çarpması",
+    "description": "Küçük bir göktaşı dış gövdeye çarptı. Basınç sensörleri sızıntı bildiriyor.",
+    "options": [
+      {
+        "label": "Bölümü izole et ve tasarrufa geç",
+        "effects": { "oxygen": -12, "health": -4 },
+        "explanation": "Onarım sistemi yetersiz olduğu için bölüm kapatıldı, oksijen rezervi düştü."
+      },
+      {
+        "label": "Acil basınç onarımını devreye al",
+        "requires": { "moduleId": "lifeSupport", "minLevel": 2 },
+        "effects": { "energy": -9, "oxygen": 4 },
+        "explanation": "Sv. 2 yaşam destek sızıntıyı hızla telafi etti."
+      },
+      {
+        "label": "Otomatik kendini mühürleyen gövde",
+        "requires": { "moduleId": "lifeSupport", "minLevel": 3 },
+        "effects": { "energy": -3, "oxygen": 8 },
+        "explanation": "Sv. 3 sistem çok az enerjiyle sızıntıyı anında kapattı ve basıncı artırdı."
+      }
+    ]
+  },
+  {
+    "id": "lunar-dust",
+    "title": "Ay Tozu (Regolit) Birikimi",
+    "description": "Elektrostatik Ay tozu güneş panellerini kaplayarak verimi düşürüyor.",
+    "options": [
+      {
+        "label": "Temizliği ertele, güç tasarrufu yap",
+        "effects": { "energy": -12, "radiation": -3 },
+        "explanation": "Kirli paneller yüzünden enerji üretimi ciddi oranda düştü."
+      },
+      {
+        "label": "Dış yürüyüşle panelleri elle fırçala",
+        "effects": { "health": -9, "energy": 5 },
+        "explanation": "Bir miktar enerji kurtarıldı ancak dış görev mürettebatı yordu."
+      },
+      {
+        "label": "Titreşimli panel temizliğini çalıştır",
+        "requires": { "moduleId": "solar", "minLevel": 2 },
+        "effects": { "energy": 9, "health": 0 },
+        "explanation": "Sv. 2 paneller ekip dışarı çıkmadan kendini temizledi."
+      },
+      {
+        "label": "Elektrostatik toz itici ile tam verim",
+        "requires": { "moduleId": "solar", "minLevel": 3 },
+        "effects": { "energy": 16, "radiation": 4 },
+        "explanation": "Sv. 3 güneş dizilimi tozu anında itip yüksek enerji depoladı."
+      }
+    ]
+  },
+  {
+    "id": "water-filter",
+    "title": "Su Geri Dönüşüm Filtresi Tıkandı",
+    "description": "Yaşam destek döngüsündeki ana su filtresi verimini kaybetti.",
+    "options": [
+      {
+        "label": "Düşük akış moduna geç",
+        "effects": { "oxygen": -10, "food": -4 },
+        "explanation": "Yedek sistem olmadığı için su ve oksijen kısıtlandı."
+      },
+      {
+        "label": "Çift yedekli filtreyi devreye al",
+        "requires": { "moduleId": "lifeSupport", "minLevel": 2 },
+        "effects": { "oxygen": 6, "energy": -6 },
+        "explanation": "Sv. 2 yedek hat sayesinde oksijen üretimi korundu."
+      },
+      {
+        "label": "Kapalı devre yüksek verimli arıtma",
+        "requires": { "moduleId": "lifeSupport", "minLevel": 3 },
+        "effects": { "oxygen": 12, "energy": -2, "food": 4 },
+        "explanation": "Sv. 3 arıtma minimum enerjiyle hem oksijen hem sera suyu üretti."
+      }
+    ]
+  },
+  {
+    "id": "greenhouse-blight",
+    "title": "Serada Mantar Riski",
+    "description": "Kapalı hidroponik serada nem artışı bitki hastalığı başlattı.",
+    "options": [
+      {
+        "label": "Etkilenen bitkileri sök ve imha et",
+        "effects": { "food": -11, "health": -3 },
+        "explanation": "Sv. 1 serada ayrıştırma yapılamadığı için mahsulün büyük kısmı kaybedildi."
+      },
+      {
+        "label": "UV sterilizasyon döngüsünü başlat",
+        "requires": { "moduleId": "greenhouse", "minLevel": 2 },
+        "effects": { "energy": -7, "food": 5 },
+        "explanation": "Sv. 2 UV lambalar mantarı durdurdu, gıda stoku korundu."
+      },
+      {
+        "label": "İzole biyokubbeden tam hasat al",
+        "requires": { "moduleId": "greenhouse", "minLevel": 3 },
+        "effects": { "energy": -3, "food": 14, "oxygen": 4 },
+        "explanation": "Sv. 3 modüler sera hastalığı izole edip ekstra hasat verdi."
+      }
+    ]
+  },
+  {
+    "id": "crew-fatigue",
+    "title": "Düşük Yerçekimi Yorgunluğu",
+    "description": "Mürettebatta uyku düzensizliği ve kas yorgunluğu belirtileri başladı.",
+    "options": [
+      {
+        "label": "Vardiyayı kısalt ve ekstra erzak dağıt",
+        "effects": { "health": 4, "energy": -7, "food": -7 },
+        "explanation": "Egzersiz sistemi yetersiz olduğu için ekip ancak dinlenme ve erzakla toparlandı."
+      },
+      {
+        "label": "Standart vardiyaya devam et",
+        "effects": { "health": -11 },
+        "explanation": "Kaynak harcanmadı fakat ekip sağlığı ciddi oranda düştü."
+      },
+      {
+        "label": "Rehberli direnç egzersizi seansı",
+        "requires": { "moduleId": "exercise", "minLevel": 1 },
+        "effects": { "health": 9, "food": -3 },
+        "explanation": "Sv. 1 egzersiz ekipmanı ekibin kas ve moral dengesini korudu."
+      },
+      {
+        "label": "Gelişmiş santrifüj ve uyku programı",
+        "requires": { "moduleId": "exercise", "minLevel": 2 },
+        "effects": { "health": 15, "energy": 3 },
+        "explanation": "Sv. 2 egzersiz istasyonu ekibi tam formda tuttu ve iş verimini artırdı."
+      }
+    ]
+  },
+  {
+    "id": "thermal-drop",
+    "title": "Krater Gölgesinde Aşırı Soğuma",
+    "description": "Üs dış sıcaklığı -150°C altına düştü, ısı yalıtımı zorlanıyor.",
+    "options": [
+      {
+        "label": "Termal battaniye ve sıkı enerji tasarrufu",
+        "effects": { "health": -8, "food": -4 },
+        "explanation": "Isıtıcılar kısıtlandı, soğuk stresi mürettebatı etkiledi."
+      },
+      {
+        "label": "Depolanmış güneş ısısını dağıt",
+        "requires": { "moduleId": "solar", "minLevel": 2 },
+        "effects": { "energy": -6, "health": 6 },
+        "explanation": "Sv. 2 güneş sistemi ısıl dengeyi daha az enerjiyle sağladı."
+      },
+      {
+        "label": "Termal kalkan yalıtımını devreye al",
+        "requires": { "moduleId": "shield", "minLevel": 3 },
+        "effects": { "energy": 0, "health": 10, "radiation": 4 },
+        "explanation": "Sv. 3 kalkan katmanı ısıyı içeride hapsedip sıfır enerji kaybı yaşattı."
+      }
+    ]
+  },
+  {
+    "id": "supply-beacon",
+    "title": "Yörünge İkmal Kapsülü",
+    "description": "Otomatik ikmal kapsülü indi. Modül kapasitenize göre yük alabilirsiniz.",
+    "options": [
+      {
+        "label": "Sadece küçük acil paketi taşı",
+        "effects": { "oxygen": 5, "food": 5, "energy": -6 },
+        "explanation": "Temel araçla ancak küçük bir paket çekilebildi."
+      },
+      {
+        "label": "Rover'ı tam şarj edip tüm ikmali al",
+        "requires": { "moduleId": "solar", "minLevel": 2 },
+        "effects": { "oxygen": 10, "food": 10, "energy": -2 },
+        "explanation": "Sv. 2 enerji altyapısı sayesinde kapsüldeki neredeyse tüm yük taşındı."
+      },
+      {
+        "label": "Gelişmiş hidroponik tohum modülünü kur",
+        "requires": { "moduleId": "greenhouse", "minLevel": 3 },
+        "effects": { "food": 16, "oxygen": 8, "health": 5 },
+        "explanation": "Sv. 3 sera kapsüldeki yeni tohumları anında üretime geçirdi!"
+      }
+    ]
+  }
+]
