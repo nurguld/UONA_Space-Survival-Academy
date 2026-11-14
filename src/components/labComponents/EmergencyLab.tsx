@@ -1,12 +1,25 @@
 import { useState } from 'react';
-import { ShieldAlert, CheckCircle2, AlertTriangle, BookOpen, Play, Info } from 'lucide-react';
-import SpaceTransition from '../SpaceTransition';
+import { ShieldAlert, CheckCircle2, AlertTriangle, BookOpen, Play, Info, Rocket } from 'lucide-react';
 
 export default function EmergencyLab() {
   const [activeTab, setActiveTab] = useState<'guide' | 'simulation'>('guide');
+  const [isRocketFlying, setIsRocketFlying] = useState<boolean>(false);
   const [selectedScenario, setSelectedScenario] = useState<number>(1);
   const [baseLevel, setBaseLevel] = useState<number>(1);
   const [defended, setDefended] = useState<boolean>(false);
+
+  const handleTabChange = (targetTab: 'guide' | 'simulation') => {
+    if (activeTab === targetTab) return;
+    setIsRocketFlying(true);
+    
+    setTimeout(() => {
+      setActiveTab(targetTab);
+    }, 300);
+
+    setTimeout(() => {
+      setIsRocketFlying(false);
+    }, 700);
+  };
 
   const scenarios = [
     {
@@ -48,6 +61,7 @@ export default function EmergencyLab() {
       id: 4,
       title: "Hydroponics Contamination",
       type: "Toxic Mold Outbreak",
+      solution: "Turn on UV Sterilization & Balance Humidity",
       desc: "Closed-loop moisture imbalance triggering toxic pathogen and mold growth over crop bays.",
       damage: { 
         1: "100% Food Loss (All Crops Spoiled)", 
@@ -60,8 +74,16 @@ export default function EmergencyLab() {
   const currentScenario = scenarios.find(s => s.id === selectedScenario)!;
 
   return (
-    <div className="p-6 bg-slate-950 text-cyan-400 rounded-xl border border-cyan-500/30 shadow-2xl max-w-4xl mx-auto">
-      <SpaceTransition transitionKey={`${activeTab}-${selectedScenario}`} />
+    <div className="relative p-6 bg-slate-950 text-cyan-400 rounded-xl border border-cyan-500/30 shadow-2xl max-w-4xl mx-auto overflow-hidden">
+      {isRocketFlying && (
+        <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center bg-slate-950/40 backdrop-blur-[2px] transition-all">
+          <div className="animate-bounce text-red-400 drop-shadow-[0_0_20px_rgba(239,68,68,0.9)] flex items-center gap-2">
+            <Rocket className="w-16 h-16 transform -rotate-45 animate-pulse" />
+            <span className="text-white font-pixel text-lg tracking-widest">DEPLOYING PROTOCOLS...</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-cyan-800/50 pb-4 gap-4">
         <div>
           <h2 className="text-xl font-bold tracking-wider text-white">🚨 EMERGENCY RESPONSE LAB</h2>
@@ -70,7 +92,7 @@ export default function EmergencyLab() {
         
         <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
           <button
-            onClick={() => setActiveTab('guide')}
+            onClick={() => handleTabChange('guide')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs transition-all ${
               activeTab === 'guide' ? 'bg-red-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
             }`}
@@ -78,7 +100,7 @@ export default function EmergencyLab() {
             <BookOpen className="w-4 h-4" /> Lab Guide & Overview
           </button>
           <button
-            onClick={() => setActiveTab('simulation')}
+            onClick={() => handleTabChange('simulation')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs transition-all ${
               activeTab === 'simulation' ? 'bg-red-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
             }`}
@@ -114,15 +136,6 @@ export default function EmergencyLab() {
                 </div>
               </div>
             ))}
-          </div>
-
-          <div className="flex justify-end pt-4">
-            <button
-              onClick={() => setActiveTab('simulation')}
-              className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2 text-sm"
-            >
-              Proceed to Defense Simulation <Play className="w-4 h-4" />
-            </button>
           </div>
         </div>
       )}
