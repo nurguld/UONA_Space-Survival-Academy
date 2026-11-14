@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-space: #0B1020;
+  --color-panel: #141B34;
+  --color-line: #38457A;
+  --color-accent: #38BDF8;
+  --color-energy: #FBBF24;
+  --color-oxygen: #38BDF8;
+  --color-food: #4ADE80;
+  --color-radiation: #FB923C;
+  --color-health: #C4B5FD;
+  --color-muted: #9AA6C7;
+  --font-pixel: "Pixelify Sans", sans-serif;
+  --font-body: "Space Grotesk", sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--color-space);
+  color: #E6EAF5;
+  font-family: var(--font-body);
+}
