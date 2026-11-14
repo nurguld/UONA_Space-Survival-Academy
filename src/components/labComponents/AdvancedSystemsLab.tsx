@@ -8,7 +8,8 @@ import {
   Sun,
   Thermometer,
 } from "lucide-react";
-import SpaceTransition from "../SpaceTransition";
+import { LabTransitionOverlay } from "../LabTransition";
+import { useLabTransition } from "../../hooks/useLabTransition";
 import "./AdvancedSystemsLab.css";
 
 type ExperimentId = "gravity" | "radiation" | "solar" | "thermal";
@@ -95,7 +96,8 @@ const SHIELDS: Record<ShieldId, { name: string; modelFactor: number; note: strin
 };
 
 export default function AdvancedSystemsLab() {
-  const [activeTab, setActiveTab] = useState<"guide" | "simulation">("guide");
+  const { activeSection: activeTab, isRocketFlying, transitionTo: handleTabChange } =
+    useLabTransition<"guide" | "simulation">("guide");
   const [experiment, setExperiment] = useState<ExperimentId>("gravity");
   const [guideExperiment, setGuideExperiment] = useState<ExperimentId>("gravity");
 
@@ -133,7 +135,7 @@ export default function AdvancedSystemsLab() {
 
   return (
     <section className="advanced-lab" aria-label="Space Science Lab">
-      <SpaceTransition transitionKey={`${activeTab}-${experiment}`} />
+      <LabTransitionOverlay visible={isRocketFlying} />
 
       <header className="advanced-lab-header">
         <div className="advanced-lab-title">
@@ -146,7 +148,7 @@ export default function AdvancedSystemsLab() {
             role="tab"
             aria-selected={activeTab === "guide"}
             className={activeTab === "guide" ? "active" : ""}
-            onClick={() => setActiveTab("guide")}
+            onClick={() => handleTabChange("guide")}
           >
             <BookOpen aria-hidden="true" /> LAB GUIDE &amp; OVERVIEW
           </button>
@@ -155,7 +157,7 @@ export default function AdvancedSystemsLab() {
             role="tab"
             aria-selected={activeTab === "simulation"}
             className={activeTab === "simulation" ? "active" : ""}
-            onClick={() => setActiveTab("simulation")}
+            onClick={() => handleTabChange("simulation")}
           >
             <Play aria-hidden="true" /> INTERACTIVE EXPERIMENTS
           </button>
@@ -241,7 +243,7 @@ export default function AdvancedSystemsLab() {
                       type="button"
                       onClick={() => {
                         setExperiment(guideExperiment);
-                        setActiveTab("simulation");
+                        handleTabChange("simulation");
                       }}
                     >
                       <Play aria-hidden="true" /> TRY THIS MISSION

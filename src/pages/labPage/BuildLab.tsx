@@ -14,14 +14,16 @@ import {
   validateBuild,
   type ValidationResult
 } from "../../game/buildValidation";
-import SpaceTransition from "../../components/SpaceTransition";
+import { LabTransitionOverlay } from "../../components/LabTransition";
+import { useLabTransition } from "../../hooks/useLabTransition";
 
 import "./BuildLab.css";
 
 const GRID_SIZE = 25;
 
 export default function BuildLab() {
-  const [view, setView] = useState<"briefing" | "construction">("briefing");
+  const { activeSection: view, isRocketFlying, transitionTo: setView } =
+    useLabTransition<"briefing" | "construction">("briefing");
   const [infoModule, setInfoModule] = useState<ModuleId | null>(null);
   const [selected, setSelected] =
     useState<ModuleId | null>(null);
@@ -115,7 +117,7 @@ export default function BuildLab() {
 
   return (
     <main className="build-lab">
-      <SpaceTransition transitionKey={view} />
+      <LabTransitionOverlay visible={isRocketFlying} />
       <div className="build-container">
 
         <nav className="build-navbar">
