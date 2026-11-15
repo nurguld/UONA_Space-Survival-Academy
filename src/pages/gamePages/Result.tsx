@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import html2canvas from 'html2canvas'
+import logoImg from '../../assets/logo.png'
 import Navbar from '../../components/Navbar'
 import { RESOURCE_ORDER } from '../../components/ResourceIcon'
 import { useGame } from '../../context/GameContext'
@@ -442,21 +443,32 @@ export default function Result() {
                 className="flex flex-wrap items-start justify-between gap-4 pb-5"
                 style={{ borderBottom: '1px solid rgba(203, 213, 225, 0.2)' }}
               >
-                <div className="min-w-0">
-                  <span
-                    className="text-xs font-semibold uppercase tracking-[0.18em]"
-                    style={{ color: '#38BDF8' }}
-                  >
-                    {isWon
-                      ? pick(
-                          'Junior Space Academy · Certificate of Achievement',
-                          'Junior Space Academy · Başarı Sertifikası',
-                        )
-                      : pick(
-                          'Junior Space Academy · Mission Debrief Report',
-                          'Junior Space Academy · Görev Sonu Raporu',
-                        )}
-                  </span>
+                <div className="min-w-0 flex items-start gap-3.5">
+                  <img
+                    src={logoImg}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-12 w-12 shrink-0 rounded-full object-cover"
+                    style={{
+                      border: '1px solid rgba(56, 189, 248, 0.45)',
+                      boxShadow: '0 0 14px rgba(34, 211, 238, 0.25)',
+                    }}
+                  />
+                  <div className="min-w-0">
+                    <span
+                      className="text-xs font-semibold uppercase tracking-[0.18em]"
+                      style={{ color: '#38BDF8' }}
+                    >
+                      {isWon
+                        ? pick(
+                            'Junior Space Academy · Certificate of Achievement',
+                            'Junior Space Academy · Başarı Sertifikası',
+                          )
+                        : pick(
+                            'Junior Space Academy · Mission Debrief Report',
+                            'Junior Space Academy · Görev Sonu Raporu',
+                          )}
+                    </span>
                   <h1
                     className="text-2xl sm:text-4xl font-extrabold tracking-tight mt-1 leading-tight"
                     style={{ color: '#FFFFFF' }}
@@ -476,6 +488,7 @@ export default function Result() {
                           `${commanderTitle} · Her başarısız deneme, bir sonraki görev için veri sağlar.`,
                         )}
                   </p>
+                  </div>
                 </div>
 
                 {isWon && (

@@ -37,9 +37,22 @@
 }
 
 .build-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-size: 17px;
   letter-spacing: 1px;
   color: white;
+}
+
+.build-brand-logo {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  object-fit: cover;
+  border: 1px solid rgb(73 207 255 / 45%);
+  box-shadow: 0 0 12px rgb(48 183 241 / 28%);
 }
 
 .build-nav-label {

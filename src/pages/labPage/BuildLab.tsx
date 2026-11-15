@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import logoImg from '../../assets/logo.png'
 import LanguageToggle from '../../components/LanguageToggle'
 import LabStationBadge from '../../components/labComponents/LabStationBadge'
 import ModuleSelector from '../../components/labComponents/ModuleSelector'
@@ -327,7 +328,10 @@ export default function BuildLab() {
         onClickCapture={(event) => handleInteractiveClick(event.target)}
       >
         <nav className="build-navbar" aria-label={pick('Build Lab navigation', 'İnşa Labı gezinti')}>
-          <span className="build-brand">JUNIOR SPACE ACADEMY</span>
+          <span className="build-brand">
+            <img src={logoImg} alt="" aria-hidden="true" className="build-brand-logo" />
+            <span>JUNIOR SPACE ACADEMY</span>
+          </span>
 
           <div className="build-nav-actions">
             <span className="build-nav-label">{pick('BUILD LAB / 01', 'İNŞA LABI / 01')}</span>

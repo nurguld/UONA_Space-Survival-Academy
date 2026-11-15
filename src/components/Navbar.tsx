@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import logoImg from '../assets/logo.png'
 import { useLanguage } from '../context/LanguageContext'
 import {
   getSoundMuted,
@@ -87,9 +88,15 @@ export default function Navbar() {
       <Link
         to="/"
         onClick={() => playClick()}
-        className="text-base sm:text-lg font-bold tracking-[0.2em] uppercase text-white hover:text-cyan-300 transition-colors"
+        className="inline-flex items-center gap-3 text-base sm:text-lg font-bold tracking-[0.2em] uppercase text-white hover:text-cyan-300 transition-colors"
       >
-        JUNIOR SPACE ACADEMY
+        <img
+          src={logoImg}
+          alt=""
+          aria-hidden="true"
+          className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-full object-cover border border-cyan-400/45 shadow-[0_0_14px_rgba(34,211,238,0.28)]"
+        />
+        <span>JUNIOR SPACE ACADEMY</span>
       </Link>
 
       <nav aria-label={pick('Main menu', 'Ana menü')} className="flex flex-wrap items-center gap-2 sm:gap-3">
