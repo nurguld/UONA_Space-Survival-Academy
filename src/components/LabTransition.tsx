@@ -1,11 +1,13 @@
-import { Rocket } from 'lucide-react';
+import { Rocket } from 'lucide-react'
+import { useLanguage } from '../context/LanguageContext'
 
 type LabTransitionOverlayProps = {
-  visible: boolean;
-};
+  visible: boolean
+}
 
 export function LabTransitionOverlay({ visible }: LabTransitionOverlayProps) {
-  if (!visible) return null;
+  const { pick } = useLanguage()
+  if (!visible) return null
 
   return (
     <div
@@ -14,8 +16,10 @@ export function LabTransitionOverlay({ visible }: LabTransitionOverlayProps) {
     >
       <div className="flex animate-bounce items-center gap-2 text-cyan-400 drop-shadow-[0_0_20px_rgba(6,182,212,0.9)]">
         <Rocket className="h-16 w-16 -rotate-45 animate-pulse" />
-        <span className="font-pixel text-lg tracking-widest text-white">LAUNCHING LAB...</span>
+        <span className="font-pixel text-lg tracking-widest text-white">
+          {pick('LAUNCHING LAB...', 'LABORATUVAR AÇILIYOR...')}
+        </span>
       </div>
     </div>
-  );
+  )
 }

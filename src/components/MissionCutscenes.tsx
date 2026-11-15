@@ -5,6 +5,7 @@ import cutscene3SpaceImg from '../assets/cutscene-3-space.jpg'
 import cutscene4LunarBaseImg from '../assets/cutscene-4-lunarbase.jpg'
 import spriteAstronautImg from '../assets/sprite-astronaut.png'
 import spriteRocketImg from '../assets/sprite-rocket.png'
+import { useLanguage } from '../context/LanguageContext'
 import { playAlert, playLaunch, stopLaunch } from '../game/sound'
 
 interface LaunchCutsceneProps {
@@ -343,14 +344,20 @@ function LaunchCutsceneContent({
   crewCount,
   onComplete,
 }: Omit<LaunchCutsceneProps, 'isOpen'>) {
+  const { lang, pick } = useLanguage()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const distanceRef = useRef<HTMLSpanElement>(null)
   const onCompleteRef = useRef(onComplete)
+  const langRef = useRef(lang)
   const [sceneIndex, setSceneIndex] = useState(0)
 
   useEffect(() => {
     onCompleteRef.current = onComplete
   }, [onComplete])
+
+  useEffect(() => {
+    langRef.current = lang
+  }, [lang])
 
   useEffect(() => {
     playLaunch()
@@ -429,7 +436,11 @@ function LaunchCutsceneContent({
             ? Math.round(12000 + easeInOutCubic(sceneT) * 358000)
             : 384400
       if (distanceRef.current) {
-        distanceRef.current.textContent = `AY’A MESAFE: ${(384400 - telemetryKm).toLocaleString('tr-TR')} km`
+        const remaining = 384400 - telemetryKm
+        distanceRef.current.textContent =
+          langRef.current === 'en'
+            ? `DIST TO MOON: ${remaining.toLocaleString('en-US')} km`
+            : `AY’A MESAFE: ${remaining.toLocaleString('tr-TR')} km`
       }
 
       // Sahne 4 iniş toz patlaması tetikleyici
@@ -738,26 +749,41 @@ function LaunchCutsceneContent({
   }, [crewCount])
 
   const sceneTitles = [
-    'Dünyada Hazırlık',
-    'Fırlatma Anı',
-    'Uzayda Yolculuk',
-    "Ay'a İniş",
-    'Üsse Varış',
+    pick('Earth Prep', 'Dünyada Hazırlık'),
+    pick('Liftoff', 'Fırlatma Anı'),
+    pick('Deep Space Transit', 'Uzayda Yolculuk'),
+    pick('Lunar Landing', "Ay'a İniş"),
+    pick('Base Arrival', 'Üsse Varış'),
   ]
 
   const sceneDescriptions = [
-    `${crewCount} astronot neşeyle el sallayarak Junior Space Academy roketine yürüyor.`,
-    'Roket ateş ve duman bulutları eşliğinde gökyüzüne, bulutların ötesine yükseliyor!',
-    'Dünya geride kaldı; yıldızların ve takımyıldızların arasından Ay’a süzülüyoruz.',
-    'İniş ayakları açıldı! Kraterli Ay yüzeyine toz bulutları eşliğinde yumuşak iniş...',
-    'Kapak açıldı! Astronotlar bayrak ve ekipmanlarıyla yaşam kubbelerine doğru zıplıyor.',
+    pick(
+      `${crewCount} astronauts wave cheerfully as they board the Junior Space Academy rocket.`,
+      `${crewCount} astronot neşeyle el sallayarak Junior Space Academy roketine yürüyor.`,
+    ),
+    pick(
+      'Roaring engines and plumes of smoke carry the rocket high above the clouds!',
+      'Roket ateş ve duman bulutları eşliğinde gökyüzüne, bulutların ötesine yükseliyor!',
+    ),
+    pick(
+      'Earth recedes behind us as we glide through stars and constellations toward the Moon.',
+      'Dünya geride kaldı; yıldızların ve takımyıldızların arasından Ay’a süzülüyoruz.',
+    ),
+    pick(
+      'Landing legs deployed! Soft touchdown on the cratered lunar surface through kicking dust...',
+      'İniş ayakları açıldı! Kraterli Ay yüzeyine toz bulutları eşliğinde yumuşak iniş...',
+    ),
+    pick(
+      'Hatch open! The astronauts bounce toward the habitat domes with their flag and gear.',
+      'Kapak açıldı! Astronotlar bayrak ve ekipmanlarıyla yaşam kubbelerine doğru zıplıyor.',
+    ),
   ]
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Görev Başlangıç Sinematiği"
+      aria-label={pick('Mission Launch Cutscene', 'Görev Başlangıç Sinematiği')}
       className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#030612]/94 backdrop-blur-md p-3 sm:p-5"
     >
       <div className="w-full max-w-4xl rounded-2xl border-2 border-cyan-400/50 bg-[#070E24] shadow-[0_0_70px_rgba(56,189,248,0.3)] overflow-hidden">
@@ -770,7 +796,7 @@ function LaunchCutsceneContent({
             </span>
           </div>
           <span ref={distanceRef} className="font-mono text-amber-200">
-            AY’A MESAFE: 384.400 km
+            {pick('DIST TO MOON: 384,400 km', 'AY’A MESAFE: 384.400 km')}
           </span>
         </div>
 
@@ -793,7 +819,7 @@ function LaunchCutsceneContent({
             onClick={() => onCompleteRef.current()}
             className="shrink-0 px-5 min-h-10 rounded-xl text-sm font-semibold border border-white/30 bg-white/10 text-white hover:bg-white/20 cursor-pointer transition-colors"
           >
-            Atla →
+            {pick('Skip →', 'Atla →')}
           </button>
         </div>
       </div>
@@ -889,6 +915,7 @@ function DayTransitionContent({
   lunarNightEndDay,
   onComplete,
 }: Omit<DayTransitionCutsceneProps, 'targetDay'> & { targetDay: number }) {
+  const { pick } = useLanguage()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
   const onCompleteRef = useRef(onComplete)
@@ -1140,27 +1167,45 @@ function DayTransitionContent({
     }
   }, [dayInCycle, daytimeSpan, isNight, isNightStart, isSunrise, lunarNightEndDay, lunarNightStartDay, nightSpan, targetDay])
 
-  let badge = `AY GÜNDÜZÜ · ${dayInCycle} / ${daytimeSpan}`
-  let subtitle = 'Güneş 14 günlük Ay gündüzünde gökyüzünde yavaşça ilerliyor'
+  let badge = pick(
+    `LUNAR DAY · ${dayInCycle} / ${daytimeSpan}`,
+    `AY GÜNDÜZÜ · ${dayInCycle} / ${daytimeSpan}`,
+  )
+  let subtitle = pick(
+    'The Sun drifts slowly across the sky during the 14-day lunar daytime',
+    'Güneş 14 günlük Ay gündüzünde gökyüzünde yavaşça ilerliyor',
+  )
   let frameClass =
     'border-amber-300/60 shadow-[0_0_60px_rgba(251,191,36,0.28)]'
   let badgeClass = 'border-amber-300/50 bg-amber-400/20 text-amber-100'
 
   if (isNightStart) {
-    badge = '14 GÜNLÜK KARANLIK DÖNEM'
-    subtitle = 'Güneş ufuktan battı! Güneş panelleri durdu, bataryalar devrede.'
+    badge = pick('14-DAY DARKNESS', '14 GÜNLÜK KARANLIK DÖNEM')
+    subtitle = pick(
+      'The Sun has set! Solar panels are offline; batteries are now active.',
+      'Güneş ufuktan battı! Güneş panelleri durdu, bataryalar devrede.',
+    )
     frameClass =
       'border-orange-400/75 shadow-[0_0_65px_rgba(251,146,60,0.35)]'
     badgeClass = 'border-orange-400/60 bg-orange-500/25 text-orange-100'
   } else if (isSunrise) {
-    badge = 'YENİ AY ŞAFAĞI'
-    subtitle = '14 günlük Ay gecesi bitti! Güneş yeniden ufuktan yükseliyor.'
+    badge = pick('NEW LUNAR DAWN', 'YENİ AY ŞAFAĞI')
+    subtitle = pick(
+      'The 14-day lunar night is over! The Sun is rising above the horizon again.',
+      '14 günlük Ay gecesi bitti! Güneş yeniden ufuktan yükseliyor.',
+    )
     frameClass =
       'border-emerald-400/75 shadow-[0_0_65px_rgba(52,211,153,0.35)]'
     badgeClass = 'border-emerald-400/60 bg-emerald-500/25 text-emerald-100'
   } else if (isNight) {
-    badge = `AY GECESİ · ${dayInCycle} / ${nightSpan}`
-    subtitle = 'Güneş ufkun altında · Üssün enerji stokunu koru'
+    badge = pick(
+      `LUNAR NIGHT · ${dayInCycle} / ${nightSpan}`,
+      `AY GECESİ · ${dayInCycle} / ${nightSpan}`,
+    )
+    subtitle = pick(
+      'Sun below the horizon · Conserve base power reserves',
+      'Güneş ufkun altında · Üssün enerji stokunu koru',
+    )
     frameClass =
       'border-indigo-400/70 shadow-[0_0_60px_rgba(129,140,248,0.32)]'
     badgeClass = 'border-indigo-400/60 bg-indigo-500/25 text-indigo-100'
@@ -1195,7 +1240,7 @@ function DayTransitionContent({
             {badge}
           </span>
           <h2 className="mt-2.5 text-5xl sm:text-6xl font-black tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]">
-            GÜN {targetDay}
+            {pick(`DAY ${targetDay}`, `GÜN ${targetDay}`)}
           </h2>
           <p className="mt-2 max-w-md text-xs sm:text-base font-medium text-slate-100 drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
             {subtitle}
@@ -1203,7 +1248,7 @@ function DayTransitionContent({
         </div>
 
         <span className="pointer-events-none absolute bottom-6 right-5 text-[11px] font-medium text-slate-300/70">
-          Geçmek için tıkla
+          {pick('Click to continue', 'Geçmek için tıkla')}
         </span>
       </div>
     </div>
@@ -1225,6 +1270,7 @@ function VictoryCutsceneContent({
   crewCount,
   onContinue,
 }: Omit<VictoryCutsceneProps, 'isOpen'>) {
+  const { pick } = useLanguage()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -1334,7 +1380,7 @@ function VictoryCutsceneContent({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="30 Gün Zafer Kutlaması"
+      aria-label={pick('30-Day Victory Celebration', '30 Gün Zafer Kutlaması')}
       className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#030714]/92 backdrop-blur-md p-4"
     >
       <div className="w-full max-w-2xl rounded-3xl border-2 border-emerald-400/70 bg-[#08132B] shadow-[0_0_70px_rgba(52,211,153,0.35)] overflow-hidden flex flex-col items-center text-center">
@@ -1342,16 +1388,18 @@ function VictoryCutsceneContent({
 
         <div className="p-6 sm:p-7 flex flex-col items-center gap-3.5">
           <span className="px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest border border-emerald-400/60 bg-emerald-500/20 text-emerald-200">
-            30 / 30 Gün Tamamlandı
+            {pick('30 / 30 Days Completed', '30 / 30 Gün Tamamlandı')}
           </span>
 
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
-            Tebrikler Komutan!
+            {pick('Congratulations, Commander!', 'Tebrikler Komutan!')}
           </h2>
 
           <p className="text-sm sm:text-base text-slate-200 max-w-lg leading-relaxed">
-            {crewCount} kişilik ekibin 14 günlük Ay gecesini ve tüm uzay tehlikelerini başarıyla
-            atlattı. Ay üssün 30 gün boyunca ayakta kaldı!
+            {pick(
+              `Your crew of ${crewCount} survived the 14-day lunar night and every space hazard. Your lunar base stood strong for all 30 days!`,
+              `${crewCount} kişilik ekibin 14 günlük Ay gecesini ve tüm uzay tehlikelerini başarıyla atlattı. Ay üssün 30 gün boyunca ayakta kaldı!`,
+            )}
           </p>
 
           <button
@@ -1360,7 +1408,7 @@ function VictoryCutsceneContent({
             onClick={onContinue}
             className="mt-1 px-8 min-h-12 rounded-xl text-base font-bold bg-gradient-to-r from-emerald-400 to-cyan-300 text-slate-950 shadow-[0_0_24px_rgba(52,211,153,0.45)] hover:brightness-110 cursor-pointer transition-all"
           >
-            Görev Özetini Gör →
+            {pick('View Mission Summary →', 'Görev Özetini Gör →')}
           </button>
         </div>
       </div>

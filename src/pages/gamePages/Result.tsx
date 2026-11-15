@@ -2,14 +2,34 @@ import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import html2canvas from 'html2canvas'
 import Navbar from '../../components/Navbar'
-import { RESOURCE_CONFIG, RESOURCE_ORDER } from '../../components/ResourceIcon'
+import { RESOURCE_ORDER } from '../../components/ResourceIcon'
 import { useGame } from '../../context/GameContext'
+import { useLanguage, type Language } from '../../context/LanguageContext'
 import { analyzeLossReason } from '../../game/engine'
 import { playClick } from '../../game/sound'
+import {
+  formatUpgradeLabel,
+  getResourceLabel,
+  getResourceShortLabel,
+  localizeEventLog,
+} from '../../i18n/gameTranslations'
 import type { GameState, ResourceId } from '../../types'
 
-function formatCommanderTitle(name: string): string {
-  return /^komutan\b/i.test(name) ? name : `Komutan ${name}`
+function formatCommanderTitle(name: string, lang: Language): string {
+  const clean = name.trim()
+  if (!clean) {
+    return lang === 'en' ? 'Commander Candidate' : 'Komutan Adayı'
+  }
+  if (lang === 'en') {
+    if (/^komutan\b/i.test(clean)) {
+      return clean.replace(/^komutan\s+/i, 'Commander ')
+    }
+    return /^commander\b/i.test(clean) ? clean : `Commander ${clean}`
+  }
+  if (/^commander\b/i.test(clean)) {
+    return clean.replace(/^commander\s+/i, 'Komutan ')
+  }
+  return /^komutan\b/i.test(clean) ? clean : `Komutan ${clean}`
 }
 
 const STAR_DOTS = [
@@ -125,14 +145,16 @@ function renderFallbackCertificatePng(
   lossLesson: string | null,
   totalUpgrades: number,
   totalEvents: number,
+  lang: Language,
 ): string {
+  const isEn = lang === 'en'
   const isWon = state.status === 'won'
-  const commanderTitle = formatCommanderTitle(commanderName)
+  const commanderTitle = formatCommanderTitle(commanderName, lang)
   const canvas = document.createElement('canvas')
   canvas.width = 1200
   canvas.height = isWon ? 640 : 740
   const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Canvas oluşturulamadı')
+  if (!ctx) throw new Error('Canvas unavailable')
 
   ctx.fillStyle = '#040814'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -152,8 +174,12 @@ function renderFallbackCertificatePng(
   ctx.font = 'bold 16px sans-serif'
   ctx.fillText(
     isWon
-      ? 'JUNIOR SPACE ACADEMY · BAŞARI SERTİFİKASI'
-      : 'JUNIOR SPACE ACADEMY · GÖREV SONU RAPORU',
+      ? isEn
+        ? 'JUNIOR SPACE ACADEMY · CERTIFICATE OF ACHIEVEMENT'
+        : 'JUNIOR SPACE ACADEMY · BAŞARI SERTİFİKASI'
+      : isEn
+        ? 'JUNIOR SPACE ACADEMY · MISSION DEBRIEF REPORT'
+        : 'JUNIOR SPACE ACADEMY · GÖREV SONU RAPORU',
     80,
     98,
   )
@@ -161,7 +187,11 @@ function renderFallbackCertificatePng(
   ctx.fillStyle = '#FFFFFF'
   ctx.font = 'bold 40px sans-serif'
   ctx.fillText(
-    isWon ? commanderTitle : `Görev ${state.day}. Günde Sona Erdi`,
+    isWon
+      ? commanderTitle
+      : isEn
+        ? `Mission Ended on Day ${state.day}`
+        : `Görev ${state.day}. Günde Sona Erdi`,
     80,
     152,
   )
@@ -171,8 +201,12 @@ function renderFallbackCertificatePng(
   let cursorY = drawWrappedText(
     ctx,
     isWon
-      ? `Ay Güney Kutbu üssünü ${maxDays} gün boyunca kesintisiz yöneterek görevi başarıyla tamamladı.`
-      : `${commanderTitle} · Her başarısız deneme, bir sonraki görev için veri sağlar.`,
+      ? isEn
+        ? `Successfully commanded the Lunar South Pole base for ${maxDays} consecutive days.`
+        : `Ay Güney Kutbu üssünü ${maxDays} gün boyunca kesintisiz yöneterek görevi başarıyla tamamladı.`
+      : isEn
+        ? `${commanderTitle} · Every failed attempt yields telemetry for the next mission.`
+        : `${commanderTitle} · Her başarısız deneme, bir sonraki görev için veri sağlar.`,
     80,
     196,
     1040,
@@ -191,7 +225,11 @@ function renderFallbackCertificatePng(
 
     ctx.fillStyle = '#7DD3FC'
     ctx.font = 'bold 15px sans-serif'
-    ctx.fillText('NEDEN OLDU & NASIL ÖNLENİRDİ?', 104, cursorY + 34)
+    ctx.fillText(
+      isEn ? 'WHAT HAPPENED & HOW TO PREVENT IT' : 'NEDEN OLDU & NASIL ÖNLENİRDİ?',
+      104,
+      cursorY + 34,
+    )
 
     ctx.fillStyle = '#F1F5F9'
     ctx.font = '18px sans-serif'
@@ -203,7 +241,11 @@ function renderFallbackCertificatePng(
 
   ctx.fillStyle = '#94A3B8'
   ctx.font = 'bold 15px sans-serif'
-  ctx.fillText('GÖREV SONU KAYNAK DURUMU', 80, cursorY)
+  ctx.fillText(
+    isEn ? 'FINAL RESOURCE STATUS' : 'GÖREV SONU KAYNAK DURUMU',
+    80,
+    cursorY,
+  )
   cursorY += 20
 
   const boxWidth = 192
@@ -220,7 +262,7 @@ function renderFallbackCertificatePng(
 
     ctx.fillStyle = '#E2E8F0'
     ctx.font = '600 16px sans-serif'
-    ctx.fillText(RESOURCE_CONFIG[id].shortLabel, x + 18, cursorY + 34)
+    ctx.fillText(getResourceShortLabel(id, lang), x + 18, cursorY + 34)
 
     ctx.fillStyle = CERT_COLORS[id]
     ctx.font = 'bold 30px sans-serif'
@@ -231,14 +273,22 @@ function renderFallbackCertificatePng(
   ctx.fillStyle = '#CBD5E1'
   ctx.font = '18px sans-serif'
   ctx.fillText(
-    `Gün: ${state.day} / ${maxDays}  ·  Modül Geliştirme: ${totalUpgrades}  ·  Yönetilen Olay: ${totalEvents}`,
+    isEn
+      ? `Day: ${state.day} / ${maxDays}  ·  Module Upgrades: ${totalUpgrades}  ·  Events Handled: ${totalEvents}`
+      : `Gün: ${state.day} / ${maxDays}  ·  Modül Geliştirme: ${totalUpgrades}  ·  Yönetilen Olay: ${totalEvents}`,
     80,
     footerY,
   )
 
   ctx.fillStyle = '#94A3B8'
   ctx.textAlign = 'right'
-  ctx.fillText('NASA Space Apps Challenge · Ay Üssü Simülasyonu', canvas.width - 80, footerY)
+  ctx.fillText(
+    isEn
+      ? 'NASA Space Apps Challenge · Lunar Base Simulation'
+      : 'NASA Space Apps Challenge · Ay Üssü Simülasyonu',
+    canvas.width - 80,
+    footerY,
+  )
 
   return canvas.toDataURL('image/png')
 }
@@ -246,15 +296,17 @@ function renderFallbackCertificatePng(
 export default function Result() {
   const navigate = useNavigate()
   const { state, rules, startGame } = useGame()
+  const { lang, pick } = useLanguage()
   const certificateRef = useRef<HTMLDivElement>(null)
   const [downloading, setDownloading] = useState(false)
   const [downloadError, setDownloadError] = useState<string | null>(null)
 
-  const commanderName = localStorage.getItem('jsa_commander')?.trim() || 'Komutan Adayı'
-  const commanderTitle = formatCommanderTitle(commanderName)
+  const defaultCandidate = pick('Commander Candidate', 'Komutan Adayı')
+  const commanderName = localStorage.getItem('jsa_commander')?.trim() || defaultCandidate
+  const commanderTitle = formatCommanderTitle(commanderName, lang)
   const isWon = state.status === 'won'
   const isLost = state.status === 'lost'
-  const lossLesson = isLost ? analyzeLossReason(state) : null
+  const lossLesson = isLost ? analyzeLossReason(state, lang) : null
 
   const totalUpgrades = state.history.reduce((sum, entry) => sum + entry.upgrades.length, 0)
   const totalEvents = state.history.filter((entry) => entry.event !== undefined).length
@@ -280,7 +332,8 @@ export default function Result() {
   const triggerDownload = (dataUrl: string) => {
     const link = document.createElement('a')
     const safeName = commanderName.toLowerCase().replace(/[^a-z0-9çğıöşü]+/gi, '-')
-    link.download = `junior-space-academy-sertifika-${safeName || 'komutan'}.png`
+    const prefix = pick('junior-space-academy-certificate', 'junior-space-academy-sertifika')
+    link.download = `${prefix}-${safeName || 'commander'}.png`
     link.href = dataUrl
     link.click()
   }
@@ -312,10 +365,16 @@ export default function Result() {
           lossLesson,
           totalUpgrades,
           totalEvents,
+          lang,
         )
         triggerDownload(fallbackUrl)
       } catch {
-        setDownloadError('Sertifika görseli oluşturulurken bir sorun oluştu.')
+        setDownloadError(
+          pick(
+            'Could not generate certificate image.',
+            'Sertifika görseli oluşturulurken bir sorun oluştu.',
+          ),
+        )
       }
     } finally {
       setDownloading(false)
@@ -342,13 +401,19 @@ export default function Result() {
         {state.status === 'playing' ? (
           <section className="mt-8 rounded-2xl border border-slate-300/35 bg-gradient-to-b from-[#151F31]/92 to-[#0B1323]/96 backdrop-blur-xl text-slate-100 shadow-[0_16px_40px_rgba(4,9,20,0.6)] p-6 sm:p-8 text-center">
             <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-400">
-              Görev Devam Ediyor
+              {pick('Mission In Progress', 'Görev Devam Ediyor')}
             </span>
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mt-1.5">
-              Henüz {state.day}. Gündesin, {commanderTitle}
+              {pick(
+                `You are on Day ${state.day}, ${commanderTitle}`,
+                `Henüz ${state.day}. Gündesin, ${commanderTitle}`,
+              )}
             </h1>
             <p className="text-slate-300 text-sm sm:text-base mt-2 max-w-xl mx-auto leading-relaxed">
-              Komutan sertifikanı veya görev sonu analizini görmek için {rules.maxDays} günlük görevi tamamla.
+              {pick(
+                `Complete the ${rules.maxDays}-day mission to view your Commander Certificate or mission debrief report.`,
+                `Komutan sertifikanı veya görev sonu analizini görmek için ${rules.maxDays} günlük görevi tamamla.`,
+              )}
             </p>
             <div className="mt-6 flex justify-center gap-3">
               <Link
@@ -356,7 +421,7 @@ export default function Result() {
                 onClick={() => playClick()}
                 className="px-6 min-h-11 rounded-xl text-sm font-bold inline-flex items-center bg-gradient-to-r from-[#0EA5D9] to-[#22C9EB] text-white shadow-[0_6px_20px_rgba(34,201,235,0.3)] hover:brightness-110 transition-all"
               >
-                Göreve Devam Et →
+                {pick('Resume Mission →', 'Göreve Devam Et →')}
               </Link>
             </div>
           </section>
@@ -383,8 +448,14 @@ export default function Result() {
                     style={{ color: '#38BDF8' }}
                   >
                     {isWon
-                      ? 'Junior Space Academy · Başarı Sertifikası'
-                      : 'Junior Space Academy · Görev Sonu Raporu'}
+                      ? pick(
+                          'Junior Space Academy · Certificate of Achievement',
+                          'Junior Space Academy · Başarı Sertifikası',
+                        )
+                      : pick(
+                          'Junior Space Academy · Mission Debrief Report',
+                          'Junior Space Academy · Görev Sonu Raporu',
+                        )}
                   </span>
                   <h1
                     className="text-2xl sm:text-4xl font-extrabold tracking-tight mt-1 leading-tight"
@@ -392,12 +463,18 @@ export default function Result() {
                   >
                     {isWon
                       ? commanderTitle
-                      : `Görev ${state.day}. Günde Sona Erdi`}
+                      : pick(`Mission Ended on Day ${state.day}`, `Görev ${state.day}. Günde Sona Erdi`)}
                   </h1>
                   <p className="text-sm sm:text-[15px] mt-1.5 leading-relaxed" style={{ color: '#CBD5E1' }}>
                     {isWon
-                      ? `Ay Güney Kutbu üssünü ${rules.maxDays} gün boyunca kesintisiz yöneterek görevi başarıyla tamamladı.`
-                      : `${commanderTitle} · Her başarısız deneme, bir sonraki görev için veri sağlar.`}
+                      ? pick(
+                          `Successfully commanded the Lunar South Pole base for ${rules.maxDays} consecutive days.`,
+                          `Ay Güney Kutbu üssünü ${rules.maxDays} gün boyunca kesintisiz yöneterek görevi başarıyla tamamladı.`,
+                        )
+                      : pick(
+                          `${commanderTitle} · Every failed attempt provides telemetry for your next mission.`,
+                          `${commanderTitle} · Her başarısız deneme, bir sonraki görev için veri sağlar.`,
+                        )}
                   </p>
                 </div>
 
@@ -410,7 +487,7 @@ export default function Result() {
                       color: '#E0F2FE',
                     }}
                   >
-                    ✓ {rules.maxDays} Günlük Görev Tamamlandı
+                    ✓ {pick(`${rules.maxDays}-Day Mission Complete`, `${rules.maxDays} Günlük Görev Tamamlandı`)}
                   </span>
                 )}
 
@@ -428,10 +505,10 @@ export default function Result() {
                         className="text-[10px] font-bold uppercase tracking-[0.1em]"
                         style={{ color: '#7DD3FC' }}
                       >
-                        Tükenen Kaynak
+                        {pick('Depleted Resource', 'Tükenen Kaynak')}
                       </p>
                       <p className="text-sm font-bold" style={{ color: '#FFFFFF' }}>
-                        {RESOURCE_CONFIG[state.lossReason].label}
+                        {getResourceLabel(state.lossReason, lang)}
                       </p>
                     </div>
                   </div>
@@ -448,7 +525,7 @@ export default function Result() {
                   }}
                 >
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: '#38BDF8' }}>
-                    Neden Oldu &amp; Nasıl Önlenirdi?
+                    {pick('What Happened & How to Prevent It?', 'Neden Oldu & Nasıl Önlenirdi?')}
                   </p>
                   <p className="text-xs sm:text-sm mt-1.5 leading-relaxed" style={{ color: '#E2E8F0' }}>
                     {lossLesson}
@@ -463,7 +540,7 @@ export default function Result() {
                     className="text-[11px] font-bold uppercase tracking-[0.14em] mb-2.5"
                     style={{ color: '#94A3B8' }}
                   >
-                    Kayıptan Önceki Kritik Günler
+                    {pick('Critical Days Before Loss', 'Kayıptan Önceki Kritik Günler')}
                   </p>
                   <div className="grid sm:grid-cols-3 gap-3">
                     {criticalDays.map((entry) => {
@@ -471,6 +548,13 @@ export default function Result() {
                         state.lossReason && entry.dailyDelta
                           ? entry.dailyDelta[state.lossReason]
                           : null
+                      const localizedEvt = entry.event
+                        ? localizeEventLog(entry.event, lang)
+                        : undefined
+                      const upgradeLabels =
+                        entry.upgradeItems && entry.upgradeItems.length > 0
+                          ? entry.upgradeItems.map((u) => formatUpgradeLabel(u, lang))
+                          : entry.upgrades
                       return (
                         <div
                           key={entry.day}
@@ -482,23 +566,27 @@ export default function Result() {
                         >
                           <div className="flex items-center justify-between font-bold">
                             <span style={{ color: '#FFFFFF' }}>
-                              {entry.day}. Gün · {entry.isNight ? 'Ay Gecesi' : 'Ay Gündüzü'}
+                              {pick(
+                                `Day ${entry.day} · ${entry.isNight ? 'Lunar Night' : 'Lunar Day'}`,
+                                `${entry.day}. Gün · ${entry.isNight ? 'Ay Gecesi' : 'Ay Gündüzü'}`,
+                              )}
                             </span>
                             {deltaVal !== null && (
                               <span className="tabular-nums" style={{ color: '#7DD3FC' }}>
-                                {deltaVal}/gün
+                                {deltaVal}/{pick('day', 'gün')}
                               </span>
                             )}
                           </div>
-                          {entry.event && (
+                          {localizedEvt && (
                             <p className="mt-1.5 leading-relaxed" style={{ color: '#CBD5E1' }}>
-                              Olay: <span style={{ color: '#E0F2FE' }}>{entry.event.title}</span> (
-                              {entry.event.chosenLabel})
+                              {pick('Event:', 'Olay:')}{' '}
+                              <span style={{ color: '#E0F2FE' }}>{localizedEvt.title}</span> (
+                              {localizedEvt.chosenLabel})
                             </p>
                           )}
-                          {entry.upgrades.length > 0 && (
+                          {upgradeLabels.length > 0 && (
                             <p className="mt-1" style={{ color: '#6EE7B7' }}>
-                              Kurulum: {entry.upgrades.join(', ')}
+                              {pick('Upgraded:', 'Kurulum:')} {upgradeLabels.join(', ')}
                             </p>
                           )}
                         </div>
@@ -514,11 +602,10 @@ export default function Result() {
                   className="text-[11px] font-bold uppercase tracking-[0.14em] mb-2.5"
                   style={{ color: '#94A3B8' }}
                 >
-                  Görev Sonu Kaynak Durumu
+                  {pick('Final Resource Status', 'Görev Sonu Kaynak Durumu')}
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   {RESOURCE_ORDER.map((id) => {
-                    const meta = RESOURCE_CONFIG[id]
                     return (
                       <div
                         key={id}
@@ -533,7 +620,7 @@ export default function Result() {
                           style={{ color: '#E2E8F0' }}
                         >
                           <CertIcon id={id} className="w-4 h-4 shrink-0" />
-                          <span className="truncate">{meta.shortLabel}</span>
+                          <span className="truncate">{getResourceShortLabel(id, lang)}</span>
                         </span>
                         <span
                           className="text-base font-extrabold tabular-nums"
@@ -557,20 +644,25 @@ export default function Result() {
               >
                 <div className="flex flex-wrap gap-3">
                   <span>
-                    Tamamlanan Gün: <strong style={{ color: '#FFFFFF' }}>{state.day}</strong> /{' '}
-                    {rules.maxDays}
+                    {pick('Days Completed:', 'Tamamlanan Gün:')}{' '}
+                    <strong style={{ color: '#FFFFFF' }}>{state.day}</strong> / {rules.maxDays}
                   </span>
                   <span>·</span>
                   <span>
-                    Modül Geliştirme: <strong style={{ color: '#7DD3FC' }}>{totalUpgrades}</strong>
+                    {pick('Module Upgrades:', 'Modül Geliştirme:')}{' '}
+                    <strong style={{ color: '#7DD3FC' }}>{totalUpgrades}</strong>
                   </span>
                   <span>·</span>
                   <span>
-                    Yönetilen Olay: <strong style={{ color: '#E2E8F0' }}>{totalEvents}</strong>
+                    {pick('Events Handled:', 'Yönetilen Olay:')}{' '}
+                    <strong style={{ color: '#E2E8F0' }}>{totalEvents}</strong>
                   </span>
                 </div>
                 <span className="text-xs" style={{ color: '#94A3B8' }}>
-                  NASA Space Apps Challenge · Ay Üssü Simülasyonu
+                  {pick(
+                    'NASA Space Apps Challenge · Lunar Base Simulation',
+                    'NASA Space Apps Challenge · Ay Üssü Simülasyonu',
+                  )}
                 </span>
               </div>
             </div>
@@ -583,14 +675,14 @@ export default function Result() {
                   onClick={() => playClick()}
                   className="px-5 min-h-11 rounded-xl text-sm font-semibold inline-flex items-center border border-slate-300/40 bg-[#0A1224]/85 text-slate-200 hover:border-white hover:text-white hover:bg-[#131F3A] backdrop-blur-md transition-colors"
                 >
-                  ← Brifinge Dön
+                  {pick('← Back to Briefing', '← Brifinge Dön')}
                 </Link>
                 <button
                   type="button"
                   onClick={handleReplay}
                   className="px-6 min-h-11 rounded-xl text-sm font-bold bg-gradient-to-r from-[#0EA5D9] to-[#22C9EB] text-white shadow-[0_6px_22px_rgba(34,201,235,0.3)] hover:brightness-110 cursor-pointer transition-all"
                 >
-                  Yeni Görev Başlat →
+                  {pick('Start New Mission →', 'Yeni Görev Başlat →')}
                 </button>
               </div>
 
@@ -603,10 +695,10 @@ export default function Result() {
                 <span aria-hidden="true">⬇</span>
                 <span>
                   {downloading
-                    ? 'Hazırlanıyor...'
+                    ? pick('Preparing...', 'Hazırlanıyor...')
                     : isWon
-                      ? 'Sertifikayı PNG İndir'
-                      : 'Görev Raporunu PNG İndir'}
+                      ? pick('Download Certificate PNG', 'Sertifikayı PNG İndir')
+                      : pick('Download Mission Report PNG', 'Görev Raporunu PNG İndir')}
                 </span>
               </button>
             </div>

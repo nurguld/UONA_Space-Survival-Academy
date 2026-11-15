@@ -1,9 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLanguage, type Language } from '../context/LanguageContext'
 import { EVENTS, calculateDailyDelta, getModuleWorkCost } from '../game/engine'
 import { playClick } from '../game/sound'
+import { getModuleDesc, getModuleName, getResourceLabel } from '../i18n/gameTranslations'
 import type { ActiveBuild, ModuleDef, ModuleId, ModuleLevels, Resources } from '../types'
 import BuildingSprite from './BuildingSprite'
-import { RESOURCE_CONFIG, RESOURCE_ORDER, ResourceIcon } from './ResourceIcon'
+import { RESOURCE_ORDER, ResourceIcon } from './ResourceIcon'
 
 interface UpgradeModalProps {
   moduleId: ModuleId | null
@@ -21,19 +23,35 @@ interface UpgradeModalProps {
   onClose: () => void
 }
 
-const MODULE_HOW_IT_WORKS: Record<ModuleId, string> = {
-  solar:
-    'Güneş ışığını elektrik enerjisine dönüştürür. Ay gününde (1–20. gün) çok yüksek enerji üretir; ancak 21. günden itibaren Ay Gecesinde güneş battığı için üretim durur.',
-  lifeSupport:
-    'Astronotların nefes alabilmesi için oksijen üretir, solunum ve terdeki nemi bile geri dönüştürerek temiz su sağlar.',
-  battery:
-    'Güneş panellerinin gündüz ürettiği enerjiyi depolar ve özellikle güneşsiz Ay Gecesinde üssün enerjisini kesintisiz tutar.',
-  greenhouse:
-    'Hidroponik tarımla mürettebat için taze gıda yetiştirir; bitkiler gündüz karbondioksiti emer ama sulama ve büyütme lambaları su ve enerji tüketir.',
-  exercise:
-    'Düşük Ay yerçekiminde astronotların kas ve kemik erimesini önler; her gün mürettebat sağlığını aktif olarak artırır.',
-  shield:
-    'Güneş patlamaları ve kozmik radyasyona karşı üssü zırhlar. Yükseltildiğinde rastgele tehlikelere karşı ek savunma seçeneklerinin kilidini açar.',
+const MODULE_HOW_IT_WORKS: Record<Language, Record<ModuleId, string>> = {
+  en: {
+    solar:
+      'Converts sunlight into electrical power. Generates strong output during Lunar Day, then pauses at sunset when Lunar Night begins.',
+    lifeSupport:
+      'Produces breathable oxygen for astronauts and recycles moisture from breath and sweat into clean drinking water.',
+    battery:
+      'Stores daytime solar electricity and keeps the base powered continuously throughout the sunless Lunar Night.',
+    greenhouse:
+      'Grows fresh food hydroponically for the crew; crops absorb CO₂ by day while irrigation and grow lights use water and energy.',
+    exercise:
+      'Prevents muscle and bone density loss in 1/6th lunar gravity, actively improving crew health every single day.',
+    shield:
+      'Shields the habitat from solar flares and cosmic radiation. Higher levels unlock extra protective responses during emergencies.',
+  },
+  tr: {
+    solar:
+      'Güneş ışığını elektrik enerjisine dönüştürür. Ay gününde çok yüksek enerji üretir; ancak Ay Gecesinde güneş battığı için üretim durur.',
+    lifeSupport:
+      'Astronotların nefes alabilmesi için oksijen üretir, solunum ve terdeki nemi bile geri dönüştürerek temiz su sağlar.',
+    battery:
+      'Güneş panellerinin gündüz ürettiği enerjiyi depolar ve özellikle güneşsiz Ay Gecesinde üssün enerjisini kesintisiz tutar.',
+    greenhouse:
+      'Hidroponik tarımla mürettebat için taze gıda yetiştirir; bitkiler gündüz karbondioksiti emer ama sulama ve büyütme lambaları su ve enerji tüketir.',
+    exercise:
+      'Düşük Ay yerçekiminde astronotların kas ve kemik erimesini önler; her gün mürettebat sağlığını aktif olarak artırır.',
+    shield:
+      'Güneş patlamaları ve kozmik radyasyona karşı üssü zırhlar. Yükseltildiğinde rastgele tehlikelere karşı ek savunma seçeneklerinin kilidini açar.',
+  },
 }
 
 function formatSigned(value: number): string {
@@ -86,6 +104,10 @@ function UpgradePanelContent({
   onAdjustCrew,
   onClose,
 }: UpgradePanelContentProps) {
+  const { lang, pick } = useLanguage()
+  const modName = getModuleName(mod.id, lang)
+  const modDesc = getModuleDesc(mod.id, lang)
+  const lvLabel = pick('Lv.', 'Sv.')
   const wrapperRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const leftArrowRef = useRef<SVGSVGElement>(null)
@@ -242,19 +264,19 @@ function UpgradePanelContent({
     : 0
 
   const startButtonLabel = activeBuild
-    ? 'İnşaat Sürüyor'
+    ? pick('Under Construction', 'İnşaat Sürüyor')
     : !canAfford
-      ? 'Yetersiz Bütçe'
+      ? pick('Insufficient Budget', 'Yetersiz Bütçe')
       : !hasIdleCrew
-        ? 'Boşta Astronot Yok'
-        : 'İnşaatı Başlat'
+        ? pick('No Idle Astronaut', 'Boşta Astronot Yok')
+        : pick('Start Construction', 'İnşaatı Başlat')
 
   return (
     <div
       ref={wrapperRef}
       role="dialog"
       aria-modal="false"
-      aria-label={`${mod.name} istasyon bilgisi ve inşaatı`}
+      aria-label={pick(`${modName} station info and build`, `${modName} istasyon bilgisi ve inşaatı`)}
       className="upgrade-popover-in fixed z-[965] w-[min(94vw,26rem)] overflow-visible"
     >
       {/* Sol ok (panel binanın sağında açıldığında binayı gösterir) */}
@@ -301,7 +323,7 @@ function UpgradePanelContent({
         {/* Üst Kaş & Kapat */}
         <div className="flex items-center justify-between gap-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-            İstasyon Bilgisi &amp; İnşaat
+            {pick('Station Info & Construction', 'İstasyon Bilgisi & İnşaat')}
           </p>
           <button
             type="button"
@@ -309,7 +331,7 @@ function UpgradePanelContent({
               playClick()
               onClose()
             }}
-            aria-label="İstasyon panelini kapat"
+            aria-label={pick('Close station panel', 'İstasyon panelini kapat')}
             className="w-6 h-6 rounded-full border border-slate-300/30 bg-[#0E1626]/75 text-slate-300 hover:text-white hover:border-slate-200 flex items-center justify-center text-sm leading-none cursor-pointer transition-colors shrink-0"
           >
             ×
@@ -320,21 +342,21 @@ function UpgradePanelContent({
         <div className="mt-1.5 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-lg font-extrabold tracking-tight text-white leading-snug">
-              {mod.name} ·{' '}
+              {modName} ·{' '}
               <span className="text-cyan-300">
                 {isMaxLevel
-                  ? `Sv. ${currentLevel} (Maks.)`
-                  : `Sv. ${currentLevel} → Sv. ${nextLevel}`}
+                  ? `${lvLabel} ${currentLevel} (${pick('Max', 'Maks.')})`
+                  : `${lvLabel} ${currentLevel} → ${lvLabel} ${nextLevel}`}
               </span>
             </h2>
-            <p className="text-xs text-slate-300/90 mt-0.5 leading-snug">{mod.description}</p>
+            <p className="text-xs text-slate-300/90 mt-0.5 leading-snug">{modDesc}</p>
           </div>
 
           <div className="w-[104px] h-[74px] rounded-xl border border-slate-300/35 bg-[#0C1424]/95 p-2 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
             <BuildingSprite
               moduleId={mod.id}
               level={isMaxLevel ? currentLevel : nextLevel}
-              alt={mod.name}
+              alt={modName}
               className="scale-[0.82]"
             />
           </div>
@@ -343,7 +365,7 @@ function UpgradePanelContent({
         {/* Bilgi Kutusu */}
         <div className="mt-3 rounded-xl border border-slate-300/20 bg-[#101829]/75 px-3.5 py-2.5">
           <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-slate-400 flex items-center gap-1.5">
-            <span>Bu İstasyon Ne İşe Yarar?</span>
+            <span>{pick('What Does This Station Do?', 'Bu İstasyon Ne İşe Yarar?')}</span>
             <span
               aria-hidden="true"
               className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border border-slate-400/50 text-[9px] text-slate-300 leading-none"
@@ -352,7 +374,7 @@ function UpgradePanelContent({
             </span>
           </p>
           <p className="text-[12px] text-slate-100/95 leading-relaxed mt-1">
-            {MODULE_HOW_IT_WORKS[mod.id]}
+            {MODULE_HOW_IT_WORKS[lang][mod.id]}
           </p>
         </div>
 
@@ -360,7 +382,7 @@ function UpgradePanelContent({
         {!isMaxLevel && (
           <div className="mt-2.5 rounded-xl border border-slate-300/20 bg-[#101829]/75 px-3.5 py-2.5">
             <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-slate-400 mb-2">
-              Tamamlandığında Günlük Net Değişim
+              {pick('Net Daily Change Upon Completion', 'Tamamlandığında Günlük Net Değişim')}
             </p>
 
             <div className="space-y-1.5">
@@ -372,7 +394,7 @@ function UpgradePanelContent({
                 return (
                   <div key={key} className="flex items-center justify-between gap-2 text-[12px]">
                     <span className="inline-flex items-center gap-1.5 font-semibold text-slate-200">
-                      <span>{RESOURCE_CONFIG[key].label}</span>
+                      <span>{getResourceLabel(key, lang)}</span>
                       <ResourceIcon id={key} className="w-3.5 h-3.5 shrink-0" />
                     </span>
 
@@ -390,7 +412,7 @@ function UpgradePanelContent({
                       >
                         {formatSigned(after)}
                       </span>
-                      <span className="text-slate-300 font-semibold">/gün</span>
+                      <span className="text-slate-300 font-semibold">/{pick('day', 'gün')}</span>
                     </span>
                   </div>
                 )
@@ -399,8 +421,13 @@ function UpgradePanelContent({
 
             {unlockedEventCount > 0 && (
               <p className="mt-2 pt-2 border-t border-slate-300/15 text-[11px] text-slate-200 leading-snug">
-                <strong className="text-amber-300 font-bold">Yeni Kilit:</strong> Sv. {nextLevel}{' '}
-                ile olaylarda {unlockedEventCount} yeni savunma seçeneği açılır!
+                <strong className="text-amber-300 font-bold">
+                  {pick('New Unlock:', 'Yeni Kilit:')}
+                </strong>{' '}
+                {pick(
+                  `${lvLabel} ${nextLevel} unlocks ${unlockedEventCount} new defensive option${unlockedEventCount > 1 ? 's' : ''} in events!`,
+                  `${lvLabel} ${nextLevel} ile olaylarda ${unlockedEventCount} yeni savunma seçeneği açılır!`,
+                )}
               </p>
             )}
           </div>
@@ -410,9 +437,11 @@ function UpgradePanelContent({
         {!isMaxLevel && activeBuild && (
           <div className="mt-2.5 rounded-xl border border-amber-300/35 bg-[#101829]/80 px-3.5 py-2.5 space-y-2">
             <div className="flex items-center justify-between text-[12px]">
-              <span className="font-bold text-amber-300">İnşaat Devam Ediyor</span>
+              <span className="font-bold text-amber-300">
+                {pick('Construction in Progress', 'İnşaat Devam Ediyor')}
+              </span>
               <span className="font-semibold text-slate-200 tabular-nums whitespace-nowrap">
-                {activeWorkDone} / {activeBuild.totalWork} iş günü ({activeProgressPct}%)
+                {activeWorkDone} / {activeBuild.totalWork} {pick('work-days', 'iş günü')} ({activeProgressPct}%)
               </span>
             </div>
 
@@ -425,7 +454,7 @@ function UpgradePanelContent({
 
             <div className="flex items-center justify-between gap-2 pt-0.5 text-[12px]">
               <div className="flex items-center gap-1.5 whitespace-nowrap">
-                <span className="text-slate-300">Ekip:</span>
+                <span className="text-slate-300">{pick('Crew:', 'Ekip:')}</span>
                 <button
                   type="button"
                   disabled={disabled || activeBuild.assignedCrew <= 0}
@@ -433,7 +462,7 @@ function UpgradePanelContent({
                     playClick()
                     onAdjustCrew(mod.id, -1)
                   }}
-                  aria-label="İnşaat ekibinden 1 astronot çıkar"
+                  aria-label={pick('Remove 1 astronaut from build', 'İnşaat ekibinden 1 astronot çıkar')}
                   className="w-6 h-6 shrink-0 rounded-full border border-slate-300/30 bg-[#1B263B] text-white font-bold flex items-center justify-center disabled:opacity-35 cursor-pointer"
                 >
                   −
@@ -449,7 +478,7 @@ function UpgradePanelContent({
                     playClick()
                     onAdjustCrew(mod.id, 1)
                   }}
-                  aria-label="İnşaat ekibine 1 astronot ekle"
+                  aria-label={pick('Assign 1 astronaut to build', 'İnşaat ekibine 1 astronot ekle')}
                   className="w-6 h-6 shrink-0 rounded-full border border-slate-300/30 bg-[#1B263B] text-white font-bold flex items-center justify-center disabled:opacity-35 cursor-pointer"
                 >
                   +
@@ -457,7 +486,9 @@ function UpgradePanelContent({
               </div>
 
               <span className="rounded-md border border-slate-300/20 bg-[#182235] px-2.5 py-1 text-[11px] font-semibold text-amber-200 tabular-nums whitespace-nowrap shrink-0">
-                {remainingActiveDays !== null ? `Kalan: ~${remainingActiveDays} gün` : 'Beklemede'}
+                {remainingActiveDays !== null
+                  ? pick(`Remaining: ~${remainingActiveDays}d`, `Kalan: ~${remainingActiveDays} gün`)
+                  : pick('Paused', 'Beklemede')}
               </span>
             </div>
           </div>
@@ -467,11 +498,13 @@ function UpgradePanelContent({
           <div className="mt-2.5 rounded-xl border border-slate-300/20 bg-[#101829]/75 px-3.5 py-2.5 space-y-2">
             <div className="flex items-center justify-between gap-2 text-[12px]">
               <span className="text-slate-300 whitespace-nowrap">
-                Toplam İş Yükü:{' '}
-                <strong className="text-amber-300 font-bold">{workCost} iş günü</strong>
+                {pick('Total Workload:', 'Toplam İş Yükü:')}{' '}
+                <strong className="text-amber-300 font-bold">
+                  {workCost} {pick('work-days', 'iş günü')}
+                </strong>
               </span>
               <span className="text-slate-300 whitespace-nowrap">
-                Boşta Astronot:{' '}
+                {pick('Idle Astronauts:', 'Boşta Astronot:')}{' '}
                 <strong
                   className={`font-bold tabular-nums ${
                     hasIdleCrew ? 'text-white' : 'text-rose-300'
@@ -484,7 +517,7 @@ function UpgradePanelContent({
 
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-[11.5px] whitespace-nowrap">
-                <span className="text-slate-300">Atanacak Ekip:</span>
+                <span className="text-slate-300">{pick('Assign Crew:', 'Atanacak Ekip:')}</span>
                 <button
                   type="button"
                   disabled={!hasIdleCrew || assignableCrew <= 1}
@@ -492,7 +525,7 @@ function UpgradePanelContent({
                     playClick()
                     setSelectedCrew((prev) => Math.max(1, prev - 1))
                   }}
-                  aria-label="Atanacak astronot sayısını azalt"
+                  aria-label={pick('Decrease assigned astronauts', 'Atanacak astronot sayısını azalt')}
                   className="w-6 h-6 shrink-0 rounded-full border border-slate-300/30 bg-[#1B263B] hover:bg-[#24324D] text-white font-bold flex items-center justify-center disabled:opacity-35 cursor-pointer transition-colors"
                 >
                   −
@@ -508,7 +541,7 @@ function UpgradePanelContent({
                     playClick()
                     setSelectedCrew((prev) => Math.min(idleCrew, prev + 1))
                   }}
-                  aria-label="Atanacak astronot sayısını artır"
+                  aria-label={pick('Increase assigned astronauts', 'Atanacak astronot sayısını artır')}
                   className="w-6 h-6 shrink-0 rounded-full border border-slate-300/30 bg-[#1B263B] hover:bg-[#24324D] text-white font-bold flex items-center justify-center disabled:opacity-35 cursor-pointer transition-colors"
                 >
                   +
@@ -516,7 +549,10 @@ function UpgradePanelContent({
               </div>
 
               <span className="rounded-md border border-slate-300/20 bg-[#182235] px-2.5 py-1 text-[11px] font-semibold text-slate-100 tabular-nums whitespace-nowrap shrink-0">
-                Tamamlanma: {assignableCrew > 0 ? `${estimatedDays} gün` : 'Ekip gerekli'}
+                {pick('ETA:', 'Tamamlanma:')}{' '}
+                {assignableCrew > 0
+                  ? `${estimatedDays} ${pick('days', 'gün')}`
+                  : pick('Crew needed', 'Ekip gerekli')}
               </span>
             </div>
           </div>
@@ -527,17 +563,19 @@ function UpgradePanelContent({
           {!isMaxLevel && (
             <div className="flex items-center justify-between text-[12px] px-0.5">
               <span className="text-slate-300">
-                Maliyet:{' '}
-                <strong className="text-amber-300 font-bold">{upgradeCost} puan</strong>
+                {pick('Cost:', 'Maliyet:')}{' '}
+                <strong className="text-amber-300 font-bold">
+                  {upgradeCost} {pick('pts', 'puan')}
+                </strong>
               </span>
               <span className="text-slate-300">
-                Bütçe:{' '}
+                {pick('Budget:', 'Bütçe:')}{' '}
                 <strong
                   className={`font-bold tabular-nums ${
                     canAfford ? 'text-white' : 'text-rose-300'
                   }`}
                 >
-                  {budget} puan
+                  {budget} {pick('pts', 'puan')}
                 </strong>
               </span>
             </div>
@@ -552,7 +590,7 @@ function UpgradePanelContent({
               }}
               className="w-full min-h-10 rounded-xl border border-slate-300/35 bg-[#1B263B]/90 hover:bg-[#24324D] text-xs font-bold text-slate-100 cursor-pointer transition-colors"
             >
-              Kapat (Maksimum Seviye)
+              {pick('Close (Max Level)', 'Kapat (Maksimum Seviye)')}
             </button>
           ) : (
             <div className="grid grid-cols-[1fr_1.35fr] gap-2.5">
@@ -564,7 +602,7 @@ function UpgradePanelContent({
                 }}
                 className="min-h-10 rounded-xl border border-slate-300/35 bg-[#1B263B]/90 hover:bg-[#24324D] text-xs font-bold text-slate-100 cursor-pointer transition-colors"
               >
-                {activeBuild ? 'Kapat' : 'Vazgeç'}
+                {activeBuild ? pick('Close', 'Kapat') : pick('Cancel', 'Vazgeç')}
               </button>
               <button
                 type="button"

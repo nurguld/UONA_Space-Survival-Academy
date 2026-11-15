@@ -73,16 +73,25 @@ export interface TutorialStep {
 }
 
 export interface EventLogRecord {
+  eventId?: string
+  optionIndex?: number
   title: string
   chosenLabel: string
   explanation: string
   effects: Partial<Resources>
 }
 
+export interface UpgradeLogItem {
+  moduleId: ModuleId
+  prevLevel: number
+  targetLevel: number
+}
+
 export interface DayLog {
   day: number
   isNight: boolean
   upgrades: string[]
+  upgradeItems?: UpgradeLogItem[]
   dailyDelta?: Resources
   event?: EventLogRecord
 }

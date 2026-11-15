@@ -1,19 +1,17 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { useLanguage } from '../context/LanguageContext'
 import { playBookPage, playClick } from '../game/sound'
+import {
+  formatUpgradeLabel,
+  getResourceLabel,
+  localizeEventLog,
+} from '../i18n/gameTranslations'
 import type { DayLog, ResourceId } from '../types'
 
 interface LogbookModalProps {
   isOpen: boolean
   history: DayLog[]
   onClose: () => void
-}
-
-const RESOURCE_LABELS: Record<ResourceId, string> = {
-  energy: 'Enerji',
-  oxygen: 'Oksijen / Su',
-  food: 'Gıda',
-  radiation: 'Radyasyon',
-  health: 'Sağlık',
 }
 
 const RESOURCE_IDS: ResourceId[] = ['energy', 'oxygen', 'food', 'radiation', 'health']
@@ -53,6 +51,7 @@ function LogbookDrawerContent({
   history: DayLog[]
   onClose: () => void
 }) {
+  const { lang, pick } = useLanguage()
   const panelRef = useRef<HTMLElement>(null)
   const titleId = useId()
   const [pageIndex, setPageIndex] = useState(() => Math.max(0, history.length - 1))
@@ -83,6 +82,12 @@ function LogbookDrawerContent({
   const safeIndex = Math.min(pageIndex, Math.max(0, history.length - 1))
   const entry = history[safeIndex]
   const formatSigned = (val: number) => (val > 0 ? `+${val}` : `${val}`)
+  const localizedEvent = entry?.event ? localizeEventLog(entry.event, lang) : undefined
+  const upgradeLabels = entry
+    ? entry.upgradeItems && entry.upgradeItems.length > 0
+      ? entry.upgradeItems.map((u) => formatUpgradeLabel(u, lang))
+      : entry.upgrades
+    : []
 
   return (
     <section
@@ -101,10 +106,10 @@ function LogbookDrawerContent({
       <div className="flex items-center justify-between gap-2 px-4 pt-3.5 pb-2.5 rounded-t-2xl bg-gradient-to-b from-[#132038] to-[#142036] shrink-0">
         <div className="min-w-0">
           <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-sky-400">
-            Komutan Seyir Defteri
+            {pick('Commander Flight Log', 'Komutan Seyir Defteri')}
           </span>
           <h2 id={titleId} className="text-lg sm:text-xl font-bold tracking-tight text-white leading-tight">
-            Görev Günlüğü
+            {pick('Mission Logbook', 'Görev Günlüğü')}
           </h2>
         </div>
 
@@ -116,10 +121,10 @@ function LogbookDrawerContent({
               playClick()
               onClose()
             }}
-            aria-label="Günlüğü Kapat"
+            aria-label={pick('Close Logbook', 'Günlüğü Kapat')}
             className="inline-flex items-center gap-1.5 px-2.5 h-8 rounded-full text-xs font-medium text-slate-200 hover:bg-white/10 hover:text-white cursor-pointer transition-colors"
           >
-            <span>Kapat</span>
+            <span>{pick('Close', 'Kapat')}</span>
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-slate-300/45 text-xs leading-none">
               ×
             </span>
@@ -153,7 +158,7 @@ function LogbookDrawerContent({
                       : 'bg-[#101829]/80 text-slate-300 border-slate-400/25 mb-1 rounded-b-lg border-b hover:text-white hover:border-slate-300/45'
                   }`}
                 >
-                  G{item.day}
+                  {pick(`D${item.day}`, `G${item.day}`)}
                   {(hasUpgrade || hasEvent) && (
                     <span className="inline-flex gap-1 ml-1.5 align-middle">
                       {hasUpgrade && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />}
@@ -188,7 +193,9 @@ function LogbookDrawerContent({
         {entry && (
           <>
             <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-300/20">
-              <h3 className="text-lg sm:text-xl font-bold text-[#F5D06F]">Gün {entry.day} Sayfası</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-[#F5D06F]">
+                {pick(`Day ${entry.day} Entry`, `Gün ${entry.day} Sayfası`)}
+              </h3>
               <span
                 className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full border ${
                   entry.isNight
@@ -197,14 +204,16 @@ function LogbookDrawerContent({
                 }`}
               >
                 <span aria-hidden="true">{entry.isNight ? '🌙' : '☀️'}</span>
-                {entry.isNight ? 'Ay Gecesi' : 'Ay Gündüzü'}
+                {entry.isNight
+                  ? pick('Lunar Night', 'Ay Gecesi')
+                  : pick('Lunar Day', 'Ay Gündüzü')}
               </span>
             </div>
 
             {/* 1. Geliştirmeler */}
             <div>
               <h4 className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-sky-400 mb-1">
-                <span>Yapılan Geliştirmeler</span>
+                <span>{pick('Upgrades Completed', 'Yapılan Geliştirmeler')}</span>
                 <svg aria-hidden="true" viewBox="0 0 16 16" className="w-3.5 h-3.5">
                   <path
                     d="M11.5 2.5a3 3 0 0 0-3.8 3.8L2.8 11.2a1.2 1.2 0 0 0 1.7 1.7l4.9-4.9a3 3 0 0 0 3.8-3.8l-1.8 1.8-1.7-1.7 1.8-1.8Z"
@@ -214,9 +223,9 @@ function LogbookDrawerContent({
                   />
                 </svg>
               </h4>
-              {entry.upgrades.length > 0 ? (
+              {upgradeLabels.length > 0 ? (
                 <ul className="flex flex-wrap gap-1.5">
-                  {entry.upgrades.map((up, i) => (
+                  {upgradeLabels.map((up, i) => (
                     <li
                       key={`${up}-${i}`}
                       className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-[#21453F] border border-emerald-400/40 text-emerald-100"
@@ -226,14 +235,16 @@ function LogbookDrawerContent({
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-slate-200/90">Bu gün modül geliştirmesi yapılmadı.</p>
+                <p className="text-xs text-slate-200/90">
+                  {pick('No modules were upgraded today.', 'Bu gün modül geliştirmesi yapılmadı.')}
+                </p>
               )}
             </div>
 
             {/* 2. Yaşanan Olay ve Kararın */}
             <div>
               <h4 className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#F0A35E] mb-1.5">
-                <span>Yaşanan Olay ve Kararın</span>
+                <span>{pick('Event & Decision', 'Yaşanan Olay ve Kararın')}</span>
                 <svg aria-hidden="true" viewBox="0 0 16 16" className="w-3.5 h-3.5">
                   <path
                     d="M8 2L1.8 13.2h12.4L8 2Zm0 4.2v3.5m0 1.8v.4"
@@ -245,18 +256,20 @@ function LogbookDrawerContent({
                   />
                 </svg>
               </h4>
-              {entry.event ? (
+              {localizedEvent ? (
                 <div className="rounded-xl bg-[#10182B]/92 border border-slate-300/30 p-3.5 flex flex-col gap-1.5 shadow-inner">
-                  <p className="text-sm font-bold text-white leading-snug">{entry.event.title}</p>
+                  <p className="text-sm font-bold text-white leading-snug">{localizedEvent.title}</p>
                   <p className="text-xs text-slate-200 leading-snug">
-                    <span className="text-sky-300 font-semibold">Tercih: </span>
-                    {entry.event.chosenLabel}
+                    <span className="text-sky-300 font-semibold">
+                      {pick('Decision: ', 'Tercih: ')}
+                    </span>
+                    {localizedEvent.chosenLabel}
                   </p>
                   <p className="text-[11px] text-slate-300/90 leading-relaxed">
-                    {entry.event.explanation}
+                    {localizedEvent.explanation}
                   </p>
                   <div className="flex flex-wrap gap-1.5 pt-1">
-                    {(Object.entries(entry.event.effects) as [ResourceId, number][]).map(
+                    {(Object.entries(localizedEvent.effects) as [ResourceId, number][]).map(
                       ([resId, val]) => (
                         <span
                           key={resId}
@@ -266,21 +279,23 @@ function LogbookDrawerContent({
                               : 'border-orange-400/40 text-orange-100 bg-[#4A2825]'
                           }`}
                         >
-                          {RESOURCE_LABELS[resId]} {formatSigned(val)}
+                          {getResourceLabel(resId, lang)} {formatSigned(val)}
                         </span>
                       ),
                     )}
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-slate-200/90">Bu gün olağan dışı bir olay yaşanmadı.</p>
+                <p className="text-xs text-slate-200/90">
+                  {pick('No unusual events occurred today.', 'Bu gün olağan dışı bir olay yaşanmadı.')}
+                </p>
               )}
             </div>
 
             {/* 3. Gün Sonu Net Değişim */}
             <div>
               <h4 className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-300/85 mb-1">
-                <span>Gün Sonu Net Değişim</span>
+                <span>{pick('Net Daily Change', 'Gün Sonu Net Değişim')}</span>
                 <svg aria-hidden="true" viewBox="0 0 16 16" className="w-3.5 h-3.5">
                   <path
                     d="M2 12.5h12M3.5 9.5l3-3 2.5 2 3.5-4"
@@ -305,13 +320,15 @@ function LogbookDrawerContent({
                             : 'border-orange-400/40 text-orange-100 bg-[#4A2825]'
                         }`}
                       >
-                        {RESOURCE_LABELS[id]} {formatSigned(val)}
+                        {getResourceLabel(id, lang)} {formatSigned(val)}
                       </span>
                     )
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-slate-200/90">Gün henüz tamamlanmadı.</p>
+                <p className="text-xs text-slate-200/90">
+                  {pick('Day is still in progress.', 'Gün henüz tamamlanmadı.')}
+                </p>
               )}
             </div>
           </>
@@ -329,11 +346,11 @@ function LogbookDrawerContent({
           }}
           className="px-3.5 h-8 rounded-xl text-xs font-semibold border border-slate-300/45 bg-[#121B2E]/90 text-slate-100 hover:bg-[#223252] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
         >
-          ← Önceki Gün
+          {pick('← Previous Day', '← Önceki Gün')}
         </button>
 
         <span className="text-xs font-medium text-slate-300">
-          Sayfa {safeIndex + 1} / {history.length}
+          {pick(`Page ${safeIndex + 1} / ${history.length}`, `Sayfa ${safeIndex + 1} / ${history.length}`)}
         </span>
 
         <button
@@ -345,7 +362,7 @@ function LogbookDrawerContent({
           }}
           className="px-3.5 h-8 rounded-xl text-xs font-semibold border border-slate-300/45 bg-[#121B2E]/90 text-slate-100 hover:bg-[#223252] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
         >
-          Sonraki Gün →
+          {pick('Next Day →', 'Sonraki Gün →')}
         </button>
       </div>
     </section>

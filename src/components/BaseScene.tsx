@@ -1,6 +1,8 @@
 import { useEffect, useImperativeHandle, useRef, useState, type MouseEvent, type RefObject } from 'react'
-import type { ActiveBuild, ModuleDef, ModuleId, ModuleLevels, SceneNavigationHandle } from '../types'
+import { useLanguage } from '../context/LanguageContext'
 import { isLunarNight } from '../game/engine'
+import { getModuleName } from '../i18n/gameTranslations'
+import type { ActiveBuild, ModuleDef, ModuleId, ModuleLevels, SceneNavigationHandle } from '../types'
 import baseSceneImg from '../assets/game-base-scene.jpg'
 import AstronautSprite from './AstronautSprite'
 import LunarMapScene from './LunarMapScene'
@@ -23,17 +25,16 @@ interface BaseSceneProps {
 
 const HOTSPOTS: {
   id: ModuleId
-  label: string
   left: string
   width: string
   height: string
 }[] = [
-  { id: 'lifeSupport', label: 'Yaşam destek', left: '1.5%', width: '21.5%', height: '58%' },
-  { id: 'greenhouse', label: 'Sera', left: '24%', width: '21.5%', height: '56%' },
-  { id: 'solar', label: 'Güneş paneli', left: '46%', width: '10.5%', height: '52%' },
-  { id: 'battery', label: 'Batarya', left: '57%', width: '7%', height: '24%' },
-  { id: 'exercise', label: 'Egzersiz', left: '64.5%', width: '15.5%', height: '50%' },
-  { id: 'shield', label: 'Kalkan', left: '81%', width: '17.5%', height: '56%' },
+  { id: 'lifeSupport', left: '1.5%', width: '21.5%', height: '58%' },
+  { id: 'greenhouse', left: '24%', width: '21.5%', height: '56%' },
+  { id: 'solar', left: '46%', width: '10.5%', height: '52%' },
+  { id: 'battery', left: '57%', width: '7%', height: '24%' },
+  { id: 'exercise', left: '64.5%', width: '15.5%', height: '50%' },
+  { id: 'shield', left: '81%', width: '17.5%', height: '56%' },
 ]
 
 // Yürüme alanı: sahnenin alt zemin şeridi (yüzde değerleri sahne boyutuna göre)
@@ -57,6 +58,7 @@ export default function BaseScene({
   navigationRef,
   onSelectModule,
 }: BaseSceneProps) {
+  const { lang, pick } = useLanguage()
   const night = isLunarNight(day)
   const [internalViewMode, setInternalViewMode] = useState<'map' | 'classic'>('map')
   const viewMode = controlledViewMode ?? internalViewMode
@@ -141,23 +143,41 @@ export default function BaseScene({
 
   const batteryGain = (getDef('battery')?.perDay.energy ?? 5) * modules.battery
 
-  let statusText = 'Ay Gündüzü · Güneş panelleri aktif'
+  let statusText = pick(
+    'Lunar Day · Solar panels active',
+    'Ay Gündüzü · Güneş panelleri aktif',
+  )
   let statusBorder = 'border-amber-400/50 text-amber-200'
 
   if (night) {
     if (modules.battery > 0) {
       statusText = isFirstNightDay
-        ? `Ay Gecesi Başladı · Batarya enerjisi devrede (+${batteryGain}/gün)`
-        : `Ay Gecesi · Batarya enerjisi devrede (+${batteryGain}/gün)`
+        ? pick(
+            `Lunar Night Started · Battery power active (+${batteryGain}/day)`,
+            `Ay Gecesi Başladı · Batarya enerjisi devrede (+${batteryGain}/gün)`,
+          )
+        : pick(
+            `Lunar Night · Battery power active (+${batteryGain}/day)`,
+            `Ay Gecesi · Batarya enerjisi devrede (+${batteryGain}/gün)`,
+          )
       statusBorder = 'border-emerald-400/80 text-emerald-200 shadow-[0_0_16px_rgba(52,211,153,0.28)]'
     } else {
       statusText = isFirstNightDay
-        ? 'Ay Gecesi Başladı · Güneş panelleri durdu (Batarya yok!)'
-        : 'Ay Gecesi · Güneş panelleri kapalı!'
+        ? pick(
+            'Lunar Night Started · Solar panels offline (No battery!)',
+            'Ay Gecesi Başladı · Güneş panelleri durdu (Batarya yok!)',
+          )
+        : pick(
+            'Lunar Night · Solar panels offline!',
+            'Ay Gecesi · Güneş panelleri kapalı!',
+          )
       statusBorder = 'border-orange-400 text-orange-200 shadow-[0_0_16px_rgba(251,146,60,0.25)]'
     }
   } else if (daysUntilNight > 0 && daysUntilNight <= 4) {
-    statusText = `Uyarı: Ay gecesi ${daysUntilNight} gün içinde`
+    statusText = pick(
+      `Alert: Lunar night in ${daysUntilNight} day${daysUntilNight > 1 ? 's' : ''}`,
+      `Uyarı: Ay gecesi ${daysUntilNight} gün içinde`,
+    )
     statusBorder = 'border-orange-400 text-orange-200'
   }
 
@@ -165,13 +185,13 @@ export default function BaseScene({
     <div className="relative z-[950] flex flex-wrap items-center justify-between gap-2.5 p-3.5 sm:p-4">
       <div className="flex flex-wrap items-center gap-2">
         <div className="bg-amber-400 text-slate-950 font-bold px-4 py-1.5 rounded-lg shadow-[0_0_16px_rgba(251,191,36,0.45)] text-sm sm:text-base">
-          Gün {day} / {maxDays}
+          {pick(`Day ${day} / ${maxDays}`, `Gün ${day} / ${maxDays}`)}
         </div>
 
         {/* Harita / Klasik Sahne Seçici */}
         <div
           role="group"
-          aria-label="Sahne Görünümü"
+          aria-label={pick('Scene View', 'Sahne Görünümü')}
           className="inline-flex rounded-lg border border-white/25 bg-[#09132A]/90 p-0.5 backdrop-blur-md"
         >
           <button
@@ -184,7 +204,7 @@ export default function BaseScene({
                 : 'text-slate-300 hover:text-white'
             }`}
           >
-            🗺️ 2.5D Harita
+            {pick('🗺️ 2.5D Map', '🗺️ 2.5D Harita')}
           </button>
           <button
             type="button"
@@ -196,7 +216,7 @@ export default function BaseScene({
                 : 'text-slate-300 hover:text-white'
             }`}
           >
-            🏛️ Klasik Sahne
+            {pick('🏛️ Classic Scene', '🏛️ Klasik Sahne')}
           </button>
         </div>
       </div>
@@ -211,7 +231,7 @@ export default function BaseScene({
 
   return (
     <section
-      aria-label="Ay Üssü Sahnesi"
+      aria-label={pick('Lunar Base Scene', 'Ay Üssü Sahnesi')}
       className={
         hideHeader
           ? 'relative w-full h-full overflow-x-auto overflow-y-clip bg-[#070E22]'
@@ -243,7 +263,7 @@ export default function BaseScene({
           {/* Çizimli Ay Üssü Sahnesi */}
           <img
             src={baseSceneImg}
-            alt="Ay Üssü Modülleri"
+            alt={pick('Lunar Base Modules', 'Ay Üssü Modülleri')}
             fetchPriority="high"
             className={`absolute inset-0 w-full h-full object-cover object-bottom transition-all duration-700 ${
               night ? 'brightness-55 saturate-75' : 'brightness-100'
@@ -304,25 +324,31 @@ export default function BaseScene({
           const isGuided = highlightedModuleId === spot.id
           const isBatteryActiveAtNight = night && spot.id === 'battery' && level > 0
 
-          let arrowText = '↑ Kur'
+          let arrowText = pick('↑ Build', '↑ Kur')
           if (build) {
             arrowText =
               build.assignedCrew > 0
-                ? `👷 × ${build.assignedCrew} çalışıyor`
-                : '⏸ Duraklatıldı'
+                ? pick(
+                    `👷 × ${build.assignedCrew} working`,
+                    `👷 × ${build.assignedCrew} çalışıyor`,
+                  )
+                : pick('⏸ Paused', '⏸ Duraklatıldı')
           } else if (isMax) {
             arrowText = 'MAX'
           } else if (level > 0) {
-            arrowText = `↑ ${def?.cost ?? 0} puan`
+            arrowText = pick(`↑ ${def?.cost ?? 0} pts`, `↑ ${def?.cost ?? 0} puan`)
           } else if (def) {
-            arrowText = `↑ Kur · ${def.cost} puan`
+            arrowText = pick(`↑ Build · ${def.cost} pts`, `↑ Kur · ${def.cost} puan`)
           }
 
           const buildDone = build ? build.totalWork - build.remainingWork : 0
           const buildEta =
             build && build.assignedCrew > 0
-              ? `${Math.ceil(build.remainingWork / build.assignedCrew)} gün`
-              : 'Durdu'
+              ? (() => {
+                  const etaDays = Math.ceil(build.remainingWork / build.assignedCrew)
+                  return pick(`${etaDays}d`, `${etaDays} gün`)
+                })()
+              : pick('Paused', 'Durdu')
 
           return (
             <button
@@ -342,7 +368,7 @@ export default function BaseScene({
               {/* Rehber Vurgusu veya Hover/Focus Oku */}
               {isGuided ? (
                 <span className="tutorial-pulse mb-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-amber-200 bg-amber-400 text-slate-950 whitespace-nowrap">
-                  Şimdi dene · {arrowText}
+                  {pick('Try now', 'Şimdi dene')} · {arrowText}
                 </span>
               ) : (
                 <span
@@ -372,7 +398,7 @@ export default function BaseScene({
                         : 'border-white/50 group-hover:border-white group-focus-visible:border-white text-slate-100'
                 }`}
               >
-                {spot.label} · Sv.{level}
+                {getModuleName(spot.id, lang)} · {pick('Lv.', 'Sv.')}{level}
               </span>
 
               {/* Aktif İnşaat İlerleme Rozeti */}

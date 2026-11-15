@@ -353,8 +353,21 @@ function playTone(
   }
 }
 
+let lastClickAt = 0
+
 export function playClick(): void {
+  const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
+  if (now - lastClickAt < 40) return
+  lastClickAt = now
   playAudioFile(clickSfxUrl, 0.55)
+}
+
+/** Etkileşimli bir kontrole tıklandığında tek seferlik tıklama sesi çalar. */
+export function handleInteractiveClick(target: EventTarget | null): void {
+  if (!(target instanceof Element)) return
+  if (target.closest('button:not(:disabled), a[href], summary, [role="tab"], select')) {
+    playClick()
+  }
 }
 
 /** Günlük açılışında ve gün değişiminde tek seferlik sayfa çevirme sesi çalar. */

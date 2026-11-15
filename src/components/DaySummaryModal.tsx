@@ -1,10 +1,9 @@
 import { useEffect, useId, useRef } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
-import type { Resources } from '../types'
-import { RESOURCE_CONFIG, RESOURCE_ORDER, ResourceIcon } from './ResourceIcon'
-import dailyFactsData from '../data/dailyFacts.json'
-
-const DAILY_FACTS = dailyFactsData as string[]
+import { useLanguage } from '../context/LanguageContext'
+import { formatUpgradeLabel, getDailyFact, getResourceLabel } from '../i18n/gameTranslations'
+import type { Resources, UpgradeLogItem } from '../types'
+import { RESOURCE_ORDER, ResourceIcon } from './ResourceIcon'
 
 export interface DaySummaryData {
   day: number
@@ -12,6 +11,7 @@ export interface DaySummaryData {
   before: Resources
   after: Resources
   completedBuilds?: string[]
+  completedBuildItems?: UpgradeLogItem[]
 }
 
 interface DaySummaryModalProps {
@@ -20,6 +20,7 @@ interface DaySummaryModalProps {
 }
 
 export default function DaySummaryModal({ summary, onClose }: DaySummaryModalProps) {
+  const { lang, pick } = useLanguage()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const pressedOutsideRef = useRef(false)
   const titleId = useId()
@@ -58,9 +59,12 @@ export default function DaySummaryModal({ summary, onClose }: DaySummaryModalPro
   const hasLowResource = summary
     ? RESOURCE_ORDER.some((id) => summary.after[id] < 30)
     : false
-  const factText = summary
-    ? DAILY_FACTS[(summary.day - 1) % DAILY_FACTS.length]
-    : ''
+  const factText = summary ? getDailyFact((summary.day - 1) % 30, lang) : ''
+  const completedLabels = summary
+    ? summary.completedBuildItems && summary.completedBuildItems.length > 0
+      ? summary.completedBuildItems.map((u) => formatUpgradeLabel(u, lang))
+      : summary.completedBuilds ?? []
+    : []
 
   return (
     <dialog
@@ -78,15 +82,23 @@ export default function DaySummaryModal({ summary, onClose }: DaySummaryModalPro
           <div className="flex items-start justify-between gap-3 border-b border-slate-300/20 pb-3.5">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-sky-400">
-                {summary.isNight ? 'Ay Gecesi Değerlendirmesi' : 'Gün Sonu Değerlendirmesi'}
+                {summary.isNight
+                  ? pick('Lunar Night Report', 'Ay Gecesi Değerlendirmesi')
+                  : pick('End of Day Report', 'Gün Sonu Değerlendirmesi')}
               </span>
               <h2 id={titleId} className="text-xl sm:text-2xl font-extrabold tracking-tight text-white mt-0.5 leading-snug">
-                {summary.day}. Gün Tamamlandı!
+                {pick(`Day ${summary.day} Completed!`, `${summary.day}. Gün Tamamlandı!`)}
               </h2>
               <p className="text-xs sm:text-sm text-slate-300/90 mt-1 leading-snug">
                 {hasLowResource
-                  ? 'Üs günü atlattı ancak bazı kaynaklar kritik düzeye yaklaştı; yarın takviye yap!'
-                  : 'Bugün Ay üssünün enerji ve yaşam destek dengesini başarıyla korudun.'}
+                  ? pick(
+                      'The base survived the day, though some reserves are near critical levels; reinforce them tomorrow!',
+                      'Üs günü atlattı ancak bazı kaynaklar kritik düzeye yaklaştı; yarın takviye yap!',
+                    )
+                  : pick(
+                      'You successfully balanced lunar base power and life support systems today.',
+                      'Bugün Ay üssünün enerji ve yaşam destek dengesini başarıyla korudun.',
+                    )}
               </p>
             </div>
 
@@ -97,18 +109,18 @@ export default function DaySummaryModal({ summary, onClose }: DaySummaryModalPro
                   : 'border-emerald-300/45 bg-emerald-500/18 text-emerald-200'
               }`}
             >
-              {hasLowResource ? 'Dikkat!' : 'Başarılı!'}
+              {hasLowResource ? pick('Caution!', 'Dikkat!') : pick('Success!', 'Başarılı!')}
             </span>
           </div>
 
           {/* Tamamlanan İnşaatlar Kutusu */}
-          {summary.completedBuilds && summary.completedBuilds.length > 0 && (
+          {completedLabels.length > 0 && (
             <div className="rounded-xl border border-emerald-400/40 bg-[#101829]/80 px-4 py-3 flex flex-col gap-1.5">
               <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-emerald-300">
-                🛠️ Bugün Tamamlanan İnşaatlar
+                {pick('🛠️ Completed Constructions Today', '🛠️ Bugün Tamamlanan İnşaatlar')}
               </p>
               <ul className="text-sm text-slate-100 font-semibold space-y-1">
-                {summary.completedBuilds.map((item) => (
+                {completedLabels.map((item) => (
                   <li key={item}>✓ {item}</li>
                 ))}
               </ul>
@@ -118,14 +130,13 @@ export default function DaySummaryModal({ summary, onClose }: DaySummaryModalPro
           {/* Öncesi -> Sonrası Kaynak Değişim Listesi */}
           <div className="rounded-xl border border-slate-300/20 bg-[#101829]/75 p-4 flex flex-col gap-2.5">
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
-              Kaynak Değişim Raporu
+              {pick('Resource Delta Report', 'Kaynak Değişim Raporu')}
             </p>
 
             {RESOURCE_ORDER.map((id) => {
               const beforeVal = summary.before[id]
               const afterVal = summary.after[id]
               const diff = afterVal - beforeVal
-              const meta = RESOURCE_CONFIG[id]
 
               return (
                 <div
@@ -134,7 +145,7 @@ export default function DaySummaryModal({ summary, onClose }: DaySummaryModalPro
                 >
                   <span className="inline-flex items-center gap-2 font-semibold text-slate-200">
                     <ResourceIcon id={id} className="w-4 h-4 shrink-0" />
-                    <span>{meta.label}</span>
+                    <span>{getResourceLabel(id, lang)}</span>
                   </span>
 
                   <div className="flex items-center gap-2 tabular-nums">
@@ -161,7 +172,7 @@ export default function DaySummaryModal({ summary, onClose }: DaySummaryModalPro
           {/* Bugün Ne Öğrendik? */}
           <div className="rounded-xl border border-sky-300/25 bg-[#101829]/80 p-3.5 sm:p-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-sky-300">
-              Bugün Ne Öğrendik?
+              {pick('What Did We Learn Today?', 'Bugün Ne Öğrendik?')}
             </p>
             <p className="text-xs sm:text-sm text-slate-100/95 mt-1.5 leading-relaxed">{factText}</p>
           </div>
@@ -169,7 +180,7 @@ export default function DaySummaryModal({ summary, onClose }: DaySummaryModalPro
           {/* Devam Butonu */}
           <div className="flex items-center justify-between gap-3 pt-1">
             <span className="text-xs text-slate-400">
-              {summary.day} günlük görev tamamlandı
+              {pick(`${summary.day} mission days completed`, `${summary.day} günlük görev tamamlandı`)}
             </span>
             <button
               type="button"
@@ -177,7 +188,7 @@ export default function DaySummaryModal({ summary, onClose }: DaySummaryModalPro
               onClick={onClose}
               className="px-5 sm:px-6 min-h-10 rounded-xl text-xs sm:text-sm font-extrabold bg-gradient-to-r from-[#0EA5D9] to-[#22C9EB] text-white shadow-[0_6px_18px_rgba(34,201,235,0.28)] hover:brightness-110 cursor-pointer transition-all"
             >
-              {summary.day + 1}. Güne Geç →
+              {pick(`Proceed to Day ${summary.day + 1} →`, `${summary.day + 1}. Güne Geç →`)}
             </button>
           </div>
         </div>

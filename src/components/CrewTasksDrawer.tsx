@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef } from 'react'
+import { useLanguage } from '../context/LanguageContext'
 import { MODULE_SPRITES } from '../game/moduleSprites'
 import { playClick } from '../game/sound'
+import { getModuleName } from '../i18n/gameTranslations'
 import type { ActiveBuild, ModuleDef, ModuleId, ModuleLevels } from '../types'
 
 interface CrewTasksDrawerProps {
@@ -97,6 +99,7 @@ function CrewTasksContent({
   onSelectModule,
   onClose,
 }: Omit<CrewTasksDrawerProps, 'isOpen'>) {
+  const { lang, pick } = useLanguage()
   const panelRef = useRef<HTMLElement>(null)
   const titleId = useId()
 
@@ -146,7 +149,7 @@ function CrewTasksContent({
         className="flex items-center justify-between gap-2 px-4 py-3 rounded-t-2xl bg-[#192438]/95 border-b border-slate-300/20 shrink-0"
       >
         <h2 id={titleId} className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-100">
-          Ekip &amp; Görevler ({idleCrew}/{crewCount})
+          {pick(`Crew & Tasks (${idleCrew}/${crewCount})`, `Ekip & Görevler (${idleCrew}/${crewCount})`)}
         </h2>
         <button
           type="button"
@@ -154,7 +157,7 @@ function CrewTasksContent({
             playClick()
             onClose()
           }}
-          aria-label="Ekip ve Görevler Panelini Kapat"
+          aria-label={pick('Close Crew & Tasks Panel', 'Ekip ve Görevler Panelini Kapat')}
           className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-slate-300/45 text-slate-200 hover:bg-white/10 hover:text-white cursor-pointer transition-colors text-xs leading-none"
         >
           ×
@@ -166,7 +169,7 @@ function CrewTasksContent({
         {/* 1. Aktif Yapılan İşler */}
         <div>
           <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#E9D79E] mb-2">
-            Aktif Yapılan İşler
+            {pick('Active Builds', 'Aktif Yapılan İşler')}
           </h3>
 
           <div className="flex flex-col gap-2">
@@ -175,6 +178,8 @@ function CrewTasksContent({
               const pct = Math.max(8, Math.min(100, Math.round((done / Math.max(1, build.totalWork)) * 100)))
               const daysLeft =
                 build.assignedCrew > 0 ? Math.ceil(build.remainingWork / build.assignedCrew) : null
+              const modName = getModuleName(mod.id, lang)
+              const lvLabel = pick('Lv.', 'Sv.')
 
               return (
                 <button
@@ -192,14 +197,16 @@ function CrewTasksContent({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2 text-xs">
                       <span className="font-semibold text-white truncate">
-                        • {mod.name} İnşası (Sv. {build.targetLevel})
+                        • {pick(`${modName} Build`, `${modName} İnşası`)} ({lvLabel} {build.targetLevel})
                       </span>
                       <span
                         className={`shrink-0 text-[11px] font-medium ${
                           daysLeft === null ? 'text-orange-300' : 'text-slate-300'
                         }`}
                       >
-                        {daysLeft === null ? 'Duraklatıldı' : `${daysLeft} Gün Kaldı`}
+                        {daysLeft === null
+                          ? pick('Paused', 'Duraklatıldı')
+                          : pick(`${daysLeft}d Left`, `${daysLeft} Gün Kaldı`)}
                       </span>
                     </div>
                     <div className="mt-1.5 h-1.5 w-full rounded-full bg-white/12 overflow-hidden">
@@ -221,8 +228,11 @@ function CrewTasksContent({
                 <AstronautHelmetIcon muted className="w-8 h-8 shrink-0" />
                 <span className="text-xs font-medium text-slate-400/90">
                   {idx === shownIdleSlots - 1 && idleCrew > shownIdleSlots
-                    ? `- Boşta Mürettebat (+${idleCrew - shownIdleSlots + 1}) -`
-                    : '- Boşta Mürettebat -'}
+                    ? pick(
+                        `- Idle Crew (+${idleCrew - shownIdleSlots + 1}) -`,
+                        `- Boşta Mürettebat (+${idleCrew - shownIdleSlots + 1}) -`,
+                      )
+                    : pick('- Idle Crew -', '- Boşta Mürettebat -')}
                 </span>
               </div>
             ))}
@@ -232,7 +242,7 @@ function CrewTasksContent({
         {/* 2. Yükseltilebilecek Şeyler */}
         <div>
           <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#E9D79E] mb-1">
-            Yükseltilebilecek Şeyler
+            {pick('Available Upgrades', 'Yükseltilebilecek Şeyler')}
           </h3>
 
           <div className="divide-y divide-slate-300/15">
@@ -241,6 +251,8 @@ function CrewTasksContent({
               const isMax = level >= mod.maxLevel
               const canAfford = !isMax && budget >= mod.cost
               const insufficient = !isMax && budget < mod.cost
+              const modName = getModuleName(mod.id, lang)
+              const lvLabel = pick('Lv.', 'Sv.')
 
               return (
                 <button
@@ -269,9 +281,9 @@ function CrewTasksContent({
                       <span className={insufficient ? 'text-rose-400 mr-1' : 'text-slate-300 mr-1'}>
                         •
                       </span>
-                      {mod.name}{' '}
+                      {modName}{' '}
                       <span className={insufficient ? 'text-rose-400' : 'text-slate-200'}>
-                        {isMax ? `(Sv. ${level} MAX)` : `(Sv. ${level + 1})`}
+                        {isMax ? `(${lvLabel} ${level} MAX)` : `(${lvLabel} ${level + 1})`}
                       </span>
                     </span>
                   </div>
@@ -287,7 +299,7 @@ function CrewTasksContent({
                   ) : (
                     <div className="shrink-0 flex items-center gap-1.5">
                       <span
-                        aria-label="Yetersiz puan"
+                        aria-label={pick('Insufficient points', 'Yetersiz puan')}
                         className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-rose-500 text-[10px] font-black text-white shadow-[0_0_10px_rgba(244,63,94,0.9)]"
                       >
                         !
@@ -297,7 +309,7 @@ function CrewTasksContent({
                           {mod.cost} P
                         </span>
                         <span className="block text-[9px] font-semibold text-rose-300/95">
-                          Gerekli
+                          {pick('Needed', 'Gerekli')}
                         </span>
                       </div>
                     </div>

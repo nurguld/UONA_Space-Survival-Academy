@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { DIFFICULTY_CONFIG, getEffectiveBaseDrain } from '../game/engine'
+import { useLanguage } from '../context/LanguageContext'
+import { getDifficultyInfo, getEffectiveBaseDrain } from '../game/engine'
 import type { DifficultyLevel, MissionSetup } from '../types'
 
 interface MissionSetupModalProps {
@@ -18,6 +19,7 @@ export default function MissionSetupModal({
   initialDifficulty = 'normal',
   onConfirm,
 }: MissionSetupModalProps) {
+  const { lang, pick } = useLanguage()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
   const titleId = useId()
@@ -89,13 +91,16 @@ export default function MissionSetupModal({
       <div className="flex flex-col gap-3.5">
         <div className="border-b border-slate-300/20 pb-3.5">
           <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-sky-400">
-            Görev Planlama · 30 Günlük Ay Görevi
+            {pick('Mission Planning · 30-Day Lunar Mission', 'Görev Planlama · 30 Günlük Ay Görevi')}
           </span>
           <h2 id={titleId} className="text-xl sm:text-2xl font-extrabold tracking-tight text-white mt-0.5 leading-snug">
-            Komutanını, Ekibini ve Zorluğu Seç
+            {pick('Select Commander, Crew, and Difficulty', 'Komutanını, Ekibini ve Zorluğu Seç')}
           </h2>
           <p className="text-xs sm:text-sm text-slate-300/90 mt-1 leading-relaxed">
-            Ay&apos;a inmeden önce komutan adını gir, kaç astronotla çalışacağını ve başlangıç bütçeni belirle.
+            {pick(
+              'Before landing on the Moon, enter your commander name, choose your crew size, and pick your starting budget.',
+              "Ay'a inmeden önce komutan adını gir, kaç astronotla çalışacağını ve başlangıç bütçeni belirle.",
+            )}
           </p>
         </div>
 
@@ -106,14 +111,16 @@ export default function MissionSetupModal({
               htmlFor={nameInputId}
               className="text-[11px] font-bold uppercase tracking-[0.12em] text-sky-400"
             >
-              Komutan Adı
+              {pick('Commander Name', 'Komutan Adı')}
             </label>
             <span
               className={`text-[11px] font-semibold ${
                 canStart ? 'text-emerald-300' : 'text-sky-300'
               }`}
             >
-              {canStart ? '✓ Sertifika için hazır' : 'Başlamak için zorunlu'}
+              {canStart
+                ? pick('✓ Ready for certificate', '✓ Sertifika için hazır')
+                : pick('Required to launch', 'Başlamak için zorunlu')}
             </span>
           </div>
 
@@ -131,7 +138,7 @@ export default function MissionSetupModal({
                 handleConfirm()
               }
             }}
-            placeholder="Örn. Ahmet Demir"
+            placeholder={pick('e.g. Alex Mercer', 'Örn. Ahmet Demir')}
             className="w-full min-h-10 px-3.5 rounded-xl text-sm bg-[#0E172A] border border-slate-300/30 text-white placeholder:text-slate-500 focus-visible:outline-2 focus-visible:outline-cyan-300"
           />
         </div>
@@ -140,12 +147,15 @@ export default function MissionSetupModal({
         <div className="rounded-xl border border-slate-300/20 bg-[#081020]/90 p-3.5 sm:p-4 flex flex-col gap-2.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-sky-400">
-              Mürettebat Sayısı (1–4 Astronot)
+              {pick('Crew Size (1–4 Astronauts)', 'Mürettebat Sayısı (1–4 Astronot)')}
             </span>
             <span className="text-xs text-slate-300">
-              Günlük tüketim:{' '}
+              {pick('Daily drain:', 'Günlük tüketim:')}{' '}
               <strong className="text-sky-200">
-                Oksijen {dailyDrain.oxygen}, Gıda {dailyDrain.food}
+                {pick(
+                  `Oxygen ${dailyDrain.oxygen}, Food ${dailyDrain.food}`,
+                  `Oksijen ${dailyDrain.oxygen}, Gıda ${dailyDrain.food}`,
+                )}
               </strong>
             </span>
           </div>
@@ -167,7 +177,11 @@ export default function MissionSetupModal({
                 >
                   <div className="text-sm sm:text-base font-bold">👷 × {count}</div>
                   <div className="text-[11px] text-slate-300/90 mt-0.5">
-                    {count === 1 ? 'Az tüketim' : count === 4 ? 'Hızlı inşaat' : `${count} iş gücü`}
+                    {count === 1
+                      ? pick('Low drain', 'Az tüketim')
+                      : count === 4
+                        ? pick('Fast build', 'Hızlı inşaat')
+                        : pick(`${count}× workforce`, `${count} iş gücü`)}
                   </div>
                 </button>
               )
@@ -176,20 +190,26 @@ export default function MissionSetupModal({
 
           <p className="text-xs text-slate-300/90 leading-relaxed">
             {crewCount === 1
-              ? '1 astronot çok az oksijen ve gıda tüketir ama tek seferde yalnızca 1 inşaatı yavaşça ilerletebilir.'
-              : `${crewCount} astronot daha fazla oksijen ve gıda tüketir; ancak birden fazla istasyonu aynı anda veya tek işi ${crewCount} kat hızda inşa edebilir!`}
+              ? pick(
+                  '1 astronaut uses very little oxygen and food, but can only advance 1 build slowly at a time.',
+                  '1 astronot çok az oksijen ve gıda tüketir ama tek seferde yalnızca 1 inşaatı yavaşça ilerletebilir.',
+                )
+              : pick(
+                  `${crewCount} astronauts consume more oxygen and food, yet can build multiple stations simultaneously or finish a single upgrade ${crewCount}× faster!`,
+                  `${crewCount} astronot daha fazla oksijen ve gıda tüketir; ancak birden fazla istasyonu aynı anda veya tek işi ${crewCount} kat hızda inşa edebilir!`,
+                )}
           </p>
         </div>
 
         {/* 3. Zorluk / Başlangıç Bütçesi Seçimi */}
         <div className="rounded-xl border border-slate-300/20 bg-[#081020]/90 p-3.5 sm:p-4 flex flex-col gap-2.5">
           <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-sky-400">
-            Görev Zorluğu &amp; Başlangıç Bütçesi
+            {pick('Mission Difficulty & Starting Budget', 'Görev Zorluğu & Başlangıç Bütçesi')}
           </span>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {DIFFICULTIES.map((lvl) => {
-              const cfg = DIFFICULTY_CONFIG[lvl]
+              const cfg = getDifficultyInfo(lvl, lang)
               const selected = difficulty === lvl
               return (
                 <button
@@ -206,7 +226,7 @@ export default function MissionSetupModal({
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-bold text-sm">{cfg.label}</span>
                     <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#0A1224] border border-cyan-300/40 text-cyan-200">
-                      {cfg.startingBudget} puan
+                      {cfg.startingBudget} {pick('pts', 'puan')}
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-300/90 mt-1 leading-snug">{cfg.summary}</p>
@@ -219,8 +239,8 @@ export default function MissionSetupModal({
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <span className="text-xs text-slate-400">
             {canStart
-              ? `Komutan: ${trimmedCommander} · 👷 ${crewCount} · ${DIFFICULTY_CONFIG[difficulty].label} (${DIFFICULTY_CONFIG[difficulty].startingBudget}p)`
-              : 'Devam etmek için yukarıya komutan adını yaz.'}
+              ? `${pick('Commander', 'Komutan')}: ${trimmedCommander} · 👷 ${crewCount} · ${getDifficultyInfo(difficulty, lang).label} (${getDifficultyInfo(difficulty, lang).startingBudget}${pick('p', 'p')})`
+              : pick('Enter your commander name above to continue.', 'Devam etmek için yukarıya komutan adını yaz.')}
           </span>
           <button
             type="button"
@@ -233,7 +253,7 @@ export default function MissionSetupModal({
                 : 'border border-slate-500/30 bg-[#1A2436]/85 text-slate-400 cursor-not-allowed'
             }`}
           >
-            Hikâyeye Geç →
+            {pick('Continue to Story →', 'Hikâyeye Geç →')}
           </button>
         </div>
       </div>

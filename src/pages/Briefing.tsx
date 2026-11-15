@@ -6,6 +6,8 @@ import BuildingSprite from '../components/BuildingSprite'
 import Navbar from '../components/Navbar'
 import { ResourceIcon } from '../components/ResourceIcon'
 import { useGame } from '../context/GameContext'
+import { useLanguage, type Language } from '../context/LanguageContext'
+import { getModuleDesc, getModuleName } from '../i18n/gameTranslations'
 import { playClick } from '../game/sound'
 import type { ResourceId } from '../types'
 
@@ -15,40 +17,76 @@ interface WhyChain {
   steps: { label: string; resourceId?: ResourceId }[]
 }
 
-const WHY_CHAINS: WhyChain[] = [
-  {
-    title: 'Enerji Zinciri',
-    summary:
-      'Enerji 25 altına düşerse Yaşam Destek ve Kalkan zayıflar. 15. günde Ay gecesi başlayınca güneş panelleri durur; önceden Batarya kur!',
-    steps: [
-      { label: 'Güneş + Batarya' },
-      { label: 'Enerji', resourceId: 'energy' },
-      { label: 'Yaşam Destek & Kalkan' },
-      { label: 'Sağlık', resourceId: 'health' },
-    ],
-  },
-  {
-    title: 'Su ve Gıda Zinciri',
-    summary:
-      'Oksijen / su azalınca Sera verimi düşer ve gıda üretimi yavaşlar. Gıda ve su düşüşü doğrudan mürettebat sağlığını vurur.',
-    steps: [
-      { label: 'Yaşam Destek' },
-      { label: 'Oksijen / Su', resourceId: 'oxygen' },
-      { label: 'Sera · Gıda', resourceId: 'food' },
-      { label: 'Sağlık', resourceId: 'health' },
-    ],
-  },
-  {
-    title: 'Koruma ve Direnç Zinciri',
-    summary:
-      'Radyasyon koruması %100 altında kaldıkça sağlık her gün azalır. Egzersiz ekipmanı günlük sağlık kaybını dengeler.',
-    steps: [
-      { label: 'Kalkan & Egzersiz' },
-      { label: 'Radyasyon', resourceId: 'radiation' },
-      { label: 'Sağlık', resourceId: 'health' },
-    ],
-  },
-]
+const WHY_CHAINS: Record<Language, WhyChain[]> = {
+  en: [
+    {
+      title: 'Energy Chain',
+      summary:
+        'If Energy drops below 25, Life Support and Shield weaken. On Day 15 Lunar Night stops all solar panels—build a Battery Bank ahead of time!',
+      steps: [
+        { label: 'Solar + Battery' },
+        { label: 'Energy', resourceId: 'energy' },
+        { label: 'Life Support & Shield' },
+        { label: 'Health', resourceId: 'health' },
+      ],
+    },
+    {
+      title: 'Water & Food Chain',
+      summary:
+        'When Oxygen / Water drops, Greenhouse yield falls and food production slows. Low food and water directly hurt crew health.',
+      steps: [
+        { label: 'Life Support' },
+        { label: 'Oxygen / Water', resourceId: 'oxygen' },
+        { label: 'Greenhouse · Food', resourceId: 'food' },
+        { label: 'Health', resourceId: 'health' },
+      ],
+    },
+    {
+      title: 'Protection & Stamina Chain',
+      summary:
+        'Whenever radiation shielding stays below 100%, crew health drains daily. Exercise Equipment offsets daily physical wear.',
+      steps: [
+        { label: 'Shield & Exercise' },
+        { label: 'Radiation', resourceId: 'radiation' },
+        { label: 'Health', resourceId: 'health' },
+      ],
+    },
+  ],
+  tr: [
+    {
+      title: 'Enerji Zinciri',
+      summary:
+        'Enerji 25 altına düşerse Yaşam Destek ve Kalkan zayıflar. 15. günde Ay gecesi başlayınca güneş panelleri durur; önceden Batarya kur!',
+      steps: [
+        { label: 'Güneş + Batarya' },
+        { label: 'Enerji', resourceId: 'energy' },
+        { label: 'Yaşam Destek & Kalkan' },
+        { label: 'Sağlık', resourceId: 'health' },
+      ],
+    },
+    {
+      title: 'Su ve Gıda Zinciri',
+      summary:
+        'Oksijen / su azalınca Sera verimi düşer ve gıda üretimi yavaşlar. Gıda ve su düşüşü doğrudan mürettebat sağlığını vurur.',
+      steps: [
+        { label: 'Yaşam Destek' },
+        { label: 'Oksijen / Su', resourceId: 'oxygen' },
+        { label: 'Sera · Gıda', resourceId: 'food' },
+        { label: 'Sağlık', resourceId: 'health' },
+      ],
+    },
+    {
+      title: 'Koruma ve Direnç Zinciri',
+      summary:
+        'Radyasyon koruması %100 altında kaldıkça sağlık her gün azalır. Egzersiz ekipmanı günlük sağlık kaybını dengeler.',
+      steps: [
+        { label: 'Kalkan & Egzersiz' },
+        { label: 'Radyasyon', resourceId: 'radiation' },
+        { label: 'Sağlık', resourceId: 'health' },
+      ],
+    },
+  ],
+}
 
 const STAR_DOTS = [
   { cx: 90, cy: 110, r: 1.4, o: 0.7 },
@@ -76,6 +114,7 @@ function ChainArrow() {
 export default function Briefing() {
   const navigate = useNavigate()
   const { rules, startGame } = useGame()
+  const { lang, pick } = useLanguage()
   const nameInputRef = useRef<HTMLInputElement>(null)
   const [commanderName, setCommanderName] = useState(
     () => localStorage.getItem('jsa_commander') ?? '',
@@ -118,11 +157,11 @@ export default function Briefing() {
         <div className="mt-7 mb-5 flex flex-wrap items-center justify-between gap-4">
           <div className="max-w-3xl">
             <span className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-400">
-              Görev Öncesi Hazırlık
+              {pick('Pre-Mission Preparation', 'Görev Öncesi Hazırlık')}
             </span>
             <div className="flex items-center gap-3.5 mt-1">
               <h1 className="text-3xl sm:text-[2.65rem] font-extrabold tracking-tight text-white leading-tight">
-                Komutan Brifingi
+                {pick('Commander Briefing', 'Komutan Brifingi')}
               </h1>
               <img
                 src={briefingAstronautImg}
@@ -133,8 +172,10 @@ export default function Briefing() {
               />
             </div>
             <p className="text-slate-300 text-sm sm:text-[15px] mt-1.5 max-w-2xl leading-relaxed">
-              Ay Güney Kutbu üssünün komutasını devralmadan önce sistemlerin birbirine nasıl
-              bağlandığını ve 30 günlük kritik görev kurallarını incele.
+              {pick(
+                'Before taking command of the Lunar South Pole base, review how systems interact and master the 30-day mission rules.',
+                'Ay Güney Kutbu üssünün komutasını devralmadan önce sistemlerin birbirine nasıl bağlandığını ve 30 günlük kritik görev kurallarını incele.',
+              )}
             </p>
           </div>
 
@@ -143,7 +184,7 @@ export default function Briefing() {
             onClick={() => playClick()}
             className="px-4 min-h-11 rounded-xl text-sm font-semibold inline-flex items-center border border-slate-300/40 bg-[#0A1224]/85 text-slate-200 hover:border-white hover:text-white hover:bg-[#131F3A] backdrop-blur-md transition-colors shrink-0"
           >
-            ← Ana Sayfaya Dön
+            {pick('← Back to Home', '← Ana Sayfaya Dön')}
           </Link>
         </div>
 
@@ -152,40 +193,46 @@ export default function Briefing() {
           <div className="rounded-2xl border border-slate-300/35 bg-gradient-to-b from-[#172133]/88 to-[#0E1627]/94 backdrop-blur-md p-4 sm:p-5 shadow-[0_10px_28px_rgba(4,9,20,0.45)]">
             <p className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
               <span aria-hidden="true">🌓</span>
-              <span>1. 14 Günlük Ay Gecesi</span>
+              <span>{pick('1. 14-Day Lunar Night', '1. 14 Günlük Ay Gecesi')}</span>
             </p>
             <p className="text-xs sm:text-[13px] text-slate-300 mt-2 leading-relaxed">
-              {rules.lunarNightStartDay}. ve {rules.lunarNightEndDay}. günler arasında güneş batar ve
-              güneş panelleri tamamen durur. Önceden Batarya kur!
+              {pick(
+                `Between Days ${rules.lunarNightStartDay} and ${rules.lunarNightEndDay}, the Sun sets and solar panels drop to zero. Build a Battery Bank beforehand!`,
+                `${rules.lunarNightStartDay}. ve ${rules.lunarNightEndDay}. günler arasında güneş batar ve güneş panelleri tamamen durur. Önceden Batarya kur!`,
+              )}
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-300/35 bg-gradient-to-b from-[#172133]/88 to-[#0E1627]/94 backdrop-blur-md p-4 sm:p-5 shadow-[0_10px_28px_rgba(4,9,20,0.45)]">
             <p className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
               <span aria-hidden="true">🔗</span>
-              <span>2. Zincirleme Sistem Etkisi</span>
+              <span>{pick('2. Chained System Effects', '2. Zincirleme Sistem Etkisi')}</span>
             </p>
             <p className="text-xs sm:text-[13px] text-slate-300 mt-2 leading-relaxed">
-              Hiçbir kaynak tek başına değildir: düşük enerji yaşam desteğini, düşük oksijen serayı
-              ve hepsi birlikte mürettebat sağlığını etkiler.
+              {pick(
+                'No resource stands alone: low energy weakens Life Support, low oxygen hurts the Greenhouse, and together they impact crew health.',
+                'Hiçbir kaynak tek başına değildir: düşük enerji yaşam desteğini, düşük oksijen serayı ve hepsi birlikte mürettebat sağlığını etkiler.',
+              )}
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-300/35 bg-gradient-to-b from-[#172133]/88 to-[#0E1627]/94 backdrop-blur-md p-4 sm:p-5 shadow-[0_10px_28px_rgba(4,9,20,0.45)]">
             <p className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
               <span aria-hidden="true">🎛️</span>
-              <span>3. Bütçe &amp; Seviye Kilitleri</span>
+              <span>{pick('3. Budget & Level Unlocks', '3. Bütçe & Seviye Kilitleri')}</span>
             </p>
             <p className="text-xs sm:text-[13px] text-slate-300 mt-2 leading-relaxed">
-              Her gün +{rules.dailyBudgetGain} bütçe puanı kazanırsın. Modülleri Sv. 2 ve Sv. 3
-              yapmak acil olaylarda güçlü savunma seçeneklerinin kilidini açar.
+              {pick(
+                `You earn +${rules.dailyBudgetGain} budget points each day. Upgrading modules to Lv. 2 and Lv. 3 unlocks stronger responses during emergencies.`,
+                `Her gün +${rules.dailyBudgetGain} bütçe puanı kazanırsın. Modülleri Sv. 2 ve Sv. 3 yapmak acil olaylarda güçlü savunma seçeneklerinin kilidini açar.`,
+              )}
             </p>
           </div>
         </div>
 
         {/* Ana İkili Panel: Sol "Kaynaklar Arası Etki Ağı" | Dikey Ayraç | Sağ "Üs Modülleri" */}
         <section
-          aria-label="Sistem Etkileşim Ağı ve Üs Modülleri"
+          aria-label={pick('System Interaction Web and Base Modules', 'Sistem Etkileşim Ağı ve Üs Modülleri')}
           className="mb-5 rounded-2xl border border-slate-300/35 bg-gradient-to-b from-[#151F31]/92 to-[#0B1323]/96 backdrop-blur-xl p-5 shadow-[0_16px_40px_rgba(4,9,20,0.6)] grid lg:grid-cols-[1.35fr_1fr] gap-5 lg:gap-0 items-stretch"
         >
           {/* Sol: Kaynaklar Arası Etki Ağı */}
@@ -193,17 +240,19 @@ export default function Briefing() {
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3.5">
               <div>
                 <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-300">
-                  Neden Böyle Oluyor?
+                  {pick('Why Does This Happen?', 'Neden Böyle Oluyor?')}
                 </span>
-                <h2 className="text-xl font-bold text-white mt-0.5">Kaynaklar Arası Etki Ağı</h2>
+                <h2 className="text-xl font-bold text-white mt-0.5">
+                  {pick('Resource Dependency Network', 'Kaynaklar Arası Etki Ağı')}
+                </h2>
               </div>
               <span className="text-[11px] font-medium text-slate-200 bg-[#081020] border border-slate-300/25 rounded-full px-3 py-1">
-                Tek bakışta sebep → sonuç
+                {pick('Cause → effect at a glance', 'Tek bakışta sebep → sonuç')}
               </span>
             </div>
 
             <div className="grid gap-2.5">
-              {WHY_CHAINS.map((chain) => (
+              {WHY_CHAINS[lang].map((chain) => (
                 <div
                   key={chain.title}
                   className="rounded-xl border border-slate-300/20 bg-[#081020]/90 px-3.5 py-3 flex flex-col gap-1.5"
@@ -232,27 +281,33 @@ export default function Briefing() {
 
           {/* Sağ: Büyük İllüstrasyonlu Üs Modülleri Kartları */}
           <div className="lg:pl-5 flex flex-col justify-between">
-            <h2 className="text-xl font-bold text-white mb-3.5">Üs Modülleri</h2>
+            <h2 className="text-xl font-bold text-white mb-3.5">
+              {pick('Base Modules', 'Üs Modülleri')}
+            </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2.5 flex-1">
-              {rules.modules.map((mod) => (
-                <div
-                  key={mod.id}
-                  title={mod.description}
-                  className="rounded-xl border border-slate-300/30 bg-[#0A1324]/92 px-3 py-2.5 flex items-center gap-2.5 hover:border-cyan-300/45 transition-colors"
-                >
-                  <div className="w-14 h-14 flex items-center justify-center shrink-0">
-                    <BuildingSprite moduleId={mod.id} level={1} alt={mod.name} />
+              {rules.modules.map((mod) => {
+                const modName = getModuleName(mod.id, lang)
+                const modDesc = getModuleDesc(mod.id, lang)
+                return (
+                  <div
+                    key={mod.id}
+                    title={modDesc}
+                    className="rounded-xl border border-slate-300/30 bg-[#0A1324]/92 px-3 py-2.5 flex items-center gap-2.5 hover:border-cyan-300/45 transition-colors"
+                  >
+                    <div className="w-14 h-14 flex items-center justify-center shrink-0">
+                      <BuildingSprite moduleId={mod.id} level={1} alt={modName} />
+                    </div>
+                    <div className="min-w-0 flex-1 flex flex-col items-start">
+                      <span className="inline-block text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-[#162238] border border-slate-300/25 text-slate-200 tabular-nums">
+                        {pick(`${mod.cost} pts`, `${mod.cost} puan`)}
+                      </span>
+                      <p className="text-[13px] font-bold text-white leading-snug mt-1">
+                        {modName}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1 flex flex-col items-start">
-                    <span className="inline-block text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-[#162238] border border-slate-300/25 text-slate-200 tabular-nums">
-                      {mod.cost} puan
-                    </span>
-                    <p className="text-[13px] font-bold text-white leading-snug mt-1">
-                      {mod.name}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </section>
@@ -261,9 +316,9 @@ export default function Briefing() {
         <section className="rounded-2xl border border-slate-300/35 bg-gradient-to-b from-[#172133]/92 to-[#0E1627]/95 backdrop-blur-xl p-4 sm:p-5 shadow-[0_14px_34px_rgba(4,9,20,0.55)]">
           <form onSubmit={handleSubmit} className="flex flex-col gap-1.5">
             <label htmlFor="commander-name" className="text-sm font-semibold text-white">
-              Komutan Adı{' '}
+              {pick('Commander Name', 'Komutan Adı')}{' '}
               <span className="text-sky-300 text-xs font-medium">
-                (Başlamak ve sertifika için gerekli)
+                {pick('(Required to launch & earn certificate)', '(Başlamak ve sertifika için gerekli)')}
               </span>
             </label>
 
@@ -285,7 +340,7 @@ export default function Briefing() {
                     setNameError(false)
                   }
                 }}
-                placeholder="Örn. Ahmet Demir"
+                placeholder={pick('e.g. Alex Mercer', 'Örn. Ahmet Demir')}
                 className={`flex-1 min-h-11 px-4 rounded-xl text-sm sm:text-base bg-[#070E1E] border text-white placeholder:text-slate-500 focus-visible:outline-2 focus-visible:outline-cyan-300 transition-colors ${
                   nameError && !trimmedName
                     ? 'border-rose-400/80 ring-1 ring-rose-400/35'
@@ -302,7 +357,7 @@ export default function Briefing() {
                     : 'border border-slate-500/30 bg-[#1A2436]/85 text-slate-400 cursor-not-allowed'
                 }`}
               >
-                Görevi Başlat →
+                {pick('Launch Mission →', 'Görevi Başlat →')}
               </button>
             </div>
 
@@ -313,8 +368,14 @@ export default function Briefing() {
               }`}
             >
               {!trimmedName
-                ? 'Göreve başlamak için önce Komutan Adını yazmalısın. Bu isim Komutan Sertifikanda görünecek.'
-                : 'Görev sonunda alacağın Komutan Sertifikasında ve sonuç raporunda bu isim görünür.'}
+                ? pick(
+                    'Enter your Commander Name to begin the mission. This name will appear on your Commander Certificate.',
+                    'Göreve başlamak için önce Komutan Adını yazmalısın. Bu isim Komutan Sertifikanda görünecek.',
+                  )
+                : pick(
+                    'This name will appear on your Commander Certificate and final mission report.',
+                    'Görev sonunda alacağın Komutan Sertifikasında ve sonuç raporunda bu isim görünür.',
+                  )}
             </span>
           </form>
         </section>

@@ -9,6 +9,8 @@ import {
 } from 'react'
 import mapCursorImg from '../assets/map-cursor.png'
 import mapTerrainWideImg from '../assets/map-terrain-wide.jpg'
+import { useLanguage, type Language } from '../context/LanguageContext'
+import { getModuleName } from '../i18n/gameTranslations'
 import { MODULE_SPRITES } from '../game/moduleSprites'
 import { playClick } from '../game/sound'
 import AstronautSprite from './AstronautSprite'
@@ -20,6 +22,13 @@ import type {
   ModuleLevels,
   SceneNavigationHandle,
 } from '../types'
+
+function getSectorLabel(sector: string, lang: Language): string {
+  if (sector === 'Enerji Alanı') return lang === 'en' ? 'Power Field' : 'Enerji Alanı'
+  if (sector === 'Merkez Üs') return lang === 'en' ? 'Central Hub' : 'Merkez Üs'
+  if (sector === 'Koruma Karakolu') return lang === 'en' ? 'Shield Outpost' : 'Koruma Karakolu'
+  return sector
+}
 
 interface LunarMapSceneProps {
   night: boolean
@@ -407,6 +416,7 @@ export default function LunarMapScene({
   navigationRef,
   onSelectModule,
 }: LunarMapSceneProps) {
+  const { lang, pick } = useLanguage()
   const worldRef = useRef<HTMLDivElement>(null)
   const astroOuterRef = useRef<HTMLDivElement>(null)
   const astroInnerRef = useRef<HTMLDivElement>(null)
@@ -868,7 +878,7 @@ export default function LunarMapScene({
         {/* Panoramik 2.5D Ay Zemini */}
         <img
           src={mapTerrainWideImg}
-          alt="Geniş Ay Üssü Haritası"
+          alt={pick('Wide Lunar Base Map', 'Geniş Ay Üssü Haritası')}
           fetchPriority="high"
           draggable={false}
           className={`absolute inset-0 w-full h-full object-fill transition-all duration-700 ${
@@ -920,7 +930,7 @@ export default function LunarMapScene({
             fontWeight="700"
             letterSpacing="0.3"
           >
-            ⚡ ENERJİ ALANI
+            {pick('⚡ POWER FIELD', '⚡ ENERJİ ALANI')}
           </text>
           <text
             x={164}
@@ -931,7 +941,7 @@ export default function LunarMapScene({
             fontWeight="700"
             letterSpacing="0.3"
           >
-            🏠 MERKEZ ÜS
+            {pick('🏠 CENTRAL HUB', '🏠 MERKEZ ÜS')}
           </text>
           <text
             x={292}
@@ -942,7 +952,7 @@ export default function LunarMapScene({
             fontWeight="700"
             letterSpacing="0.3"
           >
-            🛡️ KORUMA KARAKOLU
+            {pick('🛡️ SHIELD OUTPOST', '🛡️ KORUMA KARAKOLU')}
           </text>
 
           {/* 4 havuzlu Ay tozu elipsi */}
@@ -1021,23 +1031,32 @@ export default function LunarMapScene({
           const isBatteryActiveAtNight = night && b.id === 'battery' && level > 0
           const buildingZ = Math.round(b.footY * 10)
 
-          let arrowText = '↑ Kur'
+          const label = getModuleName(b.id, lang)
+          let arrowText = pick('↑ Build', '↑ Kur')
           if (build) {
             arrowText =
-              build.assignedCrew > 0 ? `👷 × ${build.assignedCrew} çalışıyor` : '⏸ Duraklatıldı'
+              build.assignedCrew > 0
+                ? pick(
+                    `👷 × ${build.assignedCrew} working`,
+                    `👷 × ${build.assignedCrew} çalışıyor`,
+                  )
+                : pick('⏸ Paused', '⏸ Duraklatıldı')
           } else if (isMax) {
             arrowText = 'MAX'
           } else if (level > 0) {
-            arrowText = `↑ ${def?.cost ?? 0} puan`
+            arrowText = pick(`↑ ${def?.cost ?? 0} pts`, `↑ ${def?.cost ?? 0} puan`)
           } else if (def) {
-            arrowText = `↑ Kur · ${def.cost} puan`
+            arrowText = pick(`↑ Build · ${def.cost} pts`, `↑ Kur · ${def.cost} puan`)
           }
 
           const buildDone = build ? build.totalWork - build.remainingWork : 0
           const buildEta =
             build && build.assignedCrew > 0
-              ? `${Math.ceil(build.remainingWork / build.assignedCrew)} gün`
-              : 'Durdu'
+              ? (() => {
+                  const etaDays = Math.ceil(build.remainingWork / build.assignedCrew)
+                  return pick(`${etaDays}d`, `${etaDays} gün`)
+                })()
+              : pick('Paused', 'Durdu')
 
           return (
             <button
@@ -1060,11 +1079,11 @@ export default function LunarMapScene({
               <div className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 whitespace-nowrap">
                 {isGuided ? (
                   <span className="tutorial-pulse px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-amber-200 bg-amber-400 text-slate-950 shadow-md">
-                    Şimdi dene · {arrowText}
+                    {pick('Try now', 'Şimdi dene')} · {arrowText}
                   </span>
                 ) : isNearby ? (
                   <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-emerald-200 bg-emerald-400 text-slate-950 shadow-[0_0_12px_rgba(52,211,153,0.75)]">
-                    [E] Aç · {arrowText}
+                    {pick('[E] Open', '[E] Aç')} · {arrowText}
                   </span>
                 ) : (
                   <span
@@ -1101,7 +1120,7 @@ export default function LunarMapScene({
               <BuildingSprite
                 moduleId={b.id}
                 level={level}
-                alt={b.label}
+                alt={label}
                 night={night}
                 dimmed={isUnbuiltExercise}
                 hoverScale
@@ -1110,7 +1129,7 @@ export default function LunarMapScene({
               {/* Egzersiz Sv.0 Kilidi */}
               {isUnbuiltExercise && (
                 <span className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-2 py-0.5 rounded-md border border-dashed border-white/80 bg-[#070E22]/85 text-[10px] font-bold text-slate-200 whitespace-nowrap">
-                  Kurulmadı
+                  {pick('Not built', 'Kurulmadı')}
                 </span>
               )}
 
@@ -1144,7 +1163,7 @@ export default function LunarMapScene({
                           : 'border-white/45 group-hover:border-white text-slate-100'
                   }`}
                 >
-                  {b.label} · Sv.{level}
+                  {label} · {pick('Lv.', 'Sv.')}{level}
                 </span>
                 {build && (
                   <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/25 border border-amber-300/70 text-amber-200 whitespace-nowrap">
@@ -1196,8 +1215,8 @@ export default function LunarMapScene({
           }`}
         >
           {offscreenHintDir === 'left'
-            ? `← ${guidedBuilding.label}`
-            : `${guidedBuilding.label} →`}
+            ? `← ${getModuleName(guidedBuilding.id, lang)}`
+            : `${getModuleName(guidedBuilding.id, lang)} →`}
         </button>
       )}
 
@@ -1209,7 +1228,7 @@ export default function LunarMapScene({
             alt=""
             className="w-5 h-5 object-contain drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]"
           />
-          <span>Tıkla &amp; Yürü</span>
+          <span>{pick('Click & Walk', 'Tıkla & Yürü')}</span>
         </div>
         <span className="h-6 w-px bg-white/15" />
         <div className="flex items-center gap-2">
@@ -1223,23 +1242,23 @@ export default function LunarMapScene({
               ))}
             </div>
           </div>
-          <span>Hareket Et</span>
+          <span>{pick('Move', 'Hareket Et')}</span>
         </div>
         <span className="h-6 w-px bg-white/15" />
         <div className="flex items-center gap-1.5">
           <span className={KEYCAP_CLASS}>E</span>
-          <span>Aç</span>
+          <span>{pick('Open', 'Aç')}</span>
         </div>
       </div>
 
       {/* Sağ Üst İnteraktif Radar Mini-Harita */}
       <div
-        aria-label="Üs Mini Haritası"
+        aria-label={pick('Base Mini-Map', 'Üs Mini Haritası')}
         className="absolute top-[5.5rem] right-3 sm:right-4 z-[940] w-36 sm:w-44 rounded-xl border border-cyan-400/35 bg-[#070E22]/82 p-1.5 backdrop-blur-md shadow-[0_0_20px_rgba(6,182,212,0.18)]"
       >
         <div className="flex items-center justify-between px-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-300">
-          <span>Üs Haritası</span>
-          <span className="text-cyan-300">3 Sektör</span>
+          <span>{pick('Base Map', 'Üs Haritası')}</span>
+          <span className="text-cyan-300">{pick('3 Sectors', '3 Sektör')}</span>
         </div>
         <div className="relative w-full aspect-[334/100] rounded-lg bg-[#1A243B] border border-white/10 overflow-hidden">
           {/* Ufuk çizgisi */}
@@ -1257,12 +1276,14 @@ export default function LunarMapScene({
             const build = activeBuilds[b.id]
             const isGuided = highlightedModuleId === b.id
             const isUnbuilt = b.id === 'exercise' && modules.exercise === 0
+            const modName = getModuleName(b.id, lang)
+            const sectorLabel = getSectorLabel(b.sector, lang)
             return (
               <button
                 key={b.id}
                 type="button"
-                title={`${b.label} (${b.sector})`}
-                aria-label={`${b.label} konumuna git`}
+                title={`${modName} (${sectorLabel})`}
+                aria-label={pick(`Go to ${modName}`, `${modName} konumuna git`)}
                 disabled={disabled}
                 onClick={() => navigateToBuilding(b)}
                 style={{

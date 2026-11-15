@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import lunarHeroImg from '../assets/home-lunar-hero.jpg'
 import Navbar from '../components/Navbar'
 import { useGame } from '../context/GameContext'
+import { useLanguage } from '../context/LanguageContext'
 import { playClick, startHomeAmbient, stopHomeAmbient } from '../game/sound'
 
 export default function Home() {
   const navigate = useNavigate()
   const { startGame } = useGame()
+  const { pick } = useLanguage()
 
   useEffect(() => {
     startHomeAmbient()
@@ -57,34 +59,36 @@ export default function Home() {
           </h1>
 
           <p className="text-slate-300 text-sm sm:text-[15px] mt-3.5 max-w-[27rem] leading-relaxed">
-            Gücü, oksijeni ve kalkanları yönet. 30 gün boyunca gerçekçi uzay krizlerine karşı Ay
-            üssünü hayatta tut!
+            {pick(
+              'Manage power, oxygen, and shielding. Keep your lunar base alive through 30 days of realistic space crises!',
+              'Gücü, oksijeni ve kalkanları yönet. 30 gün boyunca gerçekçi uzay krizlerine karşı Ay üssünü hayatta tut!',
+            )}
           </p>
 
           {/* Görev Seçimi: Ay Güney Kutbu Kartı */}
           <div className="mt-7">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-2.5">
-              Görev Seçimi
+              {pick('Mission Select', 'Görev Seçimi')}
             </p>
 
             <div className="relative w-full max-w-[260px] h-[142px] rounded-xl border border-slate-300/40 bg-[#0A1124]/90 overflow-hidden shadow-[0_14px_34px_rgba(0,0,0,0.55)] backdrop-blur-md">
               <img
                 src={lunarHeroImg}
-                alt="Ay Güney Kutbu üssü önizlemesi"
+                alt={pick('Lunar South Pole base preview', 'Ay Güney Kutbu üssü önizlemesi')}
                 className="w-full h-full object-cover object-[76%_46%] scale-[1.08]"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#081022] via-[#081022]/65 via-45% to-transparent" />
 
               <span className="absolute top-2.5 right-2.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#0D2B24]/85 text-emerald-300 border border-emerald-400/45 backdrop-blur-sm">
-                Aktif
+                {pick('Active', 'Aktif')}
               </span>
 
               <div className="absolute inset-x-0 bottom-0 p-3">
                 <span className="block font-bold text-sm tracking-wide text-white leading-tight">
-                  AY GÜNEY KUTBU
+                  {pick('LUNAR SOUTH POLE', 'AY GÜNEY KUTBU')}
                 </span>
                 <span className="block text-[11px] text-slate-300 mt-0.5">
-                  30 gün · 14 gün Ay gecesi
+                  {pick('30 days · 14-day Lunar Night', '30 gün · 14 gün Ay gecesi')}
                 </span>
               </div>
             </div>
@@ -97,7 +101,7 @@ export default function Home() {
               onClick={() => playClick()}
               className="px-5 min-h-11 inline-flex items-center justify-center rounded-xl text-sm font-semibold border border-slate-300/45 bg-[#0A1124]/80 hover:bg-[#131F3A] text-slate-100 backdrop-blur-md transition-colors"
             >
-              NASA Kaynakları
+              {pick('NASA Resources', 'NASA Kaynakları')}
             </Link>
 
             <button
@@ -105,7 +109,7 @@ export default function Home() {
               onClick={handleLaunch}
               className="px-7 min-h-11 inline-flex items-center justify-center rounded-xl text-sm font-bold tracking-wider uppercase cursor-pointer bg-gradient-to-r from-[#0EA5D9] to-[#22C9EB] hover:brightness-110 text-white shadow-[0_0_24px_rgba(34,211,238,0.4)] transition-all"
             >
-              GÖREVİ BAŞLAT →
+              {pick('LAUNCH MISSION →', 'GÖREVİ BAŞLAT →')}
             </button>
 
             <Link
@@ -113,15 +117,15 @@ export default function Home() {
               onClick={() => playClick()}
               className="px-5 min-h-11 inline-flex items-center justify-center rounded-xl text-sm font-semibold border border-slate-300/45 bg-[#0A1124]/80 hover:bg-[#131F3A] text-slate-100 backdrop-blur-md transition-colors"
             >
-              Komutan Brifingi
+              {pick('Commander Briefing', 'Komutan Brifingi')}
             </Link>
 
             <Link
-              to="/hazirlik"
+              to="/labs"
               onClick={() => playClick()}
               className="px-5 min-h-11 inline-flex items-center justify-center rounded-xl text-sm font-semibold border border-slate-300/45 bg-[#0A1124]/80 hover:bg-[#131F3A] text-slate-100 backdrop-blur-md transition-colors"
             >
-              Laboratuvarlar
+              {pick('Labs', 'Laboratuvarlar')}
             </Link>
           </div>
         </main>

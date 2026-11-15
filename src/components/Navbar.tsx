@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useLanguage } from '../context/LanguageContext'
 import {
   getSoundMuted,
   playClick,
   setSoundMuted,
   startHomeAmbient,
 } from '../game/sound'
+import LanguageToggle from './LanguageToggle'
 
 const NAV_LINKS = [
-  { to: '/', label: 'Ana sayfa' },
-  { to: '/hazirlik', label: 'Brifing' },
-  { to: '/oyun', label: 'Oyun' },
-  { to: '/labs', label: 'Laboratuvarlar' },
-  { to: '/kaynaklar', label: 'Kaynaklar' },
+  { to: '/', label: { en: 'Home', tr: 'Ana sayfa' } },
+  { to: '/hazirlik', label: { en: 'Briefing', tr: 'Brifing' } },
+  { to: '/oyun', label: { en: 'Game', tr: 'Oyun' } },
+  { to: '/labs', label: { en: 'Labs', tr: 'Laboratuvarlar' } },
+  { to: '/kaynaklar', label: { en: 'Resources', tr: 'Kaynaklar' } },
 ]
 
 function SpeakerIcon({ muted }: { muted: boolean }) {
@@ -55,6 +57,7 @@ function SpeakerIcon({ muted }: { muted: boolean }) {
 
 export default function Navbar() {
   const { pathname } = useLocation()
+  const { lang, pick } = useLanguage()
   const [muted, setMuted] = useState(() => getSoundMuted())
 
   useEffect(() => {
@@ -89,7 +92,7 @@ export default function Navbar() {
         JUNIOR SPACE ACADEMY
       </Link>
 
-      <nav aria-label="Ana menü" className="flex flex-wrap items-center gap-2 sm:gap-3">
+      <nav aria-label={pick('Main menu', 'Ana menü')} className="flex flex-wrap items-center gap-2 sm:gap-3">
         {NAV_LINKS.map((item) => {
           const active =
             item.to === '/labs' ? pathname.startsWith('/labs') : pathname === item.to
@@ -105,7 +108,7 @@ export default function Navbar() {
                   : 'border-transparent text-slate-300 hover:text-white hover:border-white/25'
               }`}
             >
-              {item.label}
+              {item.label[lang]}
             </Link>
           )
         })}
@@ -115,8 +118,8 @@ export default function Navbar() {
             type="button"
             onClick={handleToggleMute}
             aria-pressed={muted}
-            aria-label={muted ? 'Sesi aç' : 'Sesi kapat'}
-            title={muted ? 'Sesi aç' : 'Sesi kapat'}
+            aria-label={muted ? pick('Unmute sound', 'Sesi aç') : pick('Mute sound', 'Sesi kapat')}
+            title={muted ? pick('Unmute sound', 'Sesi aç') : pick('Mute sound', 'Sesi kapat')}
             className={`inline-flex items-center justify-center w-9 h-9 rounded-full border cursor-pointer transition-colors ${
               muted
                 ? 'border-slate-300/25 bg-[#0A1224]/70 text-slate-400 hover:border-slate-300/50 hover:text-white'
@@ -126,6 +129,8 @@ export default function Navbar() {
             <SpeakerIcon muted={muted} />
           </button>
         )}
+
+        <LanguageToggle />
       </nav>
     </header>
   )

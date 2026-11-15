@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
-import type { GameEvent, ModuleDef, ModuleLevels, ResourceId } from '../types'
+import { useLanguage } from '../context/LanguageContext'
+import { getModuleName, getResourceShortLabel } from '../i18n/gameTranslations'
+import type { GameEvent, ModuleDef, ModuleId, ModuleLevels, ResourceId } from '../types'
 import { isOptionUnlocked } from '../game/engine'
 import { RESOURCE_CONFIG, ResourceIcon } from './ResourceIcon'
 
@@ -126,6 +128,7 @@ export default function EventModal({
   modulesDef,
   onSelect,
 }: EventModalProps) {
+  const { lang, pick } = useLanguage()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
 
@@ -140,8 +143,8 @@ export default function EventModal({
     }
   }, [event])
 
-  const getModuleName = (id: string) =>
-    modulesDef.find((m) => m.id === id)?.name ?? id
+  const resolveModuleName = (id: ModuleId) =>
+    getModuleName(id, lang) || modulesDef.find((m) => m.id === id)?.name || id
 
   const firstUnlockedIndex = event
     ? event.options.findIndex((opt) => isOptionUnlocked(opt, modules))
@@ -167,7 +170,10 @@ export default function EventModal({
                   isEarthMessage ? 'text-emerald-300' : 'text-sky-400'
                 }`}
               >
-                {event.dayLabel ?? (isEarthMessage ? "Dünya'dan Mesaj" : 'Acil Durum Raporu')}
+                {event.dayLabel ??
+                  (isEarthMessage
+                    ? pick('Message from Earth', "Dünya'dan Mesaj")
+                    : pick('Emergency Alert Report', 'Acil Durum Raporu'))}
               </span>
               <h2
                 id={titleId}
@@ -189,8 +195,9 @@ export default function EventModal({
           <div className="flex flex-col gap-2.5">
             {event.options.map((opt, index) => {
               const unlocked = isOptionUnlocked(opt, modules)
+              const lvLabel = pick('Lv.', 'Sv.')
               const reqText = opt.requires
-                ? `${getModuleName(opt.requires.moduleId)} Sv. ${opt.requires.minLevel}`
+                ? `${resolveModuleName(opt.requires.moduleId)} ${lvLabel} ${opt.requires.minLevel}`
                 : null
 
               const cardStyle = !unlocked
@@ -230,7 +237,9 @@ export default function EventModal({
                         >
                           {!unlocked && <LockIcon />}
                           <span>
-                            {unlocked ? `Açık · ${reqText}` : `Kilitli · ${reqText} gerekli`}
+                            {unlocked
+                              ? pick(`Unlocked · ${reqText}`, `Açık · ${reqText}`)
+                              : pick(`Locked · ${reqText} required`, `Kilitli · ${reqText} gerekli`)}
                           </span>
                         </span>
                       )}
@@ -244,7 +253,8 @@ export default function EventModal({
                   <div className="flex flex-wrap gap-1.5 mt-2.5">
                     {opt.budgetDelta && opt.budgetDelta !== 0 && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-md border border-cyan-300/40 bg-cyan-500/15 text-cyan-200">
-                        Bütçe {opt.budgetDelta > 0 ? `+${opt.budgetDelta}` : opt.budgetDelta}p
+                        {pick('Budget', 'Bütçe')}{' '}
+                        {opt.budgetDelta > 0 ? `+${opt.budgetDelta}` : opt.budgetDelta}p
                       </span>
                     )}
 
@@ -259,7 +269,7 @@ export default function EventModal({
                         >
                           <ResourceIcon id={resId} className="w-3.5 h-3.5 shrink-0" />
                           <span>
-                            {meta.shortLabel} {val > 0 ? `+${val}` : val}
+                            {getResourceShortLabel(resId, lang)} {val > 0 ? `+${val}` : val}
                           </span>
                         </span>
                       )
@@ -267,7 +277,7 @@ export default function EventModal({
 
                     {opt.focusModuleId && (
                       <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border border-amber-300/40 bg-amber-500/15 text-amber-200">
-                        Hedef: {getModuleName(opt.focusModuleId)}
+                        {pick('Target:', 'Hedef:')} {resolveModuleName(opt.focusModuleId)}
                       </span>
                     )}
                   </div>

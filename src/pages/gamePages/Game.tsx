@@ -10,22 +10,30 @@ import MissionSetupModal from '../../components/MissionSetupModal'
 import IntroModal from '../../components/IntroModal'
 import DaySummaryModal from '../../components/DaySummaryModal'
 import type { DaySummaryData } from '../../components/DaySummaryModal'
+import LanguageToggle from '../../components/LanguageToggle'
 import {
   DayTransitionCutscene,
   LaunchCutscene,
   VictoryCutscene,
 } from '../../components/MissionCutscenes'
-import { RESOURCE_CONFIG, RESOURCE_ORDER, ResourceIcon } from '../../components/ResourceIcon'
+import { RESOURCE_ORDER, ResourceIcon } from '../../components/ResourceIcon'
 import { useGame } from '../../context/GameContext'
+import { useLanguage } from '../../context/LanguageContext'
 import {
-  DIFFICULTY_CONFIG,
   analyzeLossReason,
   calculateDailyBreakdown,
   calculateDailyDelta,
   calculateSystemEffects,
+  getDifficultyInfo,
   getIdleCrewCount,
   isLunarNight,
 } from '../../game/engine'
+import {
+  formatUpgradeLabel,
+  getResourceLabel,
+  getResourceShortLabel,
+  localizeEvent,
+} from '../../i18n/gameTranslations'
 import {
   getSoundMuted,
   playAlert,
@@ -78,6 +86,7 @@ export default function Game() {
     nextDay,
     resolveEvent,
   } = useGame()
+  const { lang, pick } = useLanguage()
 
   const [selectedModuleId, setSelectedModuleId] = useState<ModuleId | null>(null)
   const [isLogOpen, setIsLogOpen] = useState(false)
@@ -117,9 +126,14 @@ export default function Game() {
     const isDayAdvancing = state.day > prev.day && state.status === 'playing'
 
     if (isDayAdvancing) {
-      const completedBuilds = rules.modules
+      const completedBuildItems = rules.modules
         .filter((mod) => state.modules[mod.id] > prev.modules[mod.id])
-        .map((mod) => `${mod.name} (Sv. ${prev.modules[mod.id]} → Sv. ${state.modules[mod.id]})`)
+        .map((mod) => ({
+          moduleId: mod.id,
+          prevLevel: prev.modules[mod.id],
+          targetLevel: state.modules[mod.id],
+        }))
+      const completedBuilds = completedBuildItems.map((item) => formatUpgradeLabel(item, lang))
 
       if (completedBuilds.length > 0) {
         playUpgradeComplete()
@@ -131,6 +145,7 @@ export default function Game() {
         before: prev.resources,
         after: state.resources,
         completedBuilds,
+        completedBuildItems,
       })
       setFocusHintModuleId(null)
     }
@@ -180,6 +195,7 @@ export default function Game() {
     daySummary,
     dayTransitionDay,
     showVictoryCutscene,
+    lang,
   ])
 
   const handleToggleMute = () => {
@@ -240,14 +256,18 @@ export default function Game() {
     state.day,
     state.resources,
     state.crewCount,
+    lang,
   )
-  const { interactions } = calculateSystemEffects(state.resources)
+  const { interactions } = calculateSystemEffects(state.resources, lang)
   const isPlaying = state.status === 'playing'
 
   const highlightedModuleId = focusHintModuleId
   const isCutsceneActive =
     introPhase !== 'done' || dayTransitionDay !== null || showVictoryCutscene
-  const visibleEvent = isCutsceneActive || daySummary ? null : state.activeEvent
+  const visibleEvent =
+    isCutsceneActive || daySummary || !state.activeEvent
+      ? null
+      : localizeEvent(state.activeEvent, lang)
   const controlsLocked =
     !isPlaying || state.activeEvent !== null || daySummary !== null || isCutsceneActive
 
@@ -287,21 +307,25 @@ export default function Game() {
           {/* Sol: Başlık ve Bütçe + Gün */}
           <div className="min-w-0">
             <h1 className="text-base sm:text-xl font-bold tracking-tight leading-tight text-white">
-              Ay Üssü Kontrol Paneli
+              {pick('Lunar Base Control Panel', 'Ay Üssü Kontrol Paneli')}
             </h1>
             <div className="flex flex-wrap items-center gap-x-2 text-[11px] sm:text-xs text-slate-300 mt-0.5">
               <span>
-                Bütçe:{' '}
-                <strong className="text-cyan-300 font-bold">{state.budget} puan</strong>
-                {' · '}+{rules.dailyBudgetGain}/gün
+                {pick('Budget:', 'Bütçe:')}{' '}
+                <strong className="text-cyan-300 font-bold">
+                  {pick(`${state.budget} pts`, `${state.budget} puan`)}
+                </strong>
+                {' · '}+{rules.dailyBudgetGain}/{pick('day', 'gün')}
               </span>
               <span className="text-white/25">·</span>
               <span className="font-semibold text-amber-300">
-                Gün {state.day}/{rules.maxDays}
+                {pick(`Day ${state.day}/${rules.maxDays}`, `Gün ${state.day}/${rules.maxDays}`)}
               </span>
               <span className="text-white/25">·</span>
               <span className={night ? 'text-indigo-300' : 'text-amber-200'}>
-                {night ? '🌙 Ay Gecesi' : '☀️ Ay Gündüzü'}
+                {night
+                  ? pick('🌙 Lunar Night', '🌙 Ay Gecesi')
+                  : pick('☀️ Lunar Day', '☀️ Ay Gündüzü')}
               </span>
             </div>
           </div>
@@ -314,7 +338,9 @@ export default function Game() {
               const isDanger = val < 30
               const theme = PILL_THEME_MAP[resId]
               const pillLabel =
-                resId === 'health' ? RESOURCE_CONFIG[resId].shortLabel : RESOURCE_CONFIG[resId].label
+                resId === 'health'
+                  ? getResourceShortLabel(resId, lang)
+                  : getResourceLabel(resId, lang)
               const deltaText = delta > 0 ? `+${delta}` : String(delta)
               const deltaClass =
                 delta > 0 ? 'text-emerald-300' : delta < 0 ? 'text-rose-300' : 'text-slate-300/80'
@@ -347,7 +373,7 @@ export default function Game() {
             <div className="relative">
               <button
                 type="button"
-                aria-label="Oyun Ayarları ve Menü"
+                aria-label={pick('Game Settings & Menu', 'Oyun Ayarları ve Menü')}
                 aria-expanded={isSettingsOpen}
                 onClick={() => {
                   playClick()
@@ -368,8 +394,10 @@ export default function Game() {
               {isSettingsOpen && (
                 <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-white/25 bg-[#081024]/96 backdrop-blur-xl p-2.5 shadow-[0_12px_36px_rgba(0,0,0,0.7)] flex flex-col gap-1.5 text-xs">
                   <div className="px-2 py-1 text-[11px] text-slate-400 flex items-center justify-between border-b border-white/10 pb-1.5">
-                    <span>Zorluk</span>
-                    <strong className="text-slate-100">{DIFFICULTY_CONFIG[state.difficulty].label}</strong>
+                    <span>{pick('Difficulty', 'Zorluk')}</span>
+                    <strong className="text-slate-100">
+                      {getDifficultyInfo(state.difficulty, lang).label}
+                    </strong>
                   </div>
 
                   <button
@@ -378,8 +406,12 @@ export default function Game() {
                     onClick={handleToggleMute}
                     className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-white/10 text-slate-100 font-medium cursor-pointer transition-colors"
                   >
-                    {muted ? '🔇 Ses Kapalı (Aç)' : '🔊 Ses Açık (Kapat)'}
+                    {muted
+                      ? pick('🔇 Sound Off (Unmute)', '🔇 Ses Kapalı (Aç)')
+                      : pick('🔊 Sound On (Mute)', '🔊 Ses Açık (Kapat)')}
                   </button>
+
+                  <LanguageToggle variant="menu" />
 
                   <button
                     type="button"
@@ -389,7 +421,7 @@ export default function Game() {
                     }}
                     className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-rose-500/20 text-rose-200 font-medium cursor-pointer transition-colors"
                   >
-                    🔄 Görevi Sıfırla
+                    {pick('🔄 Reset Mission', '🔄 Görevi Sıfırla')}
                   </button>
 
                   <div className="border-t border-white/10 pt-1.5 flex items-center justify-between gap-1">
@@ -397,19 +429,19 @@ export default function Game() {
                       to="/"
                       className="flex-1 text-center py-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-200"
                     >
-                      Ana sayfa
+                      {pick('Home', 'Ana sayfa')}
                     </Link>
                     <Link
                       to="/hazirlik"
                       className="flex-1 text-center py-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-200"
                     >
-                      Brifing
+                      {pick('Briefing', 'Brifing')}
                     </Link>
                     <Link
                       to="/kaynaklar"
                       className="flex-1 text-center py-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-200"
                     >
-                      Kaynaklar
+                      {pick('Resources', 'Kaynaklar')}
                     </Link>
                   </div>
                 </div>
@@ -422,7 +454,7 @@ export default function Game() {
       {/* Sol Üst Yüzen Sistem Etkileşimleri */}
       {(interactions.length > 0 || night || (daysUntilNight > 0 && daysUntilNight <= 4)) && (
         <div
-          aria-label="Sistem Etkileşimleri"
+          aria-label={pick('System Interactions', 'Sistem Etkileşimleri')}
           className="pointer-events-none absolute top-[5.5rem] sm:top-[4.85rem] left-3 sm:left-4 z-[945] flex flex-col items-start gap-1.5 max-w-[min(92vw,28rem)]"
         >
           {(night || (daysUntilNight > 0 && daysUntilNight <= 4)) && (
@@ -435,9 +467,18 @@ export default function Game() {
             >
               {night
                 ? state.modules.battery > 0
-                  ? `🌙 Ay Gecesi · Batarya devrede (+${(rules.modules.find((m) => m.id === 'battery')?.perDay.energy ?? 5) * state.modules.battery}/gün)`
-                  : '🌙 Ay Gecesi · Güneş panelleri kapalı (Batarya yok!)'
-                : `⚠️ Ay gecesine ${daysUntilNight} gün kaldı`}
+                  ? pick(
+                      `🌙 Lunar Night · Battery active (+${(rules.modules.find((m) => m.id === 'battery')?.perDay.energy ?? 5) * state.modules.battery}/day)`,
+                      `🌙 Ay Gecesi · Batarya devrede (+${(rules.modules.find((m) => m.id === 'battery')?.perDay.energy ?? 5) * state.modules.battery}/gün)`,
+                    )
+                  : pick(
+                      '🌙 Lunar Night · Solar panels offline (No battery!)',
+                      '🌙 Ay Gecesi · Güneş panelleri kapalı (Batarya yok!)',
+                    )
+                : pick(
+                    `⚠️ Lunar Night in ${daysUntilNight} days`,
+                    `⚠️ Ay gecesine ${daysUntilNight} gün kaldı`,
+                  )}
             </span>
           )}
 
@@ -463,8 +504,15 @@ export default function Game() {
         type="button"
         data-crew-toggle="true"
         aria-expanded={isCrewOpen}
-        aria-label={isCrewOpen ? 'Ekip ve Görevler Panelini Kapat' : 'Ekip ve Görevler Panelini Aç'}
-        title={`Boşta astronot: ${idleCrew} / Toplam: ${state.crewCount} · Tıkla ve görevleri yönet`}
+        aria-label={
+          isCrewOpen
+            ? pick('Close Crew & Tasks Panel', 'Ekip ve Görevler Panelini Kapat')
+            : pick('Open Crew & Tasks Panel', 'Ekip ve Görevler Panelini Aç')
+        }
+        title={pick(
+          `Idle astronauts: ${idleCrew} / Total: ${state.crewCount} · Click to manage tasks`,
+          `Boşta astronot: ${idleCrew} / Toplam: ${state.crewCount} · Tıkla ve görevleri yönet`,
+        )}
         onClick={() => {
           playClick()
           setSelectedModuleId(null)
@@ -502,15 +550,23 @@ export default function Game() {
               <div className="max-w-lg">
                 <h2 className="text-xl sm:text-2xl font-bold">
                   {state.status === 'won'
-                    ? 'Tebrikler! 30 Gün Hayatta Kaldın!'
-                    : `Görev Başarısız (${state.day}. Gün · ${
-                        state.lossReason ? RESOURCE_CONFIG[state.lossReason].label : 'Kritik Kayıp'
-                      })`}
+                    ? pick('Congratulations! Survived 30 Days!', 'Tebrikler! 30 Gün Hayatta Kaldın!')
+                    : pick(
+                        `Mission Failed (Day ${state.day} · ${
+                          state.lossReason ? getResourceLabel(state.lossReason, lang) : 'Critical Loss'
+                        })`,
+                        `Görev Başarısız (${state.day}. Gün · ${
+                          state.lossReason ? getResourceLabel(state.lossReason, lang) : 'Kritik Kayıp'
+                        })`,
+                      )}
                 </h2>
                 <p className="text-slate-200 text-sm mt-1.5 leading-relaxed">
                   {state.status === 'won'
-                    ? 'Ay üssü mürettebatı tüm zorlukları başarıyla yönetti.'
-                    : analyzeLossReason(state)}
+                    ? pick(
+                        'Your lunar base crew successfully overcame every mission challenge.',
+                        'Ay üssü mürettebatı tüm zorlukları başarıyla yönetti.',
+                      )
+                    : analyzeLossReason(state, lang)}
                 </p>
               </div>
               <div className="flex gap-3">
@@ -519,13 +575,13 @@ export default function Game() {
                   onClick={handleRestart}
                   className="px-5 min-h-11 rounded-xl text-sm font-bold bg-cyan-400 text-slate-950 cursor-pointer"
                 >
-                  Tekrar Oyna
+                  {pick('Play Again', 'Tekrar Oyna')}
                 </button>
                 <Link
                   to="/sonuc"
                   className="px-5 min-h-11 rounded-xl text-sm font-semibold inline-flex items-center border border-white/25 text-white hover:border-white"
                 >
-                  Sonuç Ekranı
+                  {pick('Result Screen', 'Sonuç Ekranı')}
                 </Link>
               </div>
             </div>
@@ -551,8 +607,15 @@ export default function Game() {
               setIsSettingsOpen(false)
               setIsLogOpen((prev) => !prev)
             }}
-            aria-label={isLogOpen ? 'Görev Günlüğünü Kapat' : 'Görev Günlüğünü Aç'}
-            title={`Üs Günlüğü (${state.history.length} kayıt)`}
+            aria-label={
+              isLogOpen
+                ? pick('Close Mission Logbook', 'Görev Günlüğünü Kapat')
+                : pick('Open Mission Logbook', 'Görev Günlüğünü Aç')
+            }
+            title={pick(
+              `Base Logbook (${state.history.length} entries)`,
+              `Üs Günlüğü (${state.history.length} kayıt)`,
+            )}
             className={`relative group w-12 h-12 rounded-xl border backdrop-blur-md shadow-lg flex items-center justify-center cursor-pointer transition-all ${
               isLogOpen
                 ? 'border-amber-300 bg-[#132247] shadow-[0_0_16px_rgba(251,191,36,0.35)]'
@@ -580,7 +643,7 @@ export default function Game() {
             }}
             className="px-5 sm:px-6 h-12 rounded-xl text-sm sm:text-base font-extrabold uppercase tracking-wide bg-gradient-to-r from-[#0EA5D9] to-[#22C9EB] text-white shadow-[0_0_26px_rgba(34,211,238,0.5)] hover:brightness-110 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer transition-all"
           >
-            Günü Bitir →
+            {pick('End Day →', 'Günü Bitir →')}
           </button>
         </div>
       </div>
