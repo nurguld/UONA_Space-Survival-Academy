@@ -27,7 +27,7 @@ const REFERENCES: Record<Language, ScienceReference[]> = {
       gameLink:
         'Days 15–28 mark Lunar Night in the game: Solar Arrays pause and pre-built Battery Banks keep the base alive.',
       sourceName: 'NASA Artemis · Lunar Surface Power',
-      sourceUrl: 'https://www.nasa.gov/mission/artemis/',
+      sourceUrl: 'https://www.nasa.gov/humans-in-space/artemis/',
     },
     {
       id: 'eclss-oxygen-water',
@@ -38,7 +38,7 @@ const REFERENCES: Record<Language, ScienceReference[]> = {
       gameLink:
         'In the game, the Life Support module handles daily oxygen/water production; letting it drop weakens both crew health and crops.',
       sourceName: 'NASA ISS ECLSS · Environmental Control and Life Support',
-      sourceUrl: 'https://www.nasa.gov/international-space-station/space-station-life-support/',
+      sourceUrl: 'https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/',
     },
     {
       id: 'food-greenhouse',
@@ -49,7 +49,7 @@ const REFERENCES: Record<Language, ScienceReference[]> = {
       gameLink:
         'In the game, the Greenhouse spends power and water to grow food daily, and higher levels unlock bonus options in supply events.',
       sourceName: 'NASA Space Food & Veggie Plant Growth',
-      sourceUrl: 'https://www.nasa.gov/directorates/somd/space-food-systems/',
+      sourceUrl: 'https://www.nasa.gov/directorates/esdmd/hhp/space-food-systems/',
     },
     {
       id: 'lunar-radiation',
@@ -60,7 +60,7 @@ const REFERENCES: Record<Language, ScienceReference[]> = {
       gameLink:
         'In the game, Radiation Shielding keeps daily radiation health loss minimal and unlocks safe protective responses during solar storms.',
       sourceName: 'NASA Space Radiation Analysis & Artemis',
-      sourceUrl: 'https://www.nasa.gov/missions/artemis/nasa-releases-artemis-i-radiation-data/',
+      sourceUrl: 'https://www.nasa.gov/directorates/esdmd/hhp/space-radiation/',
     },
     {
       id: 'microgravity-exercise',
@@ -71,7 +71,7 @@ const REFERENCES: Record<Language, ScienceReference[]> = {
       gameLink:
         'In the game, Exercise Equipment offsets daily crew health decay—without it, crew condition steadily erodes.',
       sourceName: 'NASA Human Research Program · Countermeasures',
-      sourceUrl: 'https://www.nasa.gov/humans-in-space/exercising-in-space/',
+      sourceUrl: 'https://www.nasa.gov/directorates/esdmd/hhp/exercise-physiology-and-countermeasures/',
     },
   ],
   tr: [
@@ -84,7 +84,7 @@ const REFERENCES: Record<Language, ScienceReference[]> = {
       gameLink:
         'Oyunda 15–28. günler arası Ay gecesidir: Güneş panelleri durur, önceden kurulan Batarya devrede kalarak üssü ayakta tutar.',
       sourceName: 'NASA Artemis · Lunar Surface Power',
-      sourceUrl: 'https://www.nasa.gov/mission/artemis/',
+      sourceUrl: 'https://www.nasa.gov/humans-in-space/artemis/',
     },
     {
       id: 'eclss-oxygen-water',
@@ -95,7 +95,7 @@ const REFERENCES: Record<Language, ScienceReference[]> = {
       gameLink:
         'Oyunda Yaşam Destek modülü günlük oksijen/su üretimini sağlar; seviye yetersiz kalırsa hem sağlık hem sera üretimi düşer.',
       sourceName: 'NASA ISS ECLSS · Environmental Control and Life Support',
-      sourceUrl: 'https://www.nasa.gov/international-space-station/space-station-life-support/',
+      sourceUrl: 'https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/',
     },
     {
       id: 'food-greenhouse',
@@ -106,7 +106,7 @@ const REFERENCES: Record<Language, ScienceReference[]> = {
       gameLink:
         'Oyunda Sera modülü enerji ve su kullanarak günlük gıda üretir; yüksek seviyeleri acil ikmal olaylarında bonus kilidini açar.',
       sourceName: 'NASA Space Food & Veggie Plant Growth',
-      sourceUrl: 'https://www.nasa.gov/directorates/somd/space-food-systems/',
+      sourceUrl: 'https://www.nasa.gov/directorates/esdmd/hhp/space-food-systems/',
     },
     {
       id: 'lunar-radiation',
@@ -117,7 +117,7 @@ const REFERENCES: Record<Language, ScienceReference[]> = {
       gameLink:
         'Oyunda Kalkan modülü radyasyon korumasını %100’e yakın tutarak günlük sağlık kaybını azaltır ve fırtına olaylarında sığınak açar.',
       sourceName: 'NASA Space Radiation Analysis & Artemis',
-      sourceUrl: 'https://www.nasa.gov/missions/artemis/nasa-releases-artemis-i-radiation-data/',
+      sourceUrl: 'https://www.nasa.gov/directorates/esdmd/hhp/space-radiation/',
     },
     {
       id: 'microgravity-exercise',
@@ -128,7 +128,7 @@ const REFERENCES: Record<Language, ScienceReference[]> = {
       gameLink:
         'Oyunda Egzersiz Ekipmanı mürettebatın günlük sağlık düşüşünü dengeler; kurulmazsa sağlık her gün erir.',
       sourceName: 'NASA Human Research Program · Countermeasures',
-      sourceUrl: 'https://www.nasa.gov/humans-in-space/exercising-in-space/',
+      sourceUrl: 'https://www.nasa.gov/directorates/esdmd/hhp/exercise-physiology-and-countermeasures/',
     },
   ],
 }
