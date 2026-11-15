@@ -32,7 +32,7 @@ export const MODULE_CONNECTION_RULES: ModuleConnectionRule[] = [
     adjacentTo: ["habitat"],
     match: "all",
     label: "Life Support ↔ Habitat",
-    explanation: "The habitat is the crew's pressurized living volume; the life-support system maintains habitable cabin conditions. In this game, edge contact represents their system interface, not a NASA-prescribed physical layout.",
+    explanation: "The Habitat is the crew’s home, and Life Support helps manage cabin air. In this game, the two tiles must touch; real spacecraft layouts do not follow this tile rule.",
     source: ISS_SOURCE,
     sourceUrl: ISS_SOURCE_URL
   },
@@ -42,7 +42,7 @@ export const MODULE_CONNECTION_RULES: ModuleConnectionRule[] = [
     adjacentTo: ["habitat"],
     match: "all",
     label: "Airlock ↔ Habitat",
-    explanation: "An airlock provides a controlled route between a pressurized station and space. NASA describes the ISS Quest airlock as a dedicated spacewalk access point; direct edge contact is the game's simplified layout rule.",
+    explanation: "An airlock is a special doorway for going between the pressurized station and space. Our game puts it next to the Habitat so the crew can reach it.",
     source: ISS_SOURCE,
     sourceUrl: ISS_SOURCE_URL
   },
@@ -52,7 +52,7 @@ export const MODULE_CONNECTION_RULES: ModuleConnectionRule[] = [
     adjacentTo: ["habitat"],
     match: "all",
     label: "Radiation Shelter ↔ Habitat",
-    explanation: "NASA identifies space radiation as a crew health risk. The game places a shelter beside the habitat for quick access; this adjacency is a gameplay assumption, not a NASA engineering prescription.",
+    explanation: "Space radiation can be a health risk. The game puts this pretend shelter beside the Habitat for quick access; this is not a real shield design.",
     source: RADIATION_SOURCE,
     sourceUrl: RADIATION_SOURCE_URL
   },
@@ -62,7 +62,7 @@ export const MODULE_CONNECTION_RULES: ModuleConnectionRule[] = [
     adjacentTo: ["life-support"],
     match: "all",
     label: "Water Recycler ↔ Life Support",
-    explanation: "Water recovery supports long-duration life-support operations. Edge contact represents a simplified resource-system interface; NASA does not require these systems to occupy adjacent tiles.",
+    explanation: "Spacecraft can clean and reuse water. In this game, the Water Recycler touches Life Support to show that the systems work together; real systems do not have to use this tile layout.",
     source: ISS_SOURCE,
     sourceUrl: ISS_SOURCE_URL
   },
@@ -72,7 +72,7 @@ export const MODULE_CONNECTION_RULES: ModuleConnectionRule[] = [
     adjacentTo: ["habitat", "life-support"],
     match: "all",
     label: "Greenhouse ↔ Habitat + Life Support",
-    explanation: "NASA's Veggie experiments grow plants aboard the ISS. The game connects the greenhouse to crew space and life support to represent access to a controlled environment; this exact tile layout is a gameplay simplification.",
+    explanation: "NASA’s Veggie helps researchers grow plants on the space station. Our game puts the Greenhouse next to the Habitat and Life Support as a simple design rule.",
     source: VEGGIE_SOURCE,
     sourceUrl: VEGGIE_SOURCE_URL
   },
@@ -82,7 +82,7 @@ export const MODULE_CONNECTION_RULES: ModuleConnectionRule[] = [
     adjacentTo: ["habitat", "life-support", "airlock", "radiation-shield", "water-recycler", "greenhouse"],
     match: "any",
     label: "Solar Array ↔ Habitat power network",
-    explanation: "NASA describes ISS modules as interconnected through electrical and other service lines. A solar array must touch a non-solar module here to represent that interface; real spacecraft use dedicated wiring and power systems.",
+    explanation: "Solar arrays make electricity from sunlight. In this game, an array must touch another connected module to show where its power goes; real spacecraft use wiring and power systems.",
     source: ISS_SOURCE,
     sourceUrl: ISS_SOURCE_URL
   }
@@ -91,17 +91,17 @@ export const MODULE_CONNECTION_RULES: ModuleConnectionRule[] = [
 export const BUILD_MODULES = [
   {
     id: "habitat", name: "Habitat", label: "Living quarters", icon: "⌂", energyDemand: 3, energyOutput: 0,
-    description: "A pressurized module where crew members live, work, and rest.",
-    science: "The International Space Station is an orbital laboratory assembled from pressurized modules. Living areas depend on power, air, and other support systems to keep the crew safe.",
+    description: "The crew’s space home for living, working, and resting.",
+    science: "The International Space Station is built from connected modules. Some are pressurized living and working spaces, with systems that help the crew stay safe.",
     source: "NASA — International Space Station",
     sourceUrl: "https://www.nasa.gov/reference/international-space-station/",
-    gameRule: "Represents the crew's primary living area. Place at least one to meet the mission objective.",
+    gameRule: "Build at least one home module for your crew. It is the center of this habitat mission.",
     connectionSummary: "Connect Life Support, Airlock, and Radiation Shelter directly to the Habitat."
   },
   {
     id: "life-support", name: "Life Support", label: "Life support", icon: "◉", energyDemand: 4, energyOutput: 0,
-    description: "Manages cabin air and other conditions the crew needs to stay healthy.",
-    science: "NASA studies how spacecraft systems can maintain a safe environment for crews. Air and water management are essential needs for long-duration missions.",
+    description: "Helps manage the air and other things astronauts need.",
+    science: "Astronauts need breathable air and water. Spacecraft life-support systems help manage the cabin environment so crews can live and work in space.",
     source: "NASA — ISS Research Explorer",
     sourceUrl: "https://www.nasa.gov/mission/station/research-explorer/",
     gameRule: "Consumes power. Connect it directly to the Habitat and provide enough energy from solar arrays.",
@@ -109,8 +109,8 @@ export const BUILD_MODULES = [
   },
   {
     id: "solar-array", name: "Power", label: "Solar array", icon: "☼", energyDemand: 0, energyOutput: 10,
-    description: "Converts sunlight into electrical power for habitat systems.",
-    science: "NASA reports that the International Space Station's solar arrays provide electrical power and span a large area. Real output depends on mission and lighting conditions; the tile-shadow rule here is a simplified teaching model.",
+    description: "Catches sunlight and turns it into electricity.",
+    science: "The International Space Station uses large solar arrays to make electricity from sunlight. In this game, a shadow can block a panel; real power depends on many mission conditions.",
     source: "NASA — International Space Station",
     sourceUrl: "https://www.nasa.gov/reference/international-space-station/",
     gameRule: "Each sunlit array produces 10 game energy units. Modules above an array in the same column block light under this simplified game rule.",
@@ -118,8 +118,8 @@ export const BUILD_MODULES = [
   },
   {
     id: "airlock", name: "Airlock", label: "Airlock", icon: "⇄", energyDemand: 1, energyOutput: 0,
-    description: "Provides a controlled passage between the habitat and the lunar surface.",
-    science: "The ISS Quest airlock provides a dedicated route for spacewalks. Airlocks allow crew to move outside without opening the entire pressurized habitat to space.",
+    description: "A special doorway for astronauts going outside.",
+    science: "The space station’s Quest airlock is used for spacewalks. An airlock lets astronauts go outside without opening the whole pressurized station to space.",
     source: "NASA — International Space Station",
     sourceUrl: "https://www.nasa.gov/reference/international-space-station/",
     gameRule: "Place at least one airlock and connect it directly to the Habitat.",
@@ -127,8 +127,8 @@ export const BUILD_MODULES = [
   },
   {
     id: "radiation-shield", name: "Radiation Shelter", label: "Radiation shelter", icon: "⬡", energyDemand: 1, energyOutput: 0,
-    description: "Represents a protected area intended to reduce crew exposure to space radiation.",
-    science: "NASA identifies space radiation as a significant crew health risk and monitors the radiation environment during missions. This is an educational game module; it does not represent a real shield design or measured protection level.",
+    description: "A pretend safe nook for the crew in this building game.",
+    science: "Space radiation can be a health risk, so NASA monitors it during missions. This game tile is only an idea for a protected area; it does not show real shielding or guarantee safety.",
     source: "NASA Space Radiation",
     sourceUrl: "https://www.nasa.gov/directorates/esdmd/hhp/space-radiation/",
     gameRule: "Place at least one shelter module to meet the game objective. Its presence does not guarantee real radiation safety.",
@@ -136,8 +136,8 @@ export const BUILD_MODULES = [
   },
   {
     id: "water-recycler", name: "Water Recycler", label: "Water recycler", icon: "≈", energyDemand: 2, energyOutput: 0,
-    description: "Represents a system that recovers and reuses water during a mission.",
-    science: "Space station research explores ways to support crews with limited supplies. Recovering and reusing water is important for reducing the amount of consumables needed on long missions.",
+    description: "Cleans used water so the crew can reuse it.",
+    science: "The space station has a water recovery system. Cleaning and reusing water helps astronauts make their limited supplies last.",
     source: "NASA — ISS Research Explorer",
     sourceUrl: "https://www.nasa.gov/mission/station/research-explorer/",
     gameRule: "Adds to the mission score and consumes energy. This educational simulation does not model real water-treatment processes.",
@@ -145,8 +145,8 @@ export const BUILD_MODULES = [
   },
   {
     id: "greenhouse", name: "Greenhouse", label: "Greenhouse", icon: "✿", energyDemand: 2, energyOutput: 0,
-    description: "A controlled growing space for plants and crop research.",
-    science: "NASA's Veggie is a space garden on the ISS used to study plant growth in microgravity. The research also explores fresh food and crew well-being.",
+    description: "A little space garden for growing and studying plants.",
+    science: "NASA’s Veggie is a garden on the space station. Researchers use it to learn how plants grow in microgravity, and it can provide fresh food for astronauts.",
     source: "NASA — Veggie",
     sourceUrl: "https://science.nasa.gov/mission/veggie/",
     gameRule: "An optional system that consumes energy. It is not required for this mission, but can expand your habitat design.",

@@ -174,11 +174,11 @@ export default function BuildLab() {
           >
             <div className="briefing-heading">
               <div>
-                <p className="build-eyebrow">01 / SYSTEMS OVERVIEW</p>
-                <h2 id="module-briefing-title">Explore habitat systems</h2>
-                <p>Select a module to discover its NASA connection and role in your build mission.</p>
+                <p className="build-eyebrow">ROVER RADIO / MESSAGE 01</p>
+                <h2 id="module-briefing-title">Build a home for the next Moon explorers</h2>
+                <p>A scout rover found a safe landing spot. Now the astronaut crew is on the way, and they need a habitat! Meet the space-station parts before you snap your outpost together.</p>
               </div>
-              <span className="briefing-count">07 MODULES</span>
+              <span className="briefing-count">7 SPACE PARTS</span>
             </div>
 
             <div className="module-card-grid">
@@ -191,15 +191,15 @@ export default function BuildLab() {
                   onClick={() => setInfoModule(module.id)}
                 >
                   <ModuleIllustration moduleId={module.id} name={module.name} />
-                  <span className="module-card-index">SYSTEM 0{index + 1}</span>
+                  <span className="module-card-index">SPACE PART 0{index + 1}</span>
                   <strong>{module.name}</strong>
                   <span className="module-card-summary">{module.description}</span>
                   <span className="module-card-energy">
                     {module.energyOutput > 0
-                      ? `+${module.energyOutput} ENERGY OUTPUT`
-                      : `${module.energyDemand} ENERGY USE`}
+                      ? `MAKES ${module.energyOutput} GAME POWER`
+                      : `USES ${module.energyDemand} GAME POWER`}
                   </span>
-                  <span className="module-card-open">VIEW DETAILS →</span>
+                  <span className="module-card-open">OPEN SPACE-PART CARD →</span>
                 </button>
               ))}
             </div>
@@ -237,29 +237,23 @@ export default function BuildLab() {
                       <span className="module-modal-scanline" aria-hidden="true" />
                     </div>
                     <div className="module-modal-copy">
-                      <p className="build-eyebrow">MODULE BRIEF / NASA SOURCE</p>
+                      <p className="build-eyebrow">MOON BASE FIELD CARD</p>
                       <h3 id="module-dialog-title">{module.icon} {module.name} — {module.label}</h3>
                       <p className="module-science-copy">{module.science}</p>
-                      <a href={module.sourceUrl} target="_blank" rel="noreferrer">
-                        Explore {module.source} ↗
-                      </a>
                       <div className="module-connections">
-                        <strong>REQUIRED ADJACENCIES</strong>
+                        <strong>WHO DOES THIS PART WORK WITH?</strong>
                         {relatedConnections.map((rule) => (
                           <article key={rule.id}>
-                            <b>{rule.label}</b>
+                            <b>{rule.label.replace(" ↔ ", " + ")}</b>
                             <p>{rule.explanation}</p>
-                            <a href={rule.sourceUrl} target="_blank" rel="noreferrer">
-                              Source: {rule.source} ↗
-                            </a>
                           </article>
                         ))}
                         <small>
-                          These tile connections are simplified gameplay rules. NASA sources describe real system functions and interfaces, not this grid layout.
+                          Snap-together neighbors are a game rule. Real spacecraft connect systems with equipment and wiring, not a 5×5 tile map.
                         </small>
                       </div>
                       <div className="module-game-note">
-                        <strong>ROLE IN THIS BUILD MISSION</strong>
+                        <strong>YOUR GAME-BUILD CLUE</strong>
                         <p>{module.gameRule}</p>
                         <small>
                           {module.energyOutput > 0
@@ -274,7 +268,7 @@ export default function BuildLab() {
             })()}
 
             <p className="module-source-note">
-              Science notes are summarized from the NASA sources linked on each card. Energy values and panel shadows are simplified game rules, not real mission or engineering specifications.
+              Space facts are simplified for young explorers. Module placement, energy values, and panel shadows are game rules—not real spacecraft designs.
             </p>
           </section>
         ) : (
@@ -289,7 +283,7 @@ export default function BuildLab() {
             <h2>MODULES</h2>
 
             <p className="build-hint">
-              Select a module to place in your habitat.
+              Help the rover crew move in: choose a space part, then tap a tile to place it.
             </p>
 
             <ModuleSelector
@@ -481,7 +475,7 @@ export default function BuildLab() {
                 ))}
               </ul>
               <small className="connection-source-note">
-                NASA sources do not prescribe these exact tile positions; adjacency is a simplified representation of system interfaces.
+                Tile connections are part of this building game. Real spacecraft use equipment and wiring instead of a tile map.
               </small>
             </section>
           </aside>

@@ -16,11 +16,6 @@ type ExperimentId = "gravity" | "radiation" | "solar" | "thermal";
 type WorldId = "earth" | "moon" | "mars";
 type ShieldId = "aluminum" | "water" | "regolith";
 
-const NASA_RADIATION = "https://www.nasa.gov/directorates/esdmd/hhp/space-radiation/";
-const NASA_THERMAL = "https://www.nasa.gov/smallsat-institute/sst-soa/thermal-control/";
-const NASA_MOON = "https://science.nasa.gov/moon/facts/";
-const NASA_MARS = "https://science.nasa.gov/mars/facts/";
-
 const EXPERIMENTS: {
   id: ExperimentId;
   title: string;
@@ -29,56 +24,46 @@ const EXPERIMENTS: {
   fact: string;
   challenge: string;
   science: string;
-  source: string;
-  sourceUrl: string;
   icon: typeof Orbit;
 }[] = [
   {
     id: "gravity",
     title: "Gravity",
-    summary: "Will your test object bounce, float, or fall?",
-    hook: "Become a low-gravity explorer",
-    fact: "On the Moon, you would weigh about one-sixth of your Earth weight.",
-    challenge: "Can you predict which world lets the object fall slowest?",
-    science: "Gravity pulls objects toward a world. The Moon’s surface gravity is about one-sixth of Earth’s; Mars is also weaker than Earth. Our experiment compares idealized falls.",
-    source: "NASA Moon & Mars facts",
-    sourceUrl: NASA_MOON,
+    summary: "A rover has one test rock and three worlds to visit.",
+    hook: "ROVER LOG 01 · The great drop-off",
+    fact: "The Moon’s gravity is about one-sixth as strong as Earth’s. The same rock weighs less there, even though it is still the same rock.",
+    challenge: "The rover is filming a slow-motion video. Which world should it visit?",
+    science: "The rover crew is testing how gravity changes a falling object. Gravity is a world’s pull: it keeps our feet on Earth and guides moons around planets. The Moon and Mars pull less strongly than Earth, so the same object falls differently in our simple model.",
     icon: Orbit,
   },
   {
     id: "radiation",
     title: "Radiation",
-    summary: "Build an imaginary shield for a space explorer.",
-    hook: "Design a cosmic-ray shield",
-    fact: "Space radiation includes energetic particles that can pose health risks to astronauts.",
-    challenge: "What changes in our model when your shield gets thicker?",
-    science: "Space is not protected by Earth’s atmosphere in the same way as the ground. Scientists study radiation and possible countermeasures, but real shielding depends on many factors.",
-    source: "NASA Space Radiation",
-    sourceUrl: NASA_RADIATION,
+    summary: "A space explorer is packing for a trip beyond Earth.",
+    hook: "ROVER LOG 02 · The cosmic-ray puzzle",
+    fact: "Some radiation in space comes from energetic particles. NASA monitors it because it can affect astronaut health.",
+    challenge: "Can your imaginary shield change the reading in our pretend detector?",
+    science: "The explorer’s detector has spotted invisible particles traveling through space. Earth’s atmosphere protects us from much of this environment, but astronauts travel beyond it. Scientists study radiation and possible protection; our pretend detector is a learning model, not a real safety test.",
     icon: Shield,
   },
   {
     id: "solar",
     title: "Solar Energy",
-    summary: "Turn a solar panel toward the Sun to catch more light.",
-    hook: "Catch the Sun’s energy",
-    fact: "A surface facing the Sun receives sunlight more directly than one turned edge-on.",
-    challenge: "Can you aim the panel to reach 100% in our simple model?",
-    science: "The amount of sunlight a spacecraft surface absorbs depends partly on how much of that surface faces the Sun. Real power systems have additional losses and constraints.",
-    source: "NASA Thermal Control",
-    sourceUrl: NASA_THERMAL,
+    summary: "The rover battery is low. Can you catch more sunlight?",
+    hook: "ROVER LOG 03 · Follow that sunshine",
+    fact: "A solar panel catches sunlight more directly when it faces the Sun than when it is turned edge-on.",
+    challenge: "Can you point the panel to wake up the rover’s pretend battery?",
+    science: "The rover needs power for its instruments. Solar arrays turn sunlight into electricity, and the angle toward the Sun affects how much light reaches a surface. Real spacecraft also deal with shadows and other power-system limits.",
     icon: Sun,
   },
   {
     id: "thermal",
     title: "Thermal",
-    summary: "Help a tiny spacecraft stay cozy in sunlight and shade.",
-    hook: "Be the spacecraft’s thermostat",
-    fact: "Spacecraft must balance heat absorbed, stored, generated, and released.",
-    challenge: "Can more insulation slow down the temperature change?",
-    science: "Spacecraft use thermal-control technologies such as insulation, special surface coatings, and radiators to keep equipment within safe temperature ranges.",
-    source: "NASA Small Spacecraft Thermal Control",
-    sourceUrl: NASA_THERMAL,
+    summary: "A science box is swinging between sunny and shady spots.",
+    hook: "ROVER LOG 04 · Too hot, too cold?",
+    fact: "A spacecraft can absorb heat, make heat, store heat, and release heat.",
+    challenge: "Can you help the science box stay comfy with insulation?",
+    science: "The rover’s science instruments work best within certain temperatures. Engineers balance heat with tools such as insulation, special coatings, and radiators. Our temperature dial is a pretend model, not a forecast for a real spacecraft.",
     icon: Thermometer,
   },
 ];
@@ -170,9 +155,9 @@ export default function AdvancedSystemsLab() {
             <div className="advanced-hero-orbit advanced-hero-orbit-one" aria-hidden="true" />
             <div className="advanced-hero-orbit advanced-hero-orbit-two" aria-hidden="true" />
             <div className="advanced-hero-copy">
-              <span className="advanced-hero-kicker">CADET TRAINING / MISSION 03</span>
-              <h3>Ready to explore the science of space?</h3>
-              <p>Pick a mission card. Discover a space secret, then test your idea in the simulator.</p>
+              <span className="advanced-hero-kicker">ROVER FIELD JOURNAL / 4 LOGS</span>
+              <h3>A rover found four space puzzles!</h3>
+              <p>Open a field log, learn the science clue, then help the rover investigate.</p>
               <span className="advanced-mission-count"><Orbit aria-hidden="true" /> 4 MINI MISSIONS</span>
             </div>
             <div className="advanced-hero-planet" aria-hidden="true">
@@ -185,7 +170,7 @@ export default function AdvancedSystemsLab() {
           <div className="advanced-guide-section-heading">
             <div>
               <span>CHOOSE YOUR MISSION</span>
-              <p>Tap a mission to unlock its science briefing.</p>
+              <p>Choose one of the rover’s discoveries.</p>
             </div>
             <span className="advanced-tip"><span aria-hidden="true">✦</span> Curiosity powered</span>
           </div>
@@ -199,7 +184,7 @@ export default function AdvancedSystemsLab() {
                 aria-pressed={guideExperiment === id}
                 onClick={() => setGuideExperiment(id)}
               >
-                <span className="advanced-card-index">MISSION 0{index + 1}</span>
+                <span className="advanced-card-index">ROVER LOG 0{index + 1}</span>
                 <span className="advanced-card-icon"><Icon aria-hidden="true" /></span>
                 <strong>{title}</strong>
                 <span className="advanced-card-select">{guideExperiment === id ? "MISSION SELECTED" : "OPEN MISSION"} <span aria-hidden="true">→</span></span>
@@ -220,7 +205,7 @@ export default function AdvancedSystemsLab() {
                 </div>
                 <div className="advanced-briefing-copy">
                   <span className="advanced-briefing-kicker">{briefing.hook}</span>
-                  <h3>{briefing.title}: space detective challenge</h3>
+                  <h3>{briefing.title}: rover field report</h3>
                   <p>{briefing.science}</p>
                   <div className="advanced-fact-and-challenge">
                     <div className="advanced-did-you-know">
@@ -233,12 +218,6 @@ export default function AdvancedSystemsLab() {
                     </div>
                   </div>
                   <div className="advanced-briefing-footer">
-                    <span className="advanced-briefing-sources">
-                      <a href={briefing.sourceUrl} target="_blank" rel="noreferrer">Explore {briefing.source} ↗</a>
-                      {guideExperiment === "gravity" && (
-                        <a href={NASA_MARS} target="_blank" rel="noreferrer">NASA Mars facts ↗</a>
-                      )}
-                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -350,7 +329,6 @@ export default function AdvancedSystemsLab() {
                 <p>{SHIELDS[shield].note}</p>
               </div>
               <aside className="advanced-caution"><Shield aria-hidden="true" /><p><strong>Model limitation:</strong> The percentage is generated by a simple classroom formula. It is not a dose, measured shielding value, or safety recommendation; NASA notes that space-radiation risk and countermeasures involve substantial uncertainty.</p></aside>
-              <a className="advanced-source-link" href={NASA_RADIATION} target="_blank" rel="noreferrer">Read NASA’s Space Radiation overview ↗</a>
             </section>
           )}
 
@@ -375,7 +353,6 @@ export default function AdvancedSystemsLab() {
                 <span>idealized output</span>
               </div>
               <p className="experiment-footnote">The idealized model follows a cosine of the incidence angle: maximum when facing the Sun, approaching zero edge-on. Real panels also depend on cells, temperature, shadow, and system losses.</p>
-              <a className="advanced-source-link" href={NASA_THERMAL} target="_blank" rel="noreferrer">NASA: absorbed solar flux depends on surface area viewing the Sun ↗</a>
             </section>
           )}
 
@@ -410,7 +387,6 @@ export default function AdvancedSystemsLab() {
                 <button type="button" className="advanced-reset-button" onClick={resetThermalExperiment}><RotateCcw aria-hidden="true" /> RESET</button>
               </div>
               <p className="experiment-footnote">Teaching model only: each simulated hour applies a fixed warming/cooling step moderated by insulation. Actual spacecraft temperatures require detailed thermal analysis of radiation, stored heat, materials, and mission conditions.</p>
-              <a className="advanced-source-link" href={NASA_THERMAL} target="_blank" rel="noreferrer">NASA Small Spacecraft Thermal Control ↗</a>
             </section>
           )}
         </div>

@@ -37,24 +37,18 @@ export default function ModuleSelector({ selected, onSelect }: Props) {
           <p>{selectedModule?.description}</p>
           <p>{selectedModule?.gameRule}</p>
           <div className="selector-connections">
-            <strong>REQUIRED CONNECTIONS</strong>
+            <strong>BUILD CONNECTIONS</strong>
             {relatedConnections.map((rule) => (
               <details key={rule.id}>
                 <summary>{rule.label}</summary>
                 <p>{rule.explanation}</p>
-                <a href={rule.sourceUrl} target="_blank" rel="noreferrer">
-                  {rule.source} ↗
-                </a>
               </details>
             ))}
           </div>
-          <a href={selectedModule?.sourceUrl} target="_blank" rel="noreferrer">
-            {selectedModule?.source} ↗
-          </a>
           <small>
             {selectedModule?.energyOutput
-              ? `+${selectedModule.energyOutput} energy output`
-              : `${selectedModule?.energyDemand} energy demand`}
+              ? `Makes ${selectedModule.energyOutput} game energy`
+              : `Uses ${selectedModule?.energyDemand} game energy`}
           </small>
         </section>
       )}

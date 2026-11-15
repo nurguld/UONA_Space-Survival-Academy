@@ -56,8 +56,6 @@ type EmergencyMission = {
   crewStatus: string;
   hazardStatus: string;
   science: string;
-  source: string;
-  sourceUrl: string;
   actions: MissionAction[];
 };
 
@@ -85,13 +83,11 @@ const MISSIONS: EmergencyMission[] = [
     id: 'radiation',
     title: 'The Sun Sends a Warning',
     signal: 'SPACE WEATHER ALERT',
-    description: 'A radiation monitor sends a warning while two crew members are getting ready for an outside task.',
+    description: 'Be the crew’s space-weather helper! A monitor spots a radiation warning while two astronauts are getting ready to go outside.',
     sceneLabel: 'LUNAR BASE / EXTERIOR ACTIVITY PAUSED',
     crewStatus: 'Crew near the airlock',
     hazardStatus: 'Radiation alert',
-    science: 'NASA monitors the space radiation environment and uses crew dosimeters to help assess exposure. Actual mission teams follow vehicle- and mission-specific plans.',
-    source: 'NASA Space Radiation',
-    sourceUrl: 'https://www.nasa.gov/directorates/esdmd/hhp/space-radiation/',
+    science: 'Space has energetic particles that can be harmful to people. NASA monitors space radiation, and astronauts can wear dosimeters that measure radiation. This story is a game, not a real safety plan.',
     actions: [
       { id: 'pause-eva', title: 'Pause the spacewalk', detail: 'Hold the outside task for now.', feedback: 'Outside activity is paused. The crew has time to follow the mission plan.', icon: DoorClosed },
       { id: 'guide-shelter', title: 'Guide crew to the safe room', detail: 'Move the crew to the planned protected area.', feedback: 'Crew is together in the designated safe area.', icon: Users },
@@ -102,13 +98,11 @@ const MISSIONS: EmergencyMission[] = [
     id: 'storm',
     title: 'Storm Watch at Mission Control',
     signal: 'SOLAR STORM WATCH',
-    description: 'A space-weather update arrives. Your crew needs a clear plan while Mission Control watches for new information.',
+    description: 'A new space-weather alert pops up! Help Mission Control check the latest information and keep the crew in the loop.',
     sceneLabel: 'MISSION CONTROL / STAY ALERT',
     crewStatus: 'Crew awaiting update',
     hazardStatus: 'Space weather watch',
-    science: 'NASA’s Space Radiation Analysis Group monitors radiation conditions and supports flight operations. Space-weather response depends on the latest information and the mission plan.',
-    source: 'NASA Space Radiation',
-    sourceUrl: 'https://www.nasa.gov/directorates/esdmd/hhp/space-radiation/',
+    science: 'NASA teams watch the space-radiation environment and support mission operations. Space weather can change, so real crews follow their mission’s instructions.',
     actions: [
       { id: 'check-weather', title: 'Open the space-weather feed', detail: 'Bring the latest monitoring update to the console.', feedback: 'Update received. Mission Control can make decisions using monitored conditions.', icon: Sun },
       { id: 'protect-power', title: 'Protect essential systems', detail: 'Flag life support and communications as priority systems.', feedback: 'Essential systems are marked for protection. The outpost keeps its lifelines in view.', icon: Zap },
@@ -119,13 +113,11 @@ const MISSIONS: EmergencyMission[] = [
     id: 'pressure',
     title: 'The Habitat Pressure Puzzle',
     signal: 'HABITAT SENSOR / PRESSURE CHANGE',
-    description: 'A sensor notices a pressure change in one room. The crew is in the neighboring module.',
+    description: 'Be a habitat detective! A sensor reports a pressure change in one room, and the crew is in the next module.',
     sceneLabel: 'HABITAT / MODULE CHECK',
     crewStatus: 'Crew in neighboring module',
     hazardStatus: 'Pressure sensor warning',
-    science: 'The ISS is a pressurized research outpost made of connected modules. This fictional training activity emphasizes crew communication and following the correct vehicle checklist.',
-    source: 'NASA International Space Station',
-    sourceUrl: 'https://www.nasa.gov/reference/international-space-station/',
+    science: 'The International Space Station is made of connected modules, including pressurized places where astronauts live and work. This pretend mission is for learning; real crews use their own checklists.',
     actions: [
       { id: 'count-crew', title: 'Check in with every crewmate', detail: 'Use the radio to confirm everyone is in a safe area.', feedback: 'Crew check complete. Mission Control knows where everyone is.', icon: Users },
       { id: 'seal-module', title: 'Secure the affected module', detail: 'Use the training control to close the module hatch.', feedback: 'The training module is isolated. The crew remains together in the neighboring area.', icon: DoorClosed },
@@ -136,13 +128,11 @@ const MISSIONS: EmergencyMission[] = [
     id: 'garden',
     title: 'Mystery in the Space Garden',
     signal: 'GARDEN SENSOR / CHECK PLANTS',
-    description: 'A plant-growth camera spots something unusual in the space garden. The crew has not touched it yet.',
+    description: 'A camera spots something unusual in the space garden! Help the crew pause, look closely, and save a science note.',
     sceneLabel: 'SPACE GARDEN / OBSERVATION MODE',
     crewStatus: 'Crew ready to inspect',
     hazardStatus: 'Unknown plant change',
-    science: 'NASA’s Veggie plant-growth system helps researchers study plants in microgravity and provides fresh food for astronauts. This activity is a fictional learning scenario, not a crop-contamination procedure.',
-    source: 'NASA Veggie',
-    sourceUrl: 'https://science.nasa.gov/mission/veggie/',
+    science: 'NASA’s Veggie is a garden on the space station. It helps researchers study how plants grow in microgravity and can give astronauts fresh food. Our mystery is made up for this game.',
     actions: [
       { id: 'pause-harvest', title: 'Pause garden work', detail: 'Ask the crew to stop handling plants for a moment.', feedback: 'Garden work is paused while the crew checks the unusual patch.', icon: Leaf },
       { id: 'isolate-garden', title: 'Mark the garden zone', detail: 'Keep the observation area separate in the training map.', feedback: 'The garden zone is marked so the observation can be checked calmly.', icon: ShieldAlert },
@@ -231,7 +221,7 @@ export default function EmergencyLab() {
       <div className="mb-6 flex flex-col items-start justify-between gap-4 border-b border-cyan-800/50 pb-4 md:flex-row md:items-center">
         <div>
           <h2 className="text-xl font-bold tracking-wider text-white">🚨 EMERGENCY RESPONSE LAB</h2>
-          <p className="text-xs text-slate-400">Help the crew through a NASA-informed outpost adventure</p>
+          <p className="text-xs text-slate-400">Episode 02: The Aurora Outpost radio log</p>
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 p-1.5">
           <button
@@ -258,9 +248,9 @@ export default function EmergencyLab() {
           <div className="flex items-start gap-4 rounded-xl border border-red-500/30 bg-slate-900/80 p-5">
             <Info className="mt-1 h-6 w-6 shrink-0 text-red-400" />
             <div>
-              <h3 className="mb-1 text-lg font-bold text-white">Mission Control needs you!</h3>
+              <h3 className="mb-1 text-lg font-bold text-white">📻 Be the voice from Earth!</h3>
               <p className="text-sm text-slate-300">
-                This is not a quiz. You are the junior mission controller: use the console tools to help the crew, protect their habitat, and complete each mini-adventure.
+                A message from the Aurora Outpost is blinking on your screen. Four strange things are happening: the Sun is acting up, a room sensor is beeping, and the space garden has a mystery. Read each radio log, discover the real space science behind it, then jump into Mission Control to help the crew.
               </p>
             </div>
           </div>
@@ -270,13 +260,14 @@ export default function EmergencyLab() {
               <article key={item.id} className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
                 <div className="mb-2 flex items-center gap-2">
                   <ShieldAlert className="h-5 w-5 text-red-400" />
-                  <span className="font-mono text-[10px] text-red-300">ADVENTURE 0{index + 1}</span>
+                  <span className="font-mono text-[10px] text-red-300">RADIO LOG 0{index + 1} · {item.signal}</span>
                 </div>
                 <h4 className="mb-2 text-base font-bold text-white">{item.title}</h4>
-                <p className="mb-3 text-xs text-slate-400">{item.description}</p>
-                <a className="text-xs text-cyan-300 underline underline-offset-2" href={item.sourceUrl} target="_blank" rel="noreferrer">
-                  Science link: {item.source} ↗
-                </a>
+                <p className="mb-3 text-xs text-slate-300">{item.description}</p>
+                <p className="mb-3 rounded-lg border border-slate-700/80 bg-slate-950/70 p-3 text-xs leading-relaxed text-slate-400">
+                  <strong className="mb-1 block text-cyan-300">SPACE SCIENCE CLUE</strong>
+                  {item.science}
+                </p>
               </article>
             ))}
           </div>
@@ -417,7 +408,7 @@ export default function EmergencyLab() {
 
               <div className="emergency-adventure-science">
                 <BookOpen aria-hidden="true" />
-                <p><strong>SPACE FACT</strong>{mission.science} <a href={mission.sourceUrl} target="_blank" rel="noreferrer">Explore {mission.source} ↗</a></p>
+                <p><strong>SPACE FACT</strong>{mission.science}</p>
               </div>
             </section>
           </div>
