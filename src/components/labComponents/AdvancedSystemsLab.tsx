@@ -11,6 +11,7 @@ import {
 import { useLanguage, type Language } from '../../context/LanguageContext'
 import { LabTransitionOverlay } from '../LabTransition'
 import { useLabTransition } from '../../hooks/useLabTransition'
+import LabStationBadge from './LabStationBadge'
 import './AdvancedSystemsLab.css'
 
 type ExperimentId = 'gravity' | 'radiation' | 'solar' | 'thermal'
@@ -212,16 +213,17 @@ export default function AdvancedSystemsLab() {
       <LabTransitionOverlay visible={isRocketFlying} />
 
       <header className="advanced-lab-header">
-        <div className="advanced-lab-title">
-          <h2>
-            <Orbit aria-hidden="true" /> {pick('SPACE SCIENCE LAB', 'UZAY BİLİMLERİ LABORATUVARI')}
-          </h2>
-          <p>
-            {pick(
-              'Explore the physics behind space exploration through four guided experiments.',
-              'Dört rehberli deneyle uzay keşfinin arkasındaki fiziği keşfet.',
-            )}
-          </p>
+        <div className="advanced-lab-title lab-station-heading">
+          <LabStationBadge station="systems" />
+          <div>
+            <h2>{pick('SPACE SCIENCE LAB', 'UZAY BİLİMLERİ LABORATUVARI')}</h2>
+            <p>
+              {pick(
+                'Explore the physics behind space exploration through four guided experiments.',
+                'Dört rehberli deneyle uzay keşfinin arkasındaki fiziği keşfet.',
+              )}
+            </p>
+          </div>
         </div>
         <div
           className="advanced-lab-tabs"

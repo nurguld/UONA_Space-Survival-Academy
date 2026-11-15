@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Activity,
   AlertTriangle,
@@ -16,14 +17,22 @@ import {
   Shield,
   ShieldAlert,
   Siren,
+  Sparkles,
   Sun,
   Users,
   Wind,
+  X,
   Zap,
 } from 'lucide-react'
+import greenhouseArtwork from '../../assets/map-greenhouse.png'
+import lifeSupportArtwork from '../../assets/map-lifesupport.png'
+import shieldArtwork from '../../assets/map-shield.png'
+import solarArtwork from '../../assets/map-solar.png'
 import { useLanguage, type Language } from '../../context/LanguageContext'
+import { handleInteractiveClick } from '../../game/sound'
 import { LabTransitionOverlay } from '../LabTransition'
 import { useLabTransition } from '../../hooks/useLabTransition'
+import LabStationBadge from './LabStationBadge'
 import './EmergencyLab.css'
 
 type ActionId =
@@ -320,6 +329,13 @@ export default function EmergencyLab() {
     transitionTo: handleTabChange,
   } = useLabTransition<'guide' | 'simulation'>('guide')
   const [missionIndex, setMissionIndex] = useState(0)
+  const [openBriefing, setOpenBriefing] = useState<{
+    id: string
+    originX: number
+    originY: number
+  } | null>(null)
+  const briefingTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const closeBriefingRef = useRef<HTMLButtonElement | null>(null)
   const [finishedActions, setFinishedActions] = useState<Record<string, ActionId[]>>({})
   const [displayedActions, setDisplayedActions] = useState<Record<string, MissionAction[]>>(() =>
     Object.fromEntries(MISSIONS.map((mission) => [mission.id, shuffleActions(mission.actions)])),
@@ -344,6 +360,40 @@ export default function EmergencyLab() {
     missionActions.includes('seal-module') ||
     missionActions.includes('isolate-garden')
   const statusValue = Math.round((missionActions.length / mission.actions.length) * 100)
+
+  function showBriefing(id: string, trigger: HTMLButtonElement) {
+    const bounds = trigger.getBoundingClientRect()
+    briefingTriggerRefs.current[id] = trigger
+    setOpenBriefing({
+      id,
+      originX: bounds.left + bounds.width / 2 - window.innerWidth / 2,
+      originY: bounds.top + bounds.height / 2 - window.innerHeight / 2,
+    })
+  }
+
+  function closeBriefing() {
+    const currentId = openBriefing?.id
+    setOpenBriefing(null)
+    if (currentId) {
+      requestAnimationFrame(() => briefingTriggerRefs.current[currentId]?.focus())
+    }
+  }
+
+  useEffect(() => {
+    if (!openBriefing) return
+
+    const currentId = openBriefing.id
+    closeBriefingRef.current?.focus()
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setOpenBriefing(null)
+        requestAnimationFrame(() => briefingTriggerRefs.current[currentId]?.focus())
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [openBriefing])
 
   function performAction(action: MissionAction) {
     if (isMissionFailed || isMissionComplete) return
@@ -403,13 +453,16 @@ export default function EmergencyLab() {
       <LabTransitionOverlay visible={isRocketFlying} />
 
       <div className="mb-6 flex flex-col items-start justify-between gap-4 border-b border-cyan-800/50 pb-4 md:flex-row md:items-center">
-        <div>
-          <h2 className="text-xl font-bold tracking-wider text-white">
-            {pick('🚨 EMERGENCY RESPONSE LAB', '🚨 ACİL DURUM MÜDAHALE LABORATUVARI')}
-          </h2>
-          <p className="text-xs text-slate-400">
-            {pick('Episode 02: The Aurora Outpost radio log', 'Bölüm 02: Aurora Karakolu telsiz kaydı')}
-          </p>
+        <div className="lab-station-heading">
+          <LabStationBadge station="emergency" />
+          <div>
+            <h2 className="text-xl font-bold tracking-wider text-white">
+              {pick('EMERGENCY RESPONSE LAB', 'ACİL DURUM MÜDAHALE LABORATUVARI')}
+            </h2>
+            <p className="text-xs text-slate-400">
+              {pick('Episode 02: The Aurora Outpost radio log', 'Bölüm 02: Aurora Karakolu telsiz kaydı')}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 p-1.5">
           <button
@@ -432,53 +485,73 @@ export default function EmergencyLab() {
       </div>
 
       {activeTab === 'guide' ? (
-        <div className="space-y-6">
-          <div className="flex items-start gap-4 rounded-xl border border-red-500/30 bg-slate-900/80 p-5">
-            <Info className="mt-1 h-6 w-6 shrink-0 text-red-400" />
-            <div>
-              <h3 className="mb-1 text-lg font-bold text-white">
-                {pick('📻 Be the voice from Earth!', '📻 Dünya’dan gelen ses ol!')}
-              </h3>
-              <p className="text-sm text-slate-300">
+        <div className="emergency-briefing">
+          <section className="emergency-briefing-hero">
+            <div className="emergency-briefing-icon">
+              <Radio aria-hidden="true" />
+            </div>
+            <div className="emergency-briefing-copy">
+              <span className="emergency-briefing-kicker">
+                <i /> {pick('INCOMING FROM AURORA OUTPOST', 'AURORA KARAKOLUNDAN GELEN İLETİ')}
+              </span>
+              <h3>{pick('Mission briefing', 'Görev brifingi')}</h3>
+              <p>
                 {pick(
-                  'A message from the Aurora Outpost is blinking on your screen. Four strange things are happening: the Sun is acting up, a room sensor is beeping, and the space garden has a mystery. Read each radio log, discover the real space science behind it, then jump into Mission Control to help the crew.',
-                  'Ekranda Aurora Karakolu’ndan yanıp sönen bir mesaj var. Dört garip olay yaşanıyor: Güneş hareketlendi, bir oda sensörü ötüyor ve uzay bahçesinde bir gizem var. Her telsiz kaydını oku, ardındaki gerçek uzay bilimini keşfet ve ekibe yardım etmek için Görev Kontrolüne geç.',
+                  'Four sealed alerts. Open a message to reveal the situation and its space-science clue.',
+                  'Dört mühürlü uyarı. Durumu ve uzay bilimi ipucunu görmek için bir mesaj aç.',
                 )}
               </p>
             </div>
+            <div className="emergency-briefing-count">
+              <strong>04</strong>
+              <span>{pick('RADIO LOGS', 'TELSİZ KAYDI')}</span>
+            </div>
+          </section>
+
+          <div className="emergency-briefing-section-heading">
+            <span>{pick('INCOMING MESSAGES', 'GELEN MESAJLAR')}</span>
+            <span>{pick('SELECT AN ENVELOPE TO OPEN', 'AÇMAK İÇİN BİR ZARF SEÇ')}</span>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="emergency-briefing-grid">
             {MISSIONS.map((item, index) => (
-              <article
-                key={item.id}
-                className="rounded-xl border border-slate-800 bg-slate-900/60 p-4"
-              >
-                <div className="mb-2 flex items-center gap-2">
-                  <ShieldAlert className="h-5 w-5 text-red-400" />
-                  <span className="font-mono text-[10px] text-red-300">
-                    {pick('RADIO LOG', 'TELSİZ KAYDI')} 0{index + 1} · {item.signal[lang]}
+              <article key={item.id} className={`emergency-briefing-card briefing-${item.id}`}>
+                <button
+                  type="button"
+                  className="emergency-envelope"
+                  ref={(element) => {
+                    briefingTriggerRefs.current[item.id] = element
+                  }}
+                  aria-haspopup="dialog"
+                  aria-expanded={openBriefing?.id === item.id}
+                  aria-controls={`briefing-letter-${item.id}`}
+                  onClick={(event) => showBriefing(item.id, event.currentTarget)}
+                >
+                  <span className="emergency-envelope-flap" aria-hidden="true" />
+                  <span className="emergency-envelope-topline">
+                    <span>{pick('INCOMING', 'GELEN')} · 0{index + 1}</span>
+                    <ShieldAlert aria-hidden="true" />
                   </span>
-                </div>
-                <h4 className="mb-2 text-base font-bold text-white">{item.title[lang]}</h4>
-                <p className="mb-3 text-xs text-slate-300">{item.description[lang]}</p>
-                <p className="mb-3 rounded-lg border border-slate-700/80 bg-slate-950/70 p-3 text-xs leading-relaxed text-slate-400">
-                  <strong className="mb-1 block text-cyan-300">
-                    {pick('SPACE SCIENCE CLUE', 'UZAY BİLİMİ İPUCU')}
-                  </strong>
-                  {item.science[lang]}
-                </p>
+                  <strong>{item.title[lang]}</strong>
+                  <span className="emergency-envelope-signal">{item.signal[lang]}</span>
+                  <span className="emergency-envelope-seal" aria-hidden="true">
+                    ✦
+                  </span>
+                  <span className="emergency-envelope-hint">
+                    {pick('OPEN MESSAGE', 'MESAJI AÇ')} <MoveRight aria-hidden="true" />
+                  </span>
+                </button>
               </article>
             ))}
           </div>
 
-          <div className="flex justify-end pt-2">
-            <button
-              type="button"
-              onClick={() => handleTabChange('simulation')}
-              className="flex items-center gap-2 rounded-xl bg-red-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-red-500"
-            >
-              {pick('Enter Mission Control', 'Görev Kontrolüne Gir')} <Play className="h-4 w-4" />
+          <div className="emergency-briefing-footer">
+            <span>
+              <Info aria-hidden="true" />{' '}
+              {pick('Training scenarios are fictional.', 'Eğitim senaryoları kurgusaldır.')}
+            </span>
+            <button type="button" onClick={() => handleTabChange('simulation')}>
+              {pick('Enter Mission Control', 'Görev Kontrolüne Gir')} <Play aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -724,6 +797,129 @@ export default function EmergencyLab() {
           </p>
         </div>
       )}
+      {openBriefing &&
+        (() => {
+          const selectedMission = MISSIONS.find((item) => item.id === openBriefing.id)
+          if (!selectedMission) return null
+          const SignalArtwork =
+            selectedMission.id === 'radiation'
+              ? shieldArtwork
+              : selectedMission.id === 'storm'
+                ? solarArtwork
+                : selectedMission.id === 'pressure'
+                  ? lifeSupportArtwork
+                  : greenhouseArtwork
+          const SignalMarker =
+            selectedMission.id === 'radiation'
+              ? ShieldAlert
+              : selectedMission.id === 'storm'
+                ? Zap
+                : selectedMission.id === 'pressure'
+                  ? Activity
+                  : Sparkles
+
+          return createPortal(
+            <div
+              className="emergency-letter-overlay"
+              onClickCapture={(event) => handleInteractiveClick(event.target)}
+            >
+              <button
+                type="button"
+                className="emergency-letter-backdrop"
+                aria-label={pick('Close mission letter', 'Görev mektubunu kapat')}
+                onClick={closeBriefing}
+              />
+              <article
+                id={`briefing-letter-${selectedMission.id}`}
+                className={`emergency-letter-paper briefing-${selectedMission.id}`}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={`briefing-title-${selectedMission.id}`}
+                style={
+                  {
+                    '--paper-origin-x': `${openBriefing.originX}px`,
+                    '--paper-origin-y': `${openBriefing.originY}px`,
+                  } as CSSProperties
+                }
+              >
+                <div className="emergency-letter-paper-header">
+                  <span className="emergency-letter-origin">
+                    <Radio aria-hidden="true" /> {pick('AURORA OUTPOST', 'AURORA KARAKOLU')}
+                  </span>
+                  <span className="emergency-letter-live">
+                    <i /> {pick('INCOMING TRANSMISSION', 'GELEN İLETİ')}
+                  </span>
+                  <button
+                    type="button"
+                    ref={closeBriefingRef}
+                    aria-label={pick('Close mission letter', 'Görev mektubunu kapat')}
+                    onClick={closeBriefing}
+                  >
+                    <X aria-hidden="true" />
+                  </button>
+                </div>
+                <div className="emergency-letter-paper-body">
+                  <div className="emergency-letter-signal-row">
+                    <span
+                      className={`emergency-letter-signal-icon emblem-${selectedMission.id}`}
+                      aria-hidden="true"
+                    >
+                      <span className="emergency-letter-emblem-orbit" />
+                      <img className="emergency-letter-emblem-art" src={SignalArtwork} alt="" />
+                      <SignalMarker className="emergency-letter-emblem-marker" />
+                    </span>
+                    <span className="emergency-letter-paper-signal">
+                      {selectedMission.signal[lang]}
+                    </span>
+                    <span className="emergency-letter-log">
+                      {pick('LOG', 'KAYIT')} 0
+                      {MISSIONS.findIndex((item) => item.id === selectedMission.id) + 1}
+                    </span>
+                  </div>
+                  <h3 id={`briefing-title-${selectedMission.id}`}>
+                    {selectedMission.title[lang]}
+                  </h3>
+                  <div className="emergency-letter-divider">
+                    <span />
+                  </div>
+                  <div className="emergency-letter-situation">
+                    <span className="emergency-letter-section-label">
+                      {pick('SITUATION REPORT', 'DURUM RAPORU')}
+                    </span>
+                    <p>{selectedMission.description[lang]}</p>
+                  </div>
+                  <div className="emergency-letter-paper-fact">
+                    <div className="emergency-letter-fact-icon">
+                      <span className="emergency-letter-fact-orbit" />
+                      <BookOpen aria-hidden="true" />
+                      <i aria-hidden="true" />
+                    </div>
+                    <div>
+                      <strong>{pick('SPACE SCIENCE', 'UZAY BİLİMİ')}</strong>
+                      <p>{selectedMission.science[lang]}</p>
+                    </div>
+                  </div>
+                  <div className="emergency-letter-paper-footer">
+                    <span>
+                      <Activity aria-hidden="true" />{' '}
+                      {pick(
+                        'TRAINING DATA · FICTIONAL SCENARIO',
+                        'EĞİTİM VERİSİ · KURGUSAL SENARYO',
+                      )}
+                    </span>
+                    <span className="emergency-letter-signal-bars" aria-hidden="true">
+                      <i />
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </div>,
+            document.body,
+          )
+        })()}
     </div>
   )
 }

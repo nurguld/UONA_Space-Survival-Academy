@@ -1,3 +1,884 @@
+.emergency-briefing {
+  display: grid;
+  gap: 1.15rem;
+  color: #e2e8f0;
+  font-family: inherit;
+}
+
+.emergency-briefing-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  overflow: hidden;
+  padding: 1.25rem;
+  border: 1px solid rgba(56, 189, 248, 0.26);
+  border-radius: 1rem;
+  background:
+    radial-gradient(ellipse at 92% 10%, rgba(14, 116, 144, 0.2), transparent 38%),
+    linear-gradient(120deg, #151b2c, #101827 72%);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.emergency-briefing-icon {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 0.85rem;
+  background: rgba(8, 47, 73, 0.45);
+  color: #7dd3fc;
+}
+
+.emergency-briefing-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.emergency-briefing-copy {
+  min-width: 0;
+}
+
+.emergency-briefing-kicker,
+.emergency-briefing-section-heading,
+.emergency-briefing-signal,
+.emergency-briefing-count span {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.59rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
+
+.emergency-briefing-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #7dd3fc;
+}
+
+.emergency-briefing-kicker i {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 0.65rem rgba(56, 189, 248, 0.75);
+}
+
+.emergency-briefing-copy h3 {
+  margin: 0.3rem 0 0.25rem;
+  color: #fff;
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.emergency-briefing-copy p {
+  max-width: 42rem;
+  margin: 0;
+  color: #aab8cc;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.emergency-briefing-count {
+  display: grid;
+  flex: 0 0 auto;
+  justify-items: center;
+  margin-left: auto;
+  padding: 0.45rem 0.65rem;
+  border-left: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.emergency-briefing-count strong {
+  color: #fff;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.emergency-briefing-count span {
+  margin-top: 0.35rem;
+  color: #8290a5;
+  font-size: 0.48rem;
+  white-space: nowrap;
+}
+
+.emergency-briefing-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #e2e8f0;
+}
+
+.emergency-briefing-section-heading span:last-child {
+  color: #74839b;
+  font-size: 0.52rem;
+}
+
+.emergency-briefing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.emergency-briefing-card {
+  position: relative;
+  min-width: 0;
+  align-self: start;
+  border: 1px solid #263d52;
+  border-radius: 0.85rem;
+  background: #0c1725;
+  box-shadow: 0 5px 0 #080e19, 0 12px 24px rgba(0, 0, 0, 0.14);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.emergency-briefing-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.58);
+  box-shadow: 0 6px 0 #080e19, 0 14px 26px rgba(0, 0, 0, 0.2);
+}
+
+.briefing-storm {
+  --envelope-accent: #7dd3fc;
+}
+
+.briefing-pressure {
+  --envelope-accent: #7dd3fc;
+}
+
+.briefing-garden {
+  --envelope-accent: #7dd3fc;
+}
+
+.emergency-envelope {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 10rem;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: hidden;
+  padding: 1rem;
+  border: 0;
+  border-radius: inherit;
+  background: linear-gradient(150deg, #1c3a50, #142c40 58%, #102336);
+  color: #e2e8f0;
+  cursor: pointer;
+  text-align: left;
+  isolation: isolate;
+  transition: filter 180ms ease, min-height 240ms ease;
+}
+
+.emergency-envelope::before {
+  position: absolute;
+  z-index: 1;
+  top: 0.15rem;
+  left: 18%;
+  width: 64%;
+  height: 55%;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 0.68rem, rgba(56, 189, 248, 0.2) 0.7rem 0.73rem),
+    linear-gradient(#dceaf0, #c6d9e3);
+  box-shadow: 0 2px 6px rgba(3, 10, 23, 0.3);
+  content: '';
+  transform: translateY(-72%);
+  transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.emergency-envelope:hover::before,
+.emergency-envelope:focus-visible::before {
+  transform: translateY(-49%);
+}
+
+.emergency-envelope::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  clip-path: polygon(0 43%, 50% 86%, 100% 43%, 100% 100%, 0 100%);
+  background: linear-gradient(145deg, #1a354a, #10283a 74%);
+  content: '';
+}
+
+.emergency-envelope:hover {
+  filter: brightness(1.04);
+}
+
+.emergency-envelope:focus-visible {
+  outline: 2px solid var(--envelope-accent, #7dd3fc);
+  outline-offset: -4px;
+}
+
+.emergency-envelope-flap {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 53%;
+  clip-path: polygon(0 0, 100% 0, 50% 79%);
+  background: linear-gradient(180deg, #315c78, #25465e 90%);
+  filter: drop-shadow(0 3px 3px rgba(3, 10, 23, 0.28));
+  transform: rotateX(0);
+  transform-origin: top center;
+  transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 220ms ease;
+  backface-visibility: hidden;
+}
+
+.emergency-envelope:hover .emergency-envelope-flap,
+.emergency-envelope:focus-visible .emergency-envelope-flap {
+  filter: brightness(1.12);
+}
+
+.emergency-envelope-topline {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #e6f4f8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.emergency-envelope-topline svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: #a7d7e8;
+}
+
+.emergency-envelope > strong {
+  position: relative;
+  z-index: 4;
+  max-width: 85%;
+  margin: 1.15rem 0 0.3rem;
+  color: #f8fafc;
+  font-size: 0.96rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.emergency-envelope-signal {
+  position: relative;
+  z-index: 4;
+  max-width: 78%;
+  color: #a9c5d5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.emergency-envelope-seal {
+  position: absolute;
+  z-index: 5;
+  right: 1rem;
+  bottom: 1.05rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgba(186, 230, 253, 0.45);
+  border-radius: 50%;
+  background: linear-gradient(145deg, #78b7ca, #3d819a 52%, #285c75);
+  color: #e7f5f9;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3), inset 0 1px rgba(255, 255, 255, 0.2);
+  font-size: 0.9rem;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.emergency-envelope:hover .emergency-envelope-seal {
+  transform: scale(1.08) rotate(-8deg);
+  box-shadow: 0 0 1rem rgba(56, 189, 248, 0.28), 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.emergency-envelope-hint {
+  position: absolute;
+  z-index: 4;
+  right: 3.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  bottom: 1.72rem;
+  color: #a9c5d5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.47rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+}
+
+.emergency-envelope-hint svg {
+  width: 0.65rem;
+  height: 0.65rem;
+}
+
+.emergency-letter-overlay {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  perspective: 1000px;
+}
+
+.emergency-letter-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: rgba(3, 10, 20, 0.78);
+  backdrop-filter: blur(6px);
+  cursor: default;
+  animation: emergency-backdrop-in 220ms ease-out both;
+}
+
+.emergency-letter-paper {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 34rem);
+  box-sizing: border-box;
+  max-height: min(84vh, 42rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-color: #315c78 #0a1422;
+  scrollbar-width: thin;
+  padding: 0.65rem;
+  border: 1px solid rgb(87 151 194 / 42%);
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, rgb(19 36 58 / 98%), rgb(8 17 32 / 99%));
+  color: #e6eaf5;
+  box-shadow: 0 28px 90px rgb(0 0 0 / 58%), inset 0 1px rgb(255 255 255 / 5%);
+  animation: emergency-paper-emerge 580ms cubic-bezier(0.18, 0.82, 0.24, 1) both;
+}
+
+.emergency-letter-paper::-webkit-scrollbar {
+  width: 7px;
+}
+
+.emergency-letter-paper::-webkit-scrollbar-track {
+  border-radius: 0.75rem;
+  background: #0a1422;
+}
+
+.emergency-letter-paper::-webkit-scrollbar-thumb {
+  border: 2px solid #0a1422;
+  border-radius: 1rem;
+  background: #315c78;
+}
+
+.emergency-letter-paper::before {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: radial-gradient(circle at 88% 12%, rgb(56 189 248 / 12%), transparent 32%);
+  content: '';
+  pointer-events: none;
+}
+
+.emergency-letter-paper::after {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #38bdf8, #fb7185, transparent);
+  content: '';
+  opacity: 0.75;
+  animation: emergency-paper-scan 3.8s ease-in-out infinite;
+}
+
+.emergency-letter-paper-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 3.2rem;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
+  min-width: 0;
+  padding: 0.3rem 0.55rem 0.7rem;
+  border-bottom: 1px solid rgb(125 211 252 / 16%);
+}
+
+.emergency-letter-origin,
+.emergency-letter-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #c5d8e8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.57rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.emergency-letter-origin svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  color: #7dd3fc;
+}
+
+.emergency-letter-live {
+  margin-left: auto;
+  color: #95a9bf;
+  font-size: 0.49rem;
+}
+
+.emergency-letter-live i {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: #fb7185;
+  box-shadow: 0 0 0.55rem rgb(251 113 133 / 65%);
+  animation: emergency-letter-live 1.5s ease-in-out infinite;
+}
+
+.emergency-letter-paper-header button {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgb(148 163 184 / 25%);
+  border-radius: 0.55rem;
+  background: rgb(8 17 32 / 72%);
+  color: #a9bfd2;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.emergency-letter-paper-header button:hover {
+  border-color: rgb(125 211 252 / 55%);
+  background: #18324b;
+  color: #fff;
+}
+
+.emergency-letter-paper-header button:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.emergency-letter-paper-header button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.emergency-letter-paper-body {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  padding: clamp(0.85rem, 3.5vw, 1.35rem);
+}
+
+.emergency-letter-signal-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.emergency-letter-signal-icon {
+  position: relative;
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  place-items: center;
+  isolation: isolate;
+  border: 1px solid rgb(125 211 252 / 35%);
+  border-radius: 0.65rem;
+  background: linear-gradient(145deg, rgb(18 47 69 / 95%), rgb(8 19 34 / 95%));
+  color: #7dd3fc;
+  box-shadow: 0 0 1.2rem rgb(56 189 248 / 12%), inset 0 0 0.6rem rgb(56 189 248 / 8%);
+}
+
+.emergency-letter-signal-icon::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0.27rem;
+  border: 1px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  content: '';
+  opacity: 0.55;
+  animation: emergency-emblem-orbit 8s linear infinite;
+}
+
+.emergency-letter-emblem-orbit {
+  position: absolute;
+  inset: 0.12rem;
+  border: 1px dotted rgb(255 255 255 / 35%);
+  border-radius: 0.52rem;
+  animation: emergency-emblem-orbit 18s linear infinite reverse;
+}
+
+.emergency-letter-emblem-art {
+  position: relative;
+  z-index: 1;
+  width: 2.9rem;
+  height: 2.9rem;
+  object-fit: contain;
+  filter: drop-shadow(0 0 0.4rem currentColor);
+  animation: emergency-emblem-hover 2.8s ease-in-out infinite;
+}
+
+.emergency-letter-emblem-marker {
+  position: absolute;
+  right: -0.22rem;
+  bottom: -0.18rem;
+  width: 0.95rem;
+  height: 0.95rem;
+  padding: 0.12rem;
+  border: 1px solid currentColor;
+  border-radius: 0.32rem;
+  background: #101d2d;
+  filter: drop-shadow(0 0 0.25rem currentColor);
+}
+
+.emergency-letter-signal-icon.emblem-radiation {
+  border-color: rgb(251 113 133 / 45%);
+  background: linear-gradient(145deg, rgb(83 37 45 / 95%), rgb(23 24 39 / 96%));
+  color: #fbbf24;
+  box-shadow: 0 0 1.2rem rgb(251 113 133 / 14%), inset 0 0 0.6rem rgb(251 113 133 / 9%);
+}
+
+.emergency-letter-signal-icon.emblem-radiation .emergency-letter-emblem-marker {
+  color: #fb7185;
+}
+
+.emergency-letter-signal-icon.emblem-storm {
+  border-color: rgb(251 191 36 / 40%);
+  background: linear-gradient(145deg, rgb(72 53 34 / 95%), rgb(19 27 39 / 96%));
+  color: #fbbf24;
+  box-shadow: 0 0 1.2rem rgb(251 191 36 / 13%), inset 0 0 0.6rem rgb(251 191 36 / 8%);
+}
+
+.emergency-letter-signal-icon.emblem-storm .emergency-letter-emblem-marker {
+  color: #fb923c;
+}
+
+.emergency-letter-signal-icon.emblem-pressure .emergency-letter-emblem-marker {
+  color: #38bdf8;
+}
+
+.emergency-letter-signal-icon.emblem-garden {
+  border-color: rgb(74 222 128 / 38%);
+  background: linear-gradient(145deg, rgb(24 64 54 / 95%), rgb(11 28 39 / 96%));
+  color: #86efac;
+  box-shadow: 0 0 1.2rem rgb(74 222 128 / 12%), inset 0 0 0.6rem rgb(74 222 128 / 8%);
+}
+
+.emergency-letter-signal-icon.emblem-garden .emergency-letter-emblem-marker {
+  color: #4ade80;
+}
+
+.emergency-letter-paper-signal {
+  min-width: 0;
+  color: #fda4af;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.briefing-storm .emergency-letter-paper-signal {
+  color: #fbbf24;
+}
+
+.briefing-pressure .emergency-letter-paper-signal {
+  color: #7dd3fc;
+}
+
+.briefing-garden .emergency-letter-paper-signal {
+  color: #86efac;
+}
+
+.emergency-letter-log {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 0.32rem 0.45rem;
+  border: 1px solid rgb(125 211 252 / 18%);
+  border-radius: 0.35rem;
+  background: rgb(8 17 32 / 72%);
+  color: #7dd3fc;
+  font: 700 0.5rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.08em;
+}
+
+.emergency-letter-paper h3 {
+  margin: 0.8rem 0 0.6rem;
+  color: #f4f8ff;
+  font-size: clamp(1.35rem, 4vw, 1.9rem);
+  font-weight: 850;
+  letter-spacing: -0.025em;
+  line-height: 1.18;
+  text-wrap: balance;
+}
+
+.emergency-letter-divider {
+  display: flex;
+  height: 1px;
+  align-items: center;
+  margin: 0.7rem 0;
+  background: linear-gradient(90deg, rgb(56 189 248 / 40%), rgb(56 189 248 / 8%) 72%, transparent);
+}
+
+.emergency-letter-divider span {
+  width: 2.3rem;
+  height: 2px;
+  background: #38bdf8;
+  box-shadow: 0 0 0.7rem rgb(56 189 248 / 52%);
+}
+
+.emergency-letter-section-label {
+  display: block;
+  color: #7dd3fc;
+  font: 700 0.54rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.12em;
+}
+
+.emergency-letter-paper-description {
+  margin: 0.45rem 0 0;
+  color: #c1cede;
+  font-size: 0.83rem;
+  line-height: 1.7;
+}
+
+.emergency-letter-situation {
+  position: relative;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgb(125 211 252 / 13%);
+  border-left: 2px solid #38bdf8;
+  border-radius: 0.35rem 0.65rem 0.65rem 0.35rem;
+  background: linear-gradient(100deg, rgb(17 39 61 / 88%), rgb(12 27 44 / 64%));
+}
+
+.emergency-letter-paper-fact {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-top: 0.7rem;
+  padding: 0.75rem;
+  border: 1px solid rgb(56 189 248 / 17%);
+  border-radius: 0.65rem;
+  background: linear-gradient(120deg, rgb(9 28 45 / 96%), rgb(13 27 43 / 90%));
+}
+
+.emergency-letter-fact-icon {
+  position: relative;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgb(56 189 248 / 25%);
+  border-radius: 0.5rem;
+  background: radial-gradient(circle at 50% 45%, rgb(56 189 248 / 18%), rgb(8 24 39 / 95%) 72%);
+  color: #7dd3fc;
+}
+
+.emergency-letter-fact-orbit {
+  position: absolute;
+  inset: -0.2rem;
+  border: 1px dashed rgb(125 211 252 / 48%);
+  border-radius: 50%;
+  animation: emergency-emblem-orbit 12s linear infinite;
+}
+
+.emergency-letter-fact-icon > svg {
+  position: relative;
+  z-index: 1;
+  width: 1rem;
+  height: 1rem;
+  filter: drop-shadow(0 0 0.3rem rgb(56 189 248 / 65%));
+}
+
+.emergency-letter-fact-icon > i {
+  position: absolute;
+  top: 0.08rem;
+  right: 0.12rem;
+  width: 0.25rem;
+  height: 0.25rem;
+  border: 1px solid #c4f1ff;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 0.4rem rgb(56 189 248 / 90%);
+  animation: emergency-emblem-hover 1.7s ease-in-out infinite alternate;
+}
+
+.emergency-letter-paper-fact strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #7dd3fc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+}
+
+.emergency-letter-paper-fact p {
+  margin: 0;
+  color: #aebed0;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.emergency-letter-paper-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgb(148 163 184 / 13%);
+}
+
+.emergency-letter-paper-footer > span:first-child {
+  color: #74889e;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.48rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.emergency-letter-paper-footer > span:first-child svg {
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-right: 0.35rem;
+  color: #7dd3fc;
+  vertical-align: -0.15rem;
+}
+
+.emergency-letter-signal-bars {
+  display: flex;
+  height: 0.85rem;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.emergency-letter-signal-bars i {
+  width: 3px;
+  border-radius: 1px;
+  background: #38bdf8;
+  animation: emergency-signal 0.85s ease-in-out infinite alternate;
+}
+
+.emergency-letter-signal-bars i:nth-child(1) { height: 30%; }
+.emergency-letter-signal-bars i:nth-child(2) { height: 58%; animation-delay: 140ms; }
+.emergency-letter-signal-bars i:nth-child(3) { height: 82%; animation-delay: 280ms; }
+.emergency-letter-signal-bars i:nth-child(4) { height: 100%; animation-delay: 420ms; }
+
+@keyframes emergency-paper-scan {
+  0%, 100% { transform: translateX(-36%); opacity: 0.35; }
+  50% { transform: translateX(36%); opacity: 0.9; }
+}
+
+@keyframes emergency-letter-live {
+  0%, 100% { opacity: 0.55; box-shadow: 0 0 0.25rem rgb(251 113 133 / 45%); }
+  50% { opacity: 1; box-shadow: 0 0 0.75rem rgb(251 113 133 / 85%); }
+}
+
+@keyframes emergency-signal {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
+@keyframes emergency-emblem-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes emergency-emblem-hover {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes emergency-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes emergency-paper-emerge {
+  from {
+    opacity: 0;
+    transform: translate(var(--paper-origin-x), var(--paper-origin-y)) rotate(7deg) scale(0.35);
+  }
+  68% {
+    opacity: 1;
+    transform: translate(0, -0.5rem) rotate(-1.5deg) scale(1.015);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0) scale(1);
+  }
+}
+
+.emergency-briefing-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.15rem;
+}
+
+.emergency-briefing-footer > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #8290a5;
+  font-size: 0.62rem;
+}
+
+.emergency-briefing-footer > span svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: #fbbf24;
+}
+
+.emergency-briefing-footer button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0 1rem;
+  border: 1px solid #39a7c7;
+  border-radius: 0.7rem;
+  background: linear-gradient(135deg, #176b86, #12485f);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  box-shadow: 0 5px 16px rgba(8, 47, 73, 0.3);
+  cursor: pointer;
+  transition: transform 160ms ease, filter 160ms ease, box-shadow 160ms ease;
+}
+
+.emergency-briefing-footer button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.12);
+  box-shadow: 0 7px 20px rgba(14, 116, 144, 0.28);
+}
+
+.emergency-briefing-footer button:focus-visible {
+  outline: 2px solid #a5f3fc;
+  outline-offset: 3px;
+}
+
+.emergency-briefing-footer button svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
 .emergency-adventure {
   color: #e2e8f0;
   font-family: inherit;
@@ -801,6 +1682,14 @@
 }
 
 @media (max-width: 700px) {
+  .emergency-briefing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .emergency-envelope {
+    min-height: 8.5rem;
+  }
+
   .emergency-adventure-layout {
     grid-template-columns: 1fr;
   }
@@ -820,6 +1709,77 @@
 }
 
 @media (max-width: 480px) {
+  .emergency-briefing-hero {
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .emergency-briefing-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .emergency-briefing-count {
+    padding: 0.35rem 0 0.35rem 0.45rem;
+  }
+
+  .emergency-briefing-count strong {
+    font-size: 1.1rem;
+  }
+
+  .emergency-briefing-count span {
+    font-size: 0.4rem;
+  }
+
+  .emergency-briefing-card {
+    border-radius: 0.75rem;
+  }
+
+  .emergency-envelope {
+    padding: 0.85rem;
+  }
+
+  .emergency-envelope > strong {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .emergency-letter-paper {
+    max-height: 88vh;
+    padding: 0.45rem;
+  }
+
+  .emergency-letter-paper-body {
+    padding: 0.9rem 0.7rem;
+  }
+
+  .emergency-letter-live {
+    font-size: 0;
+  }
+
+  .emergency-letter-live i {
+    width: 0.48rem;
+    height: 0.48rem;
+  }
+
+  .emergency-letter-paper h3 {
+    font-size: 1.35rem;
+  }
+
+  .emergency-letter-paper-fact {
+    padding: 0.75rem;
+  }
+
+  .emergency-briefing-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .emergency-briefing-footer button {
+    width: 100%;
+  }
+
   .emergency-adventure-heading {
     align-items: center;
   }
@@ -909,6 +1869,38 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .emergency-briefing-card,
+  .emergency-envelope,
+  .emergency-envelope::before,
+  .emergency-envelope-flap,
+  .emergency-envelope-seal,
+  .emergency-letter-paper,
+  .emergency-letter-paper::after,
+  .emergency-letter-paper-header button,
+  .emergency-letter-live i,
+  .emergency-letter-fact-icon > i,
+  .emergency-letter-emblem-art,
+  .emergency-letter-signal-bars i,
+  .emergency-briefing-footer button {
+    transition: none;
+  }
+
+  .emergency-letter-backdrop,
+  .emergency-letter-paper {
+    animation: none;
+  }
+
+  .emergency-letter-paper::after,
+  .emergency-letter-live i,
+  .emergency-letter-fact-icon > i,
+  .emergency-letter-fact-orbit,
+  .emergency-letter-emblem-orbit,
+  .emergency-letter-signal-icon::before,
+  .emergency-letter-emblem-art,
+  .emergency-letter-signal-bars i {
+    animation: none;
+  }
+
   .emergency-scene-hazard,
   .emergency-adventure-complete {
     animation: none;

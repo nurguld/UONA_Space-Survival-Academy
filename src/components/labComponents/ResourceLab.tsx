@@ -16,6 +16,7 @@ import { useLanguage, type Language } from '../../context/LanguageContext'
 import { handleInteractiveClick } from '../../game/sound'
 import { LabTransitionOverlay } from '../LabTransition'
 import { useLabTransition } from '../../hooks/useLabTransition'
+import LabStationBadge from './LabStationBadge'
 import ResourceLabGuide from './ResourceLabGuide'
 
 const RESOURCE_LABELS: Record<'water' | 'energy' | 'oxygen' | 'food', Record<Language, string>> = {
@@ -151,13 +152,16 @@ export default function ResourceLab() {
       <LabTransitionOverlay visible={isRocketFlying} />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-cyan-800/50 pb-4 gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-wider text-white">
-            {pick('💧 RESOURCE MANAGEMENT LAB', '💧 KAYNAK YÖNETİM LABORATUVARI')}
-          </h2>
-          <p className="text-sm text-slate-400">
-            {pick('Episode 01: The Last Crate of Supplies', 'Bölüm 01: Son İkmal Sandığı')}
-          </p>
+        <div className="lab-station-heading">
+          <LabStationBadge station="resources" />
+          <div>
+            <h2 className="text-2xl font-bold tracking-wider text-white">
+              {pick('RESOURCE MANAGEMENT LAB', 'KAYNAK YÖNETİM LABORATUVARI')}
+            </h2>
+            <p className="text-sm text-slate-400">
+              {pick('Episode 01: The Last Crate of Supplies', 'Bölüm 01: Son İkmal Sandığı')}
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">

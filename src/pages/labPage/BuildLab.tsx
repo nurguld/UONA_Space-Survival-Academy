@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import LanguageToggle from '../../components/LanguageToggle'
+import LabStationBadge from '../../components/labComponents/LabStationBadge'
 import ModuleSelector from '../../components/labComponents/ModuleSelector'
 import ModuleIllustration from '../../components/labComponents/ModuleIllustration'
 import BuildGrid, { type GridCell } from '../../components/labComponents/BuildGrid'
@@ -328,21 +330,23 @@ export default function BuildLab() {
           <span className="build-brand">JUNIOR SPACE ACADEMY</span>
 
           <div className="build-nav-actions">
-            <Link
-              className="build-back-button"
-              to="/labs"
-              aria-label={pick('Back to labs', 'Laboratuvarlara dön')}
-            >
-              {pick('← BACK', '← GERİ')}
-            </Link>
             <span className="build-nav-label">{pick('BUILD LAB / 01', 'İNŞA LABI / 01')}</span>
             <LanguageToggle />
           </div>
         </nav>
+        <Link
+          className="lab-back-button build-back-button"
+          to="/labs"
+          aria-label={pick('Back to labs', 'Laboratuvarlara dön')}
+        >
+          <ArrowLeft aria-hidden="true" />
+          <span>{pick('BACK', 'GERİ')}</span>
+        </Link>
 
         <section className="build-lab-panel">
           <header className="build-header">
-            <div className="build-lab-heading">
+            <div className="build-lab-heading lab-station-heading">
+              <LabStationBadge station="build" />
               <h1>{pick('Habitat Build Lab', 'Habitat İnşa Laboratuvarı')}</h1>
             </div>
             <div
@@ -492,21 +496,6 @@ export default function BuildLab() {
                                 'Snap-together neighbors are a game rule. Real spacecraft connect systems with equipment and wiring, not a 4×4 tile map.',
                                 'Yan yana bağlantı bir oyun kuralıdır. Gerçek uzay araçları sistemleri 4×4 karo haritası yerine kablolama ve ekipmanlarla bağlar.',
                               )}
-                            </small>
-                          </div>
-                          <div className="module-game-note">
-                            <strong>{pick('YOUR GAME-BUILD CLUE', 'OYUN İNŞA İPUCU')}</strong>
-                            <p>{module.gameRule}</p>
-                            <small>
-                              {module.energyOutput > 0
-                                ? pick(
-                                    `SIMULATION: +${module.energyOutput} ENERGY OUTPUT`,
-                                    `SİMÜLASYON: +${module.energyOutput} ENERJİ ÇIKIŞI`,
-                                  )
-                                : pick(
-                                    `SIMULATION: ${module.energyDemand} ENERGY USE`,
-                                    `SİMÜLASYON: ${module.energyDemand} ENERJİ TÜKETİMİ`,
-                                  )}
                             </small>
                           </div>
                         </div>

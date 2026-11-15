@@ -5,7 +5,7 @@ import Game from './pages/gamePages/Game'
 import Resources from './pages/gamePages/Resources'
 import Result from './pages/gamePages/Result'
 import BuildLab from './pages/labPage/BuildLab'
-import LabsHub from './pages/labPage/lab'
+import LabsHub, { LabWorkspace } from './pages/labPage/lab'
 
 export default function App() {
   return (
@@ -16,6 +16,7 @@ export default function App() {
       <Route path="/sonuc" element={<Result />} />
       <Route path="/kaynaklar" element={<Resources />} />
       <Route path="/labs" element={<LabsHub />} />
+      <Route path="/labs/:labId" element={<LabWorkspace />} />
       <Route path="/labs/build" element={<BuildLab />} />
     </Routes>
   )

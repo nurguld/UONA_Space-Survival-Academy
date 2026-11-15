@@ -54,29 +54,7 @@
 }
 
 .build-back-button {
-  display: inline-flex;
-  min-height: 36px;
-  align-items: center;
-  padding: 0 12px;
-  border: 1px solid rgb(73 207 255 / 55%);
-  background: rgb(16 26 52 / 85%);
-  color: #bcefff;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-decoration: none;
-  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
-}
-
-.build-back-button:hover {
-  border-color: #49cfff;
-  background: rgb(48 183 241 / 16%);
-  color: #fff;
-}
-
-.build-back-button:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 3px;
+  margin-top: 24px;
 }
 
 .build-header {
@@ -2588,6 +2566,24 @@
   .grid-cell {
     border-width: 1px;
   }
+}
+
+/* Keep the Build Lab back row aligned with the shared lab workspace header. */
+.build-lab {
+  padding-right: 16px;
+  padding-left: 16px;
+}
+
+.build-container {
+  max-width: 72rem;
+}
+
+.build-navbar {
+  height: 65px;
+}
+
+.build-back-button {
+  margin-top: 20px;
 }
 
 .build-grid {

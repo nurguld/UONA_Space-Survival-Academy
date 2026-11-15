@@ -22,6 +22,58 @@ body {
   font-family: var(--font-body);
 }
 
+body .labs-page :is(h1, h2, h3, h4, h5, h6),
+body .build-lab :is(h1, h2, h3, h4, h5, h6),
+body .emergency-letter-paper h3,
+body .resource-depletion-dialog h3 {
+  font-family: var(--font-body, sans-serif);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+body .labs-page .lab-station-heading :is(h1, h2),
+body .build-lab .lab-station-heading :is(h1, h2) {
+  letter-spacing: 0.12em;
+}
+
+.lab-back-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid rgb(125 211 252 / 32%);
+  border-radius: 8px;
+  background: rgb(13 23 40 / 88%);
+  color: #c5d1e1;
+  font: 700 12px var(--font-body, sans-serif);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.lab-back-button:hover,
+.lab-back-button:focus-visible {
+  border-color: rgb(56 189 248 / 65%);
+  background: #12243a;
+  color: #fff;
+}
+
+.lab-back-button:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.lab-back-button svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
 dialog:modal {
   overscroll-behavior: contain;
 }

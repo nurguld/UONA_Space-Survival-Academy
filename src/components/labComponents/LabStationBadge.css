@@ -1,0 +1,47 @@
+.lab-station-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.lab-station-badge {
+  display: grid;
+  width: 3.25rem;
+  height: 3.25rem;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--station-accent, #38bdf8) 42%, transparent);
+  border-radius: 0.8rem;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--station-accent, #38bdf8) 18%, transparent), transparent 68%),
+    linear-gradient(145deg, #172841, #0b1424);
+  box-shadow:
+    inset 0 1px rgb(255 255 255 / 7%),
+    0 0 1.1rem color-mix(in srgb, var(--station-accent, #38bdf8) 12%, transparent);
+}
+
+.lab-station-badge img {
+  width: 100%;
+  height: 100%;
+  padding: 0.08rem;
+  object-fit: contain;
+  filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--station-accent, #38bdf8) 24%, transparent));
+}
+
+.lab-station-badge-build { --station-accent: #fbbf24; }
+.lab-station-badge-resources { --station-accent: #38bdf8; }
+.lab-station-badge-emergency { --station-accent: #fb7185; }
+.lab-station-badge-systems { --station-accent: #a78bfa; }
+
+@media (max-width: 480px) {
+  .lab-station-heading {
+    gap: 0.65rem;
+  }
+
+  .lab-station-badge {
+    width: 2.8rem;
+    height: 2.8rem;
+  }
+}
