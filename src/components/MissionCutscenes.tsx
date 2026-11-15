@@ -5,7 +5,7 @@ import cutscene3SpaceImg from '../assets/cutscene-3-space.jpg'
 import cutscene4LunarBaseImg from '../assets/cutscene-4-lunarbase.jpg'
 import spriteAstronautImg from '../assets/sprite-astronaut.png'
 import spriteRocketImg from '../assets/sprite-rocket.png'
-import { playAlert, playLaunch } from '../game/sound'
+import { playAlert, playLaunch, stopLaunch } from '../game/sound'
 
 interface LaunchCutsceneProps {
   isOpen: boolean
@@ -731,6 +731,7 @@ function LaunchCutsceneContent({
     window.addEventListener('keydown', onKeyDown)
 
     return () => {
+      stopLaunch()
       window.cancelAnimationFrame(rafId)
       window.removeEventListener('keydown', onKeyDown)
     }
@@ -757,7 +758,7 @@ function LaunchCutsceneContent({
       role="dialog"
       aria-modal="true"
       aria-label="Görev Başlangıç Sinematiği"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#030612]/94 backdrop-blur-md p-3 sm:p-5"
+      className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#030612]/94 backdrop-blur-md p-3 sm:p-5"
     >
       <div className="w-full max-w-4xl rounded-2xl border-2 border-cyan-400/50 bg-[#070E24] shadow-[0_0_70px_rgba(56,189,248,0.3)] overflow-hidden">
         {/* Üst telemetri şeridi */}
@@ -1170,7 +1171,7 @@ function DayTransitionContent({
       role="status"
       aria-live="polite"
       onClick={() => onCompleteRef.current()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#030612]/90 backdrop-blur-md p-3 sm:p-5 cursor-pointer"
+      className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#030612]/90 backdrop-blur-md p-3 sm:p-5 cursor-pointer"
     >
       <div
         className={`relative w-full max-w-3xl rounded-2xl border-2 bg-[#060D20] overflow-hidden ${frameClass}`}
@@ -1334,7 +1335,7 @@ function VictoryCutsceneContent({
       role="dialog"
       aria-modal="true"
       aria-label="30 Gün Zafer Kutlaması"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#030714]/92 backdrop-blur-md p-4"
+      className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#030714]/92 backdrop-blur-md p-4"
     >
       <div className="w-full max-w-2xl rounded-3xl border-2 border-emerald-400/70 bg-[#08132B] shadow-[0_0_70px_rgba(52,211,153,0.35)] overflow-hidden flex flex-col items-center text-center">
         <canvas ref={canvasRef} width={720} height={280} className="w-full h-auto block" />

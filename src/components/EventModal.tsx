@@ -155,15 +155,15 @@ export default function EventModal({
       aria-labelledby={titleId}
       onCancel={(e) => e.preventDefault()}
       {...({ closedby: 'none' } as Record<string, string>)}
-      className="m-auto w-[min(94vw,42rem)] rounded-2xl border-2 border-white/40 bg-[#081228]/95 backdrop-blur-xl text-[#E6EAF5] shadow-[0_0_40px_rgba(255,255,255,0.12)] p-5 sm:p-6"
+      className="m-auto w-[min(94vw,40rem)] max-h-[92dvh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-300/35 bg-gradient-to-b from-[#172133]/96 via-[#192336]/97 to-[#121A29]/98 backdrop-blur-xl text-slate-100 shadow-[0_20px_54px_rgba(4,9,20,0.72),0_0_24px_rgba(56,189,248,0.1)] p-5 sm:p-6"
     >
       {event && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3.5">
           {/* Üst Başlık + Kapsül/Dünya Görseli */}
-          <div className="flex items-start justify-between gap-4">
-            <div>
+          <div className="flex items-start justify-between gap-3.5 border-b border-slate-300/20 pb-3.5">
+            <div className="min-w-0">
               <span
-                className={`text-xs font-semibold uppercase tracking-widest ${
+                className={`text-[10px] font-bold uppercase tracking-[0.14em] ${
                   isEarthMessage ? 'text-emerald-300' : 'text-sky-400'
                 }`}
               >
@@ -171,20 +171,22 @@ export default function EventModal({
               </span>
               <h2
                 id={titleId}
-                className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-1"
+                className="text-xl sm:text-2xl font-extrabold tracking-tight text-white mt-0.5 leading-snug"
               >
                 {event.title}
               </h2>
-              <p className="text-slate-300 text-sm sm:text-base mt-1.5">
+              <p className="text-slate-300/90 text-xs sm:text-sm mt-1 leading-relaxed">
                 {event.description}
               </p>
             </div>
 
-            {isEarthMessage ? <EarthCommsIllustration /> : <EventCapsuleIllustration />}
+            <div className="hidden sm:flex w-[94px] h-[78px] rounded-xl border border-slate-300/30 bg-[#0C1424]/95 p-1.5 items-center justify-center shrink-0 shadow-inner">
+              {isEarthMessage ? <EarthCommsIllustration /> : <EventCapsuleIllustration />}
+            </div>
           </div>
 
           {/* Seçenek Kartları */}
-          <div className="flex flex-col gap-3 mt-1">
+          <div className="flex flex-col gap-2.5">
             {event.options.map((opt, index) => {
               const unlocked = isOptionUnlocked(opt, modules)
               const reqText = opt.requires
@@ -192,10 +194,10 @@ export default function EventModal({
                 : null
 
               const cardStyle = !unlocked
-                ? 'border-white/25 bg-[#070E20]/70 opacity-60 cursor-not-allowed'
+                ? 'border-slate-500/25 bg-[#0D1524]/65 opacity-60 cursor-not-allowed'
                 : reqText || opt.badge
-                  ? 'border-white/65 bg-[#0C1836]/90 hover:border-white hover:bg-[#112147] cursor-pointer'
-                  : 'border-white/35 bg-[#0A142D]/85 hover:border-white/75 hover:bg-[#101E40] cursor-pointer'
+                  ? 'border-sky-300/45 bg-[#101829]/88 hover:border-sky-300/80 hover:bg-[#17243D] cursor-pointer shadow-sm'
+                  : 'border-slate-300/25 bg-[#101829]/78 hover:border-slate-300/60 hover:bg-[#162238] cursor-pointer'
 
               return (
                 <button
@@ -204,26 +206,26 @@ export default function EventModal({
                   autoFocus={index === firstUnlockedIndex}
                   disabled={!unlocked}
                   onClick={() => onSelect(index)}
-                  className={`text-left rounded-xl border p-4 transition-all focus-visible:outline-2 focus-visible:outline-cyan-300 ${cardStyle}`}
+                  className={`text-left rounded-xl border p-3.5 sm:p-4 transition-all focus-visible:outline-2 focus-visible:outline-cyan-300 ${cardStyle}`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-base sm:text-lg font-bold text-white">
+                    <span className="text-sm sm:text-base font-extrabold text-white leading-snug">
                       {opt.label}
                     </span>
 
                     <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                       {opt.badge && unlocked && (
-                        <span className="rounded-md px-2.5 py-0.5 text-xs font-semibold border border-cyan-400/70 bg-cyan-500/20 text-cyan-200">
+                        <span className="rounded-md px-2.5 py-0.5 text-[11px] font-bold border border-cyan-300/50 bg-cyan-500/18 text-cyan-200">
                           {opt.badge}
                         </span>
                       )}
 
                       {reqText && (
                         <span
-                          className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-semibold border ${
+                          className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-[11px] font-bold border ${
                             unlocked
-                              ? 'border-emerald-400/80 bg-emerald-500/20 text-emerald-300'
-                              : 'border-amber-400/60 bg-amber-500/20 text-amber-300'
+                              ? 'border-emerald-300/55 bg-emerald-500/18 text-emerald-200'
+                              : 'border-amber-300/50 bg-amber-500/18 text-amber-200'
                           }`}
                         >
                           {!unlocked && <LockIcon />}
@@ -235,13 +237,13 @@ export default function EventModal({
                     </div>
                   </div>
 
-                  <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                  <p className="text-xs sm:text-[13px] text-slate-300/90 mt-1 leading-relaxed">
                     {opt.explanation}
                   </p>
 
-                  <div className="flex flex-wrap gap-2 mt-3">
+                  <div className="flex flex-wrap gap-1.5 mt-2.5">
                     {opt.budgetDelta && opt.budgetDelta !== 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-md border border-cyan-400/55 bg-cyan-500/20 text-cyan-200">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-md border border-cyan-300/40 bg-cyan-500/15 text-cyan-200">
                         Bütçe {opt.budgetDelta > 0 ? `+${opt.budgetDelta}` : opt.budgetDelta}p
                       </span>
                     )}
@@ -251,7 +253,7 @@ export default function EventModal({
                       return (
                         <span
                           key={resId}
-                          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-md border ${
+                          className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
                             val >= 0 ? meta.pillPositiveClass : meta.pillNegativeClass
                           }`}
                         >
@@ -264,7 +266,7 @@ export default function EventModal({
                     })}
 
                     {opt.focusModuleId && (
-                      <span className="inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-md border border-amber-400/50 bg-amber-500/15 text-amber-200">
+                      <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border border-amber-300/40 bg-amber-500/15 text-amber-200">
                         Hedef: {getModuleName(opt.focusModuleId)}
                       </span>
                     )}

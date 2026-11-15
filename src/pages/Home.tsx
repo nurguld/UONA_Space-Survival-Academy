@@ -1,12 +1,20 @@
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import lunarHeroImg from '../assets/home-lunar-hero.jpg'
 import Navbar from '../components/Navbar'
 import { useGame } from '../context/GameContext'
-import { playClick } from '../game/sound'
+import { playClick, startHomeAmbient, stopHomeAmbient } from '../game/sound'
 
 export default function Home() {
   const navigate = useNavigate()
   const { startGame } = useGame()
+
+  useEffect(() => {
+    startHomeAmbient()
+    return () => {
+      stopHomeAmbient()
+    }
+  }, [])
 
   const handleLaunch = () => {
     playClick()

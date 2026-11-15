@@ -2,7 +2,7 @@ import { useEffect, useImperativeHandle, useRef, useState, type MouseEvent, type
 import type { ActiveBuild, ModuleDef, ModuleId, ModuleLevels, SceneNavigationHandle } from '../types'
 import { isLunarNight } from '../game/engine'
 import baseSceneImg from '../assets/game-base-scene.jpg'
-import astronautImg from '../assets/sprite-astronaut.png'
+import AstronautSprite from './AstronautSprite'
 import LunarMapScene from './LunarMapScene'
 
 interface BaseSceneProps {
@@ -279,13 +279,12 @@ export default function BaseScene({
             }}
           >
             <div className="h-full w-full" style={{ transform: `scaleX(${facing})` }}>
-              <img
-                src={astronautImg}
-                alt=""
-                draggable={false}
-                className={`h-full w-full object-contain drop-shadow-[0_6px_6px_rgba(0,0,0,0.45)] ${
+              <AstronautSprite
+                walking={walking}
+                night={night}
+                className={`h-full w-full drop-shadow-[0_6px_6px_rgba(0,0,0,0.45)] ${
                   walking ? 'astro-walking' : ''
-                } ${night ? 'brightness-75' : ''}`}
+                }`}
               />
             </div>
           </div>

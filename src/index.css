@@ -85,19 +85,51 @@ dialog::backdrop {
   }
 }
 
-/* Haritada yürüyen/çalışan astronot: Ay yerçekimi zıplayışı */
+/* Haritada yürüyen/çalışan astronot: Ay yerçekimi zıplayışı + bacak adım salınımı */
 @keyframes astro-bob {
   0%,
   100% {
-    transform: translateY(0) rotate(-4deg);
+    transform: translateY(0) rotate(-3deg);
   }
   50% {
-    transform: translateY(-22%) rotate(4deg);
+    transform: translateY(-20%) rotate(3deg);
   }
 }
 
 .astro-walking {
-  animation: astro-bob 0.72s ease-in-out infinite;
+  animation: astro-bob 0.34s ease-in-out infinite;
+}
+
+@keyframes astro-stride-back {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-38deg);
+  }
+}
+
+@keyframes astro-stride-front {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(38deg);
+  }
+}
+
+.astro-leg-back {
+  transform-box: view-box;
+  transform-origin: 59.5px 186px;
+  animation: astro-stride-back 0.68s ease-in-out infinite;
+}
+
+.astro-leg-front {
+  transform-box: view-box;
+  transform-origin: 97.5px 184.5px;
+  animation: astro-stride-front 0.68s ease-in-out infinite;
 }
 
 /* Haritada mouse tıklama hedefi: yanıp sönen aşağı bakan ok ve zemin halkası */

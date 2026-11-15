@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { playClick } from '../game/sound'
+import { playBookPage, playClick } from '../game/sound'
 import type { DayLog, ResourceId } from '../types'
 
 interface LogbookModalProps {
@@ -140,7 +140,11 @@ function LogbookDrawerContent({
                   key={item.day}
                   type="button"
                   onClick={() => {
-                    playClick()
+                    if (idx !== safeIndex) {
+                      playBookPage()
+                    } else {
+                      playClick()
+                    }
                     setPageIndex(idx)
                   }}
                   className={`relative text-xs font-bold px-3 py-1.5 rounded-t-lg border-t border-x cursor-pointer transition-colors ${
@@ -320,7 +324,7 @@ function LogbookDrawerContent({
           type="button"
           disabled={safeIndex <= 0}
           onClick={() => {
-            playClick()
+            playBookPage()
             setPageIndex((i) => Math.max(0, i - 1))
           }}
           className="px-3.5 h-8 rounded-xl text-xs font-semibold border border-slate-300/45 bg-[#121B2E]/90 text-slate-100 hover:bg-[#223252] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
@@ -336,7 +340,7 @@ function LogbookDrawerContent({
           type="button"
           disabled={safeIndex >= history.length - 1}
           onClick={() => {
-            playClick()
+            playBookPage()
             setPageIndex((i) => Math.min(history.length - 1, i + 1))
           }}
           className="px-3.5 h-8 rounded-xl text-xs font-semibold border border-slate-300/45 bg-[#121B2E]/90 text-slate-100 hover:bg-[#223252] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"

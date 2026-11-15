@@ -9,9 +9,9 @@ import {
 } from 'react'
 import mapCursorImg from '../assets/map-cursor.png'
 import mapTerrainWideImg from '../assets/map-terrain-wide.jpg'
-import astronautImg from '../assets/sprite-astronaut.png'
 import { MODULE_SPRITES } from '../game/moduleSprites'
 import { playClick } from '../game/sound'
+import AstronautSprite from './AstronautSprite'
 import BuildingSprite from './BuildingSprite'
 import type {
   ActiveBuild,
@@ -411,6 +411,8 @@ export default function LunarMapScene({
   const astroOuterRef = useRef<HTMLDivElement>(null)
   const astroInnerRef = useRef<HTMLDivElement>(null)
   const astroShadowRef = useRef<HTMLSpanElement>(null)
+  const astroFrontLegRef = useRef<SVGGElement>(null)
+  const astroBackLegRef = useRef<SVGGElement>(null)
   const minimapAstroRef = useRef<HTMLSpanElement>(null)
   const minimapCamRef = useRef<HTMLSpanElement>(null)
   const dustElsRef = useRef<(SVGEllipseElement | null)[]>([])
@@ -419,7 +421,7 @@ export default function LunarMapScene({
   const camRef = useRef<{ x: number; y: number }>({ x: INITIAL_CAM.x, y: INITIAL_CAM.y })
   const facingRef = useRef<1 | -1>(1)
   const hopPhaseRef = useRef(0)
-  const hopVisualRef = useRef({ hop: 0, tilt: 0 })
+  const hopVisualRef = useRef({ hop: 0, tilt: 0, stride: 0 })
   const dustRef = useRef<
     { x: number; y: number; vx: number; vy: number; age: number; maxAge: number; size: number }[]
   >([
@@ -491,6 +493,7 @@ export default function LunarMapScene({
       y: number,
       hop: number,
       tilt: number,
+      stride: number,
       face: 1 | -1,
       cx: number,
       cy: number,
@@ -509,10 +512,25 @@ export default function LunarMapScene({
         astroInnerRef.current.style.transform = `translate3d(0, -${hop.toFixed(2)}%, 0) rotate(${(face * tilt).toFixed(2)}deg) scaleX(${face})`
       }
       if (astroShadowRef.current) {
-        const s = Math.max(0.54, 1 - hop * 0.012)
-        const op = Math.max(0.25, 0.62 - hop * 0.01)
+        const s = Math.max(0.54, 1 - hop * 0.013)
+        const op = Math.max(0.24, 0.62 - hop * 0.011)
         astroShadowRef.current.style.transform = `translateX(-50%) scale(${s.toFixed(3)})`
         astroShadowRef.current.style.opacity = op.toFixed(3)
+      }
+      const frontAngle = stride * 38
+      const backAngle = -stride * 38
+
+      if (astroFrontLegRef.current) {
+        astroFrontLegRef.current.setAttribute(
+          'transform',
+          `rotate(${frontAngle.toFixed(2)} 97.5 184.5)`,
+        )
+      }
+      if (astroBackLegRef.current) {
+        astroBackLegRef.current.setAttribute(
+          'transform',
+          `rotate(${backAngle.toFixed(2)} 59.5 186)`,
+        )
       }
       if (minimapAstroRef.current) {
         minimapAstroRef.current.style.left = `${(x / WORLD_W) * 100}%`
@@ -529,6 +547,7 @@ export default function LunarMapScene({
       astroRef.current.y,
       hopVisualRef.current.hop,
       hopVisualRef.current.tilt,
+      hopVisualRef.current.stride,
       facingRef.current,
       camRef.current.x,
       camRef.current.y,
@@ -612,26 +631,32 @@ export default function LunarMapScene({
 
       if (isMovingNow) {
         const prevPhase = hopPhaseRef.current
-        const nextPhase = prevPhase + stepMovedDist * 0.15
+        const nextPhase = prevPhase + stepMovedDist * 0.19
         hopPhaseRef.current = nextPhase
 
         if (Math.floor(prevPhase / Math.PI) !== Math.floor(nextPhase / Math.PI)) {
           spawnLandingDust(astroRef.current.x, astroRef.current.y)
         }
 
-        const hop = Math.abs(Math.sin(nextPhase)) * 32
-        const tilt = -Math.cos(nextPhase) * 5.5
-        hopVisualRef.current = { hop, tilt }
+        const hop = Math.abs(Math.sin(nextPhase)) * 28
+        const stride = (1 - Math.cos(nextPhase)) * 0.5
+        const tilt = -Math.cos(nextPhase) * 4.5
+        hopVisualRef.current = { hop, tilt, stride }
         motionChanged = true
-      } else if (hopVisualRef.current.hop > 0.25 || Math.abs(hopVisualRef.current.tilt) > 0.15) {
-        const decay = Math.pow(0.01, dt)
+      } else if (
+        hopVisualRef.current.hop > 0.15 ||
+        Math.abs(hopVisualRef.current.tilt) > 0.1 ||
+        Math.abs(hopVisualRef.current.stride) > 0.02
+      ) {
+        const decay = Math.pow(0.004, dt)
         const nextHop = hopVisualRef.current.hop * decay
         const nextTilt = hopVisualRef.current.tilt * decay
-        if (nextHop <= 0.25 && Math.abs(nextTilt) <= 0.15) {
-          hopVisualRef.current = { hop: 0, tilt: 0 }
+        const nextStride = hopVisualRef.current.stride * decay
+        if (nextHop <= 0.15 && Math.abs(nextTilt) <= 0.1 && Math.abs(nextStride) <= 0.02) {
+          hopVisualRef.current = { hop: 0, tilt: 0, stride: 0 }
           hopPhaseRef.current = 0
         } else {
-          hopVisualRef.current = { hop: nextHop, tilt: nextTilt }
+          hopVisualRef.current = { hop: nextHop, tilt: nextTilt, stride: nextStride }
         }
         motionChanged = true
       }
@@ -657,6 +682,7 @@ export default function LunarMapScene({
           astroRef.current.y,
           hopVisualRef.current.hop,
           hopVisualRef.current.tilt,
+          hopVisualRef.current.stride,
           facingRef.current,
           camRef.current.x,
           camRef.current.y,
@@ -1095,11 +1121,11 @@ export default function LunarMapScene({
                   className="pointer-events-none absolute -right-4 bottom-1 flex items-end -space-x-2"
                 >
                   {Array.from({ length: Math.min(2, build.assignedCrew) }).map((_, idx) => (
-                    <img
+                    <AstronautSprite
                       key={idx}
-                      src={astronautImg}
-                      alt=""
-                      className="h-9 w-auto object-contain astro-walking drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]"
+                      walking
+                      night={night}
+                      className="h-9 aspect-[177/260] astro-walking drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]"
                     />
                   ))}
                 </div>
@@ -1130,7 +1156,7 @@ export default function LunarMapScene({
           )
         })}
 
-        {/* 2D Haritada Düşük Yerçekiminde Zıplayarak Gezen Astronot */}
+        {/* 2D Haritada Bacak Adımıyla Yürüyen Astronot */}
         <div
           ref={astroOuterRef}
           aria-hidden="true"
@@ -1140,20 +1166,18 @@ export default function LunarMapScene({
           <span
             ref={astroShadowRef}
             style={ASTRO_SHADOW_STATIC_STYLE}
-            className="absolute bottom-[2%] left-1/2 w-[78%] h-[18%] rounded-full bg-[#020617] blur-[1px]"
+            className="absolute bottom-[3%] left-1/2 w-[66%] h-[16%] rounded-full bg-[#020617] blur-[1px]"
           />
           <div
             ref={astroInnerRef}
             className="relative h-full w-full"
             style={ASTRO_INNER_STATIC_STYLE}
           >
-            <img
-              src={astronautImg}
-              alt=""
-              draggable={false}
-              className={`h-full w-full object-contain drop-shadow-[0_4px_5px_rgba(0,0,0,0.45)] ${
-                night ? 'brightness-85' : ''
-              }`}
+            <AstronautSprite
+              night={night}
+              frontLegRef={astroFrontLegRef}
+              backLegRef={astroBackLegRef}
+              className="h-full w-full drop-shadow-[0_4px_5px_rgba(0,0,0,0.45)]"
             />
           </div>
         </div>

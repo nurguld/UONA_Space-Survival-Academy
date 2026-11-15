@@ -29,13 +29,16 @@ import {
 import {
   getSoundMuted,
   playAlert,
+  playBookPage,
   playClick,
   playLose,
+  playModuleOpen,
   playNextDay,
   playSignal,
   playUpgrade,
   playUpgradeComplete,
   playWin,
+  preloadGameSounds,
   setSoundMuted,
 } from '../../game/sound'
 import type { ModuleId, ResourceId, SceneNavigationHandle } from '../../types'
@@ -69,7 +72,6 @@ export default function Game() {
   const {
     state,
     rules,
-    tutorial,
     startGame,
     startBuild,
     adjustBuildCrew,
@@ -82,7 +84,6 @@ export default function Game() {
   const [isCrewOpen, setIsCrewOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const sceneNavRef = useRef<SceneNavigationHandle | null>(null)
-  const [viewMode, setViewMode] = useState<'map' | 'classic'>('map')
   const [introPhase, setIntroPhase] = useState<IntroPhase>(() =>
     state.day === 1 &&
     state.history.length === 1 &&
@@ -96,6 +97,10 @@ export default function Game() {
   const [showVictoryCutscene, setShowVictoryCutscene] = useState(false)
   const [focusHintModuleId, setFocusHintModuleId] = useState<ModuleId | null>(null)
   const [muted, setMuted] = useState(() => getSoundMuted())
+
+  useEffect(() => {
+    preloadGameSounds()
+  }, [])
 
   const prevRef = useRef({
     status: state.status,
@@ -237,21 +242,9 @@ export default function Game() {
     state.crewCount,
   )
   const { interactions } = calculateSystemEffects(state.resources)
-  const activeTutorial = tutorial.find((t) => t.day === state.day)
   const isPlaying = state.status === 'playing'
 
-  let tutorialModuleId: ModuleId | null = null
-  if (isPlaying) {
-    if (state.day === 1 && state.modules.solar <= 1 && !state.activeBuilds.solar) {
-      tutorialModuleId = 'solar'
-    } else if (state.day === 2 && state.modules.exercise === 0 && !state.activeBuilds.exercise) {
-      tutorialModuleId = 'exercise'
-    } else if (state.day === 3 && state.modules.battery === 0 && !state.activeBuilds.battery) {
-      tutorialModuleId = 'battery'
-    }
-  }
-
-  const highlightedModuleId = focusHintModuleId ?? tutorialModuleId
+  const highlightedModuleId = focusHintModuleId
   const isCutsceneActive =
     introPhase !== 'done' || dayTransitionDay !== null || showVictoryCutscene
   const visibleEvent = isCutsceneActive || daySummary ? null : state.activeEvent
@@ -260,8 +253,6 @@ export default function Game() {
 
   const night = isLunarNight(state.day)
   const daysUntilNight = rules.lunarNightStartDay - state.day
-
-  const showTutorialHint = isPlaying && activeTutorial && highlightedModuleId !== null
 
   return (
     <div className="relative w-full h-dvh min-h-[580px] overflow-hidden bg-[#040814] text-white">
@@ -277,11 +268,11 @@ export default function Game() {
           budget={state.budget}
           disabled={controlsLocked}
           highlightedModuleId={highlightedModuleId}
-          viewMode={viewMode}
+          viewMode="map"
           hideHeader
           navigationRef={sceneNavRef}
           onSelectModule={(id) => {
-            playClick()
+            playModuleOpen(id)
             setIsCrewOpen(false)
             setIsLogOpen(false)
             setIsSettingsOpen(false)
@@ -379,39 +370,6 @@ export default function Game() {
                   <div className="px-2 py-1 text-[11px] text-slate-400 flex items-center justify-between border-b border-white/10 pb-1.5">
                     <span>Zorluk</span>
                     <strong className="text-slate-100">{DIFFICULTY_CONFIG[state.difficulty].label}</strong>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-1 p-0.5 rounded-lg bg-white/5 border border-white/15">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        playClick()
-                        setViewMode('map')
-                        setIsSettingsOpen(false)
-                      }}
-                      className={`px-2 py-1.5 rounded-md font-semibold cursor-pointer transition-colors ${
-                        viewMode === 'map'
-                          ? 'bg-cyan-400 text-slate-950'
-                          : 'text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      🗺️ Harita
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        playClick()
-                        setViewMode('classic')
-                        setIsSettingsOpen(false)
-                      }}
-                      className={`px-2 py-1.5 rounded-md font-semibold cursor-pointer transition-colors ${
-                        viewMode === 'classic'
-                          ? 'bg-cyan-400 text-slate-950'
-                          : 'text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      🏛️ Klasik
-                    </button>
                   </div>
 
                   <button
@@ -575,43 +533,19 @@ export default function Game() {
         </div>
       )}
 
-      {/* Alt Kontrol Satırı: Ortada İpucu Barı + Sağda Günlük Kitabı & Günü Bitir */}
-      <div
-        className={`pointer-events-none absolute bottom-3 left-3 right-3 sm:left-4 sm:right-4 z-[945] flex items-end justify-end lg:justify-between gap-3 ${
-          viewMode === 'map' ? 'sm:pl-[344px]' : ''
-        }`}
-      >
-        {/* İpucu veya Aktif Gün Rehberi */}
-        <div
-          className={`hidden lg:flex flex-1 min-w-0 items-center gap-2 rounded-xl border px-3.5 py-2 text-[11px] backdrop-blur-md shadow-md ${
-            showTutorialHint
-              ? 'border-amber-300/55 bg-[#1B140C]/88 text-amber-100'
-              : 'border-white/20 bg-[#09132A]/80 text-slate-200'
-          }`}
-        >
-          {showTutorialHint ? (
-            <p className="truncate">
-              <strong className="text-amber-300 uppercase tracking-wider mr-1.5">
-                {activeTutorial.title}:
-              </strong>
-              {activeTutorial.message}
-            </p>
-          ) : (
-            <p className="truncate">
-              İpucu: İstasyonların üzerine tıklayarak nasıl çalıştığını öğrenebilir, puan ve
-              astronot atayarak inşaat başlatabilirsin.
-            </p>
-          )}
-        </div>
-
-        {/* Sağ Alt: Günlük Defteri İkonu + Günü Bitir CTA */}
+      {/* Sağ Alt Kontrol Satırı: Günlük Kitabı & Günü Bitir */}
+      <div className="pointer-events-none absolute bottom-3 right-3 sm:right-4 z-[945] flex items-end justify-end gap-2.5">
         <div className="pointer-events-auto flex items-end gap-2.5 shrink-0">
           <button
             type="button"
             data-logbook-toggle="true"
             aria-expanded={isLogOpen}
             onClick={() => {
-              playClick()
+              if (isLogOpen) {
+                playClick()
+              } else {
+                playBookPage()
+              }
               setSelectedModuleId(null)
               setIsCrewOpen(false)
               setIsSettingsOpen(false)

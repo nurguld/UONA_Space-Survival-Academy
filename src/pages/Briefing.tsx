@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import briefingAstronautImg from '../assets/briefing-astronaut.png'
@@ -76,17 +76,23 @@ function ChainArrow() {
 export default function Briefing() {
   const navigate = useNavigate()
   const { rules, startGame } = useGame()
+  const nameInputRef = useRef<HTMLInputElement>(null)
   const [commanderName, setCommanderName] = useState(
     () => localStorage.getItem('jsa_commander') ?? '',
   )
+  const [nameError, setNameError] = useState(false)
+
+  const trimmedName = commanderName.trim()
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     playClick()
-    const trimmed = commanderName.trim()
-    if (trimmed) {
-      localStorage.setItem('jsa_commander', trimmed)
+    if (!trimmedName) {
+      setNameError(true)
+      nameInputRef.current?.focus()
+      return
     }
+    localStorage.setItem('jsa_commander', trimmedName)
     startGame()
     navigate('/oyun')
   }
@@ -256,36 +262,59 @@ export default function Briefing() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-1.5">
             <label htmlFor="commander-name" className="text-sm font-semibold text-white">
               Komutan Adı{' '}
-              <span className="text-slate-400 text-xs font-normal">
-                (Sertifika için isteğe bağlı)
+              <span className="text-sky-300 text-xs font-medium">
+                (Başlamak ve sertifika için gerekli)
               </span>
             </label>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <input
+                ref={nameInputRef}
                 id="commander-name"
                 name="commanderName"
                 type="text"
                 autoComplete="name"
                 maxLength={40}
                 enterKeyHint="done"
+                aria-invalid={nameError && !trimmedName}
                 aria-describedby="commander-help"
                 value={commanderName}
-                onChange={(e) => setCommanderName(e.target.value)}
-                placeholder="Örn. Selin Yılmaz"
-                className="flex-1 min-h-11 px-4 rounded-xl text-sm sm:text-base bg-[#070E1E] border border-slate-300/30 text-white placeholder:text-slate-500 focus-visible:outline-2 focus-visible:outline-cyan-300"
+                onChange={(e) => {
+                  setCommanderName(e.target.value)
+                  if (nameError && e.target.value.trim()) {
+                    setNameError(false)
+                  }
+                }}
+                placeholder="Örn. Ahmet Demir"
+                className={`flex-1 min-h-11 px-4 rounded-xl text-sm sm:text-base bg-[#070E1E] border text-white placeholder:text-slate-500 focus-visible:outline-2 focus-visible:outline-cyan-300 transition-colors ${
+                  nameError && !trimmedName
+                    ? 'border-rose-400/80 ring-1 ring-rose-400/35'
+                    : 'border-slate-300/30'
+                }`}
               />
 
               <button
                 type="submit"
-                className="px-7 min-h-11 rounded-xl text-sm sm:text-base font-bold bg-gradient-to-r from-[#22C9EB] to-[#38BDF8] text-slate-950 shadow-[0_0_24px_rgba(34,211,238,0.4)] hover:brightness-110 cursor-pointer transition-all shrink-0"
+                disabled={!trimmedName}
+                className={`px-7 min-h-11 rounded-xl text-sm sm:text-base font-bold transition-all shrink-0 ${
+                  trimmedName
+                    ? 'bg-gradient-to-r from-[#0EA5D9] to-[#22C9EB] text-white shadow-[0_0_24px_rgba(34,211,238,0.4)] hover:brightness-110 cursor-pointer'
+                    : 'border border-slate-500/30 bg-[#1A2436]/85 text-slate-400 cursor-not-allowed'
+                }`}
               >
                 Görevi Başlat →
               </button>
             </div>
 
-            <span id="commander-help" className="text-xs text-slate-400 mt-0.5">
-              Görev sonunda alacağın Komutan Sertifikasında ve sonuç raporunda bu isim görünür.
+            <span
+              id="commander-help"
+              className={`text-xs mt-0.5 ${
+                !trimmedName ? 'text-sky-300/90' : 'text-slate-400'
+              }`}
+            >
+              {!trimmedName
+                ? 'Göreve başlamak için önce Komutan Adını yazmalısın. Bu isim Komutan Sertifikanda görünecek.'
+                : 'Görev sonunda alacağın Komutan Sertifikasında ve sonuç raporunda bu isim görünür.'}
             </span>
           </form>
         </section>
