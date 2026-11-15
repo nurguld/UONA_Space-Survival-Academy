@@ -1,0 +1,166 @@
+[
+  {
+    "day": 2,
+    "id": "earth-day-2",
+    "kind": "earth",
+    "dayLabel": "Gün 2 · Dünya'dan Mesaj",
+    "title": "Enerji Üretimi Yetersiz Kalabilir",
+    "description": "Genç astronot, Ay üssünden gelen ilk telemetri raporlarını inceledik. Üs tüketimi artarken enerji depomuz azalmadan önce önlem almalıyız. Ne yapmak istersin?",
+    "options": [
+      {
+        "label": "Güneş panelini güçlendirmeye odaklan",
+        "badge": "Önerilen",
+        "focusModuleId": "solar",
+        "effects": { "energy": 2 },
+        "budgetDelta": 1,
+        "explanation": "Dünya mühendislik ekibi panel kalibrasyonunu güncelledi (+1 bütçe) ve sahnede Güneş Paneli işaretlendi — kurup Sv. 2'ye çıkar!"
+      },
+      {
+        "label": "Gece olmadan batarya altyapısını hazırla",
+        "focusModuleId": "battery",
+        "effects": { "energy": -2 },
+        "budgetDelta": 1,
+        "explanation": "Enerji depolama planı onaylandı (+1 bütçe) ve Batarya istasyonu işaretlendi."
+      }
+    ]
+  },
+  {
+    "day": 5,
+    "id": "earth-day-5",
+    "kind": "earth",
+    "dayLabel": "Gün 5 · Dünya'dan Mesaj",
+    "title": "Hidroponik Sera Kontrol Raporu",
+    "description": "Dünya tarım uzmanları ilk filizlerin büyüdüğünü gördü! Ancak oksijen ve su dengesi korunmazsa bitkiler yavaşlar.",
+    "options": [
+      {
+        "label": "Sera için ekstra besin çözeltisi hazırla",
+        "focusModuleId": "greenhouse",
+        "effects": { "oxygen": -3, "food": 5 },
+        "explanation": "Bir miktar su kullanıldı ama bitkiler güçlendi; Sera'yı yükseltmek kalıcı gıda artışı sağlar."
+      },
+      {
+        "label": "Otomatik sulama döngüsünü çalıştır",
+        "badge": "Modül Bonusu",
+        "requires": { "moduleId": "greenhouse", "minLevel": 2 },
+        "effects": { "food": 10, "health": 3 },
+        "explanation": "Sv. 2 Sera sayesinde hiç su kaybetmeden bol taze hasat alındı!"
+      }
+    ]
+  },
+  {
+    "day": 9,
+    "id": "earth-day-9",
+    "kind": "earth",
+    "dayLabel": "Gün 9 · Dünya'dan Mesaj",
+    "title": "Düşük Yerçekimi Sağlık Taraması",
+    "description": "Ay'da yerçekimi Dünya'nın sadece altıda biridir. Mürettebat kemik ve kas gücünü korumak için düzenli egzersiz yapmalı.",
+    "options": [
+      {
+        "label": "Ekibin dinlenme saatini uzat",
+        "focusModuleId": "exercise",
+        "effects": { "health": 4, "energy": -4 },
+        "explanation": "Kısa vadede dinlenme sağladı, fakat kalıcı koruma için Egzersiz Ekipmanını güçlendirmelisin."
+      },
+      {
+        "label": "Tam direnç antrenman programını başlat",
+        "badge": "Modül Bonusu",
+        "requires": { "moduleId": "exercise", "minLevel": 2 },
+        "effects": { "health": 10, "food": -2 },
+        "explanation": "Sv. 2 Egzersiz istasyonu sayesinde astronotlar tam formda!"
+      }
+    ]
+  },
+  {
+    "day": 14,
+    "id": "earth-day-14",
+    "kind": "earth",
+    "dayLabel": "Gün 14 · Dünya'dan Acil Uyarı",
+    "title": "Yarın 14 Günlük Ay Gecesi Başlıyor!",
+    "description": "Yarın güneş batacak ve tam 14 Dünya günü boyunca güneş panelleri sıfır elektrik üretecek. Üssü geceye hazırlamak için son gün!",
+    "options": [
+      {
+        "label": "Gereksiz ışıkları kıs ve bataryaya odaklan",
+        "badge": "Önerilen",
+        "focusModuleId": "battery",
+        "effects": { "energy": 4 },
+        "budgetDelta": 1,
+        "explanation": "Dünya gece bütçesi gönderdi (+1 bütçe). Günü bitirmeden Batarya istasyonunu kurmayı unutma!"
+      },
+      {
+        "label": "Yüksek kapasiteli batarya bankasını şarj et",
+        "badge": "Modül Bonusu",
+        "requires": { "moduleId": "battery", "minLevel": 2 },
+        "effects": { "energy": 14 },
+        "explanation": "Sv. 2 Batarya gündüz güneşinden maksimum enerjiyi depoladı!"
+      }
+    ]
+  },
+  {
+    "day": 15,
+    "id": "earth-day-15",
+    "kind": "earth",
+    "dayLabel": "Gün 15 · Ay Gecesi Başladı",
+    "title": "Karanlık Dönem: Sıcaklık -180 °C",
+    "description": "Güneş ufuktan kayboldu! Güneş panelleri 28. güne kadar kapalı kalacak. Dünya ekibi gece boyunca telsizle seninle.",
+    "options": [
+      {
+        "label": "Isıtma ve yaşam desteğe öncelik ver",
+        "effects": { "energy": -4, "oxygen": 4 },
+        "explanation": "Tasarruf protokolü yaşam desteğini ayakta tuttu."
+      },
+      {
+        "label": "Batarya yedek gücünü devreye al",
+        "badge": "Modül Bonusu",
+        "requires": { "moduleId": "battery", "minLevel": 1 },
+        "effects": { "energy": 6, "health": 3 },
+        "explanation": "Kurulu Batarya gece boyunca üssü aydınlattı ve ısıttı!"
+      }
+    ]
+  },
+  {
+    "day": 21,
+    "id": "earth-day-21",
+    "kind": "earth",
+    "dayLabel": "Gün 21 · Dünya'dan Mesaj",
+    "title": "Ay Gecesinin Tam Ortasındayız",
+    "description": "Bir haftayı karanlıkta atlattın genç astronot! Ancak dışarıda uzay radyasyonu hâlâ etkili. Kalkan durumu nasıl?",
+    "options": [
+      {
+        "label": "İç kabin duvarlarını ekstra yalıtımla destekle",
+        "focusModuleId": "shield",
+        "effects": { "radiation": 4, "energy": -5 },
+        "explanation": "Ekip geçici koruma sağladı. Kalkan seviyesini yükseltmek enerji tasarrufu sağlar."
+      },
+      {
+        "label": "Zırhlı radyasyon kalkanını optimize et",
+        "badge": "Modül Bonusu",
+        "requires": { "moduleId": "shield", "minLevel": 2 },
+        "effects": { "radiation": 10, "health": 4 },
+        "explanation": "Sv. 2 Kalkan mürettebatı radyasyondan güvenle korudu!"
+      }
+    ]
+  },
+  {
+    "day": 27,
+    "id": "earth-day-27",
+    "kind": "earth",
+    "dayLabel": "Gün 27 · Dünya'dan Mesaj",
+    "title": "Şafak Ufukta Göründü!",
+    "description": "Sadece birkaç gün sonra güneş yeniden doğacak. Son düzlükte kaynaklarını dengede tutarsan 30 günlük tarihi görevi tamamlayacaksın!",
+    "options": [
+      {
+        "label": "Son kontrolü tamamla ve yola devam et",
+        "effects": { "health": 5 },
+        "budgetDelta": 1,
+        "explanation": "Dünya'dan gelen moral mesajı (+1 bütçe) ve ekip motivasyonu sağlığı yükseltti!"
+      },
+      {
+        "label": "Tüm modüller tam uyumlu çalıştır",
+        "badge": "Modül Bonusu",
+        "requires": { "moduleId": "lifeSupport", "minLevel": 2 },
+        "effects": { "oxygen": 6, "food": 6, "health": 5 },
+        "explanation": "Güçlü Yaşam Destek sayesinde üs şafağa sapasağlam ulaştı!"
+      }
+    ]
+  }
+]

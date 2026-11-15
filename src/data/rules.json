@@ -16,7 +16,8 @@
     "lifeSupport": 1,
     "greenhouse": 1,
     "shield": 1,
-    "exercise": 0
+    "exercise": 0,
+    "battery": 0
   },
   "baseDailyDrain": {
     "energy": -6,
@@ -32,7 +33,10 @@
       "description": "Enerji üretir (Ay gecesinde durur)",
       "cost": 2,
       "maxLevel": 4,
-      "perDay": { "energy": 7 },
+      "workDays": 3,
+      "perDay": {
+        "energy": 7
+      },
       "affectedByLunarNight": true
     },
     {
@@ -41,7 +45,11 @@
       "description": "Oksijen ve su üretir, enerji harcar",
       "cost": 2,
       "maxLevel": 4,
-      "perDay": { "oxygen": 8, "energy": -3 }
+      "workDays": 3,
+      "perDay": {
+        "oxygen": 8,
+        "energy": -3
+      }
     },
     {
       "id": "greenhouse",
@@ -49,7 +57,12 @@
       "description": "Gıda üretir, enerji ve su harcar",
       "cost": 3,
       "maxLevel": 4,
-      "perDay": { "food": 8, "energy": -2, "oxygen": -1 }
+      "workDays": 4,
+      "perDay": {
+        "food": 8,
+        "energy": -2,
+        "oxygen": -1
+      }
     },
     {
       "id": "shield",
@@ -57,7 +70,11 @@
       "description": "Radyasyon güvenliğini artırır",
       "cost": 3,
       "maxLevel": 4,
-      "perDay": { "radiation": 6, "energy": -2 }
+      "workDays": 4,
+      "perDay": {
+        "radiation": 6,
+        "energy": -2
+      }
     },
     {
       "id": "exercise",
@@ -65,7 +82,24 @@
       "description": "Mürettebat sağlığını korur",
       "cost": 1,
       "maxLevel": 3,
-      "perDay": { "health": 5, "oxygen": -1, "food": -1 }
+      "workDays": 2,
+      "perDay": {
+        "health": 5,
+        "oxygen": -1,
+        "food": -1
+      }
+    },
+    {
+      "id": "battery",
+      "name": "Batarya",
+      "description": "Gündüz şarj olur, Ay gecesi enerji verir",
+      "cost": 2,
+      "maxLevel": 4,
+      "workDays": 2,
+      "perDay": {
+        "energy": 5
+      },
+      "onlyAtNight": true
     }
   ]
 }

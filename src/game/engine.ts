@@ -1,7 +1,12 @@
 import type {
+  ActiveBuild,
+  DayLog,
+  DifficultyLevel,
   EventOption,
   GameEvent,
   GameState,
+  MissionSetup,
+  ModuleDef,
   ModuleId,
   ModuleLevels,
   ResourceId,
@@ -9,36 +14,118 @@ import type {
   RulesConfig,
   TutorialStep,
 } from '../types'
+
 import rulesData from '../data/rules.json'
 import eventsData from '../data/events.json'
 import tutorialData from '../data/tutorial.json'
+import earthMessagesData from '../data/earthMessages.json'
+
+interface EarthMessageRecord extends GameEvent {
+  day: number
+}
 
 export const RULES = rulesData as RulesConfig
 export const EVENTS = eventsData as GameEvent[]
 export const TUTORIAL = tutorialData as TutorialStep[]
+export const EARTH_MESSAGES = earthMessagesData as EarthMessageRecord[]
+
+export const DIFFICULTY_CONFIG: Record<
+  DifficultyLevel,
+  { label: string; startingBudget: number; eventChance: number; summary: string }
+> = {
+  easy: {
+    label: 'Kolay',
+    startingBudget: 6,
+    eventChance: 0.3,
+    summary: '6 başlangıç puanı · daha sakin uzay koşulları',
+  },
+  normal: {
+    label: 'Normal',
+    startingBudget: 4,
+    eventChance: 0.45,
+    summary: '4 başlangıç puanı · dengeli Ay üssü deneyimi',
+  },
+  hard: {
+    label: 'Zor',
+    startingBudget: 2,
+    eventChance: 0.6,
+    summary: '2 başlangıç puanı · daha sık uzay fırtınası',
+  },
+}
 
 const RESOURCE_IDS: ResourceId[] = ['energy', 'oxygen', 'food', 'radiation', 'health']
+
+const BASE_DRAIN_LABELS: Record<ResourceId, string> = {
+  energy: 'Üs temel',
+  oxygen: 'Mürettebat solunum',
+  food: 'Mürettebat tüketimi',
+  radiation: 'Güneş radyasyonu',
+  health: 'Günlük yorgunluk',
+}
 
 export function isLunarNight(day: number): boolean {
   return day >= RULES.lunarNightStartDay && day <= RULES.lunarNightEndDay
 }
 
-export function createInitialState(): GameState {
+export function getModuleWorkCost(mod: ModuleDef): number {
+  return mod.workDays ?? 3
+}
+
+export function getAssignedCrewCount(
+  activeBuilds: Partial<Record<ModuleId, ActiveBuild>>,
+): number {
+  let total = 0
+  for (const build of Object.values(activeBuilds)) {
+    if (build) {
+      total += build.assignedCrew
+    }
+  }
+  return total
+}
+
+export function getIdleCrewCount(state: GameState): number {
+  return Math.max(0, state.crewCount - getAssignedCrewCount(state.activeBuilds))
+}
+
+export function getEffectiveBaseDrain(crewCount: number): Resources {
+  const count = Math.max(1, Math.min(4, Math.round(crewCount)))
+  // 3 astronotta varsayılan tüketim (-8 oksijen, -7 gıda) korunur; her kişi ±2 tüketim etkiler
+  return {
+    ...RULES.baseDailyDrain,
+    oxygen: -(2 + count * 2),
+    food: -(1 + count * 2),
+  }
+}
+
+export function createInitialState(setup?: Partial<MissionSetup>): GameState {
+  const crewCount = Math.max(1, Math.min(4, Math.round(setup?.crewCount ?? 3)))
+  const difficulty: DifficultyLevel =
+    setup?.difficulty && setup.difficulty in DIFFICULTY_CONFIG ? setup.difficulty : 'normal'
+
   return {
     day: 1,
+    crewCount,
+    difficulty,
     resources: { ...RULES.initialResources },
     modules: { ...RULES.initialModules },
-    budget: RULES.startingBudget,
+    activeBuilds: {},
+    budget: DIFFICULTY_CONFIG[difficulty].startingBudget,
     status: 'playing',
     activeEvent: null,
     lastDelta: null,
     lossReason: null,
+    history: [{ day: 1, isNight: isLunarNight(1), upgrades: [] }],
   }
 }
 
 export interface SystemInteraction {
   text: string
   severity: 'good' | 'warn' | 'danger'
+}
+
+interface EffectPart {
+  label: string
+  value: number
 }
 
 function getRadiationHealthPenalty(radiation: number): number {
@@ -49,12 +136,21 @@ function getRadiationHealthPenalty(radiation: number): number {
   return -8
 }
 
-export function calculateSystemEffects(resources: Resources): {
+function evaluateSystemEffects(resources: Resources): {
   effects: Partial<Resources>
   interactions: SystemInteraction[]
+  contributions: Record<ResourceId, EffectPart[]>
 } {
   const effects: Partial<Resources> = {}
   const interactions: SystemInteraction[] = []
+  const contributions: Record<ResourceId, EffectPart[]> = {
+    energy: [],
+    oxygen: [],
+    food: [],
+    radiation: [],
+    health: [],
+  }
+
   let healthDelta = 0
   let foodDelta = 0
   let oxygenDelta = 0
@@ -68,6 +164,7 @@ export function calculateSystemEffects(resources: Resources): {
     })
   } else {
     healthDelta += radPenalty
+    contributions.health.push({ label: 'Radyasyon', value: radPenalty })
     interactions.push({
       text: `Radyasyon koruması (${resources.radiation}): Mürettebat sağlığı ${radPenalty}/gün.`,
       severity: resources.radiation < 50 ? 'danger' : 'warn',
@@ -76,18 +173,21 @@ export function calculateSystemEffects(resources: Resources): {
 
   if (resources.food >= 75) {
     healthDelta += 1
+    contributions.health.push({ label: 'İyi beslenme', value: 1 })
     interactions.push({
       text: 'Yeterli gıda (75+): İyi beslenme +1 sağlık/gün.',
       severity: 'good',
     })
   } else if (resources.food < 25) {
     healthDelta -= 5
+    contributions.health.push({ label: 'Gıda kıtlığı', value: -5 })
     interactions.push({
       text: 'Kritik gıda kıtlığı (<25): Mürettebat sağlığı -5/gün!',
       severity: 'danger',
     })
   } else if (resources.food < 50) {
     healthDelta -= 2
+    contributions.health.push({ label: 'Düşük gıda', value: -2 })
     interactions.push({
       text: 'Düşük gıda (<50): Mürettebat sağlığı -2/gün.',
       severity: 'warn',
@@ -97,6 +197,8 @@ export function calculateSystemEffects(resources: Resources): {
   if (resources.oxygen < 25) {
     healthDelta -= 6
     foodDelta -= 3
+    contributions.health.push({ label: 'Kritik oksijen', value: -6 })
+    contributions.food.push({ label: 'Düşük su/oksijen', value: -3 })
     interactions.push({
       text: 'Kritik oksijen/su (<25): Sağlık -6/gün ve sera -3 gıda/gün!',
       severity: 'danger',
@@ -104,12 +206,15 @@ export function calculateSystemEffects(resources: Resources): {
   } else if (resources.oxygen < 50) {
     healthDelta -= 3
     foodDelta -= 1
+    contributions.health.push({ label: 'Düşük oksijen', value: -3 })
+    contributions.food.push({ label: 'Düşük su/oksijen', value: -1 })
     interactions.push({
       text: 'Düşük oksijen/su (<50): Sağlık -3/gün ve sera -1 gıda/gün.',
       severity: 'warn',
     })
   } else if (resources.oxygen < 75) {
     healthDelta -= 1
+    contributions.health.push({ label: 'Orta oksijen', value: -1 })
     interactions.push({
       text: 'Orta oksijen/su (<75): Mürettebat sağlığı -1/gün.',
       severity: 'warn',
@@ -119,6 +224,8 @@ export function calculateSystemEffects(resources: Resources): {
   if (resources.energy < 25) {
     oxygenDelta -= 2
     radiationDelta -= 2
+    contributions.oxygen.push({ label: 'Düşük enerji', value: -2 })
+    contributions.radiation.push({ label: 'Düşük enerji', value: -2 })
     interactions.push({
       text: 'Kritik enerji (<25): Yaşam destek (-2) ve kalkan (-2) zayıflıyor!',
       severity: 'danger',
@@ -130,6 +237,14 @@ export function calculateSystemEffects(resources: Resources): {
   if (oxygenDelta !== 0) effects.oxygen = oxygenDelta
   if (radiationDelta !== 0) effects.radiation = radiationDelta
 
+  return { effects, interactions, contributions }
+}
+
+export function calculateSystemEffects(resources: Resources): {
+  effects: Partial<Resources>
+  interactions: SystemInteraction[]
+} {
+  const { effects, interactions } = evaluateSystemEffects(resources)
   return { effects, interactions }
 }
 
@@ -137,14 +252,16 @@ export function calculateDailyDelta(
   modules: ModuleLevels,
   day: number,
   resources?: Resources,
+  crewCount = 3,
 ): Resources {
-  const delta: Resources = { ...RULES.baseDailyDrain }
+  const delta: Resources = getEffectiveBaseDrain(crewCount)
   const night = isLunarNight(day)
 
   for (const mod of RULES.modules) {
     const level = modules[mod.id]
     if (level <= 0) continue
     if (night && mod.affectedByLunarNight) continue
+    if (!night && mod.onlyAtNight) continue
 
     for (const id of RESOURCE_IDS) {
       const change = mod.perDay[id]
@@ -162,6 +279,113 @@ export function calculateDailyDelta(
   }
 
   return delta
+}
+
+const formatSigned = (n: number) => (n > 0 ? `+${n}` : `${n}`)
+
+export function calculateDailyBreakdown(
+  modules: ModuleLevels,
+  day: number,
+  resources?: Resources,
+  crewCount = 3,
+): Record<ResourceId, string> {
+  const night = isLunarNight(day)
+  const baseDrain = getEffectiveBaseDrain(crewCount)
+  const delta = calculateDailyDelta(modules, day, resources, crewCount)
+  const systemParts = resources ? evaluateSystemEffects(resources).contributions : null
+
+  const result = {} as Record<ResourceId, string>
+
+  for (const id of RESOURCE_IDS) {
+    const baseVal = baseDrain[id]
+    const label =
+      id === 'oxygen' || id === 'food'
+        ? `${BASE_DRAIN_LABELS[id]} (${crewCount} kişi)`
+        : BASE_DRAIN_LABELS[id]
+    const parts: string[] = [`${label} ${formatSigned(baseVal)}`]
+
+    for (const mod of RULES.modules) {
+      const level = modules[mod.id]
+      if (level <= 0) continue
+      const perUnit = mod.perDay[id]
+      if (perUnit === undefined) continue
+
+      if (night && mod.affectedByLunarNight) {
+        parts.push(`${mod.name} 0 (Ay gecesi)`)
+        continue
+      }
+      if (!night && mod.onlyAtNight) continue
+
+      parts.push(`${mod.name} ${formatSigned(perUnit * level)}`)
+    }
+
+    if (systemParts) {
+      for (const item of systemParts[id]) {
+        parts.push(`${item.label} ${formatSigned(item.value)}`)
+      }
+    }
+
+    result[id] = `${parts.join(', ')} → net ${formatSigned(delta[id])}`
+  }
+
+  return result
+}
+
+export function analyzeLossReason(state: GameState): string {
+  const reason = state.lossReason
+  if (!reason) {
+    return 'Kritik bir kaynak tükendi. Modül yükseltmelerini ve enerji dengesini erken kurmak görevi kurtarır.'
+  }
+
+  if (reason === 'energy') {
+    const nightDrop = state.history.find(
+      (entry) => entry.isNight && entry.dailyDelta && entry.dailyDelta.energy < 0,
+    )
+    if (nightDrop && state.modules.battery === 0) {
+      return `Enerji bitti çünkü ${nightDrop.day}. günde Ay gecesi başladı ve güneş panelleri durdu. Batarya kurmak bunu önlerdi.`
+    }
+    if (isLunarNight(state.day) && state.modules.battery > 0) {
+      return `Enerji bitti çünkü Ay gecesi boyunca üs tüketimi batarya desteğini (+${state.modules.battery * 5}/gün) aştı. Gündüz daha çok enerji biriktirmek veya Bataryayı geliştirmek bunu önlerdi.`
+    }
+    const firstDrop = state.history.find((e) => e.dailyDelta && e.dailyDelta.energy < 0)
+    if (firstDrop) {
+      return `Enerji bitti çünkü ${firstDrop.day}. günden itibaren tüketim üretimi aştı. Güneş panelini erken yükseltmek bunu önlerdi.`
+    }
+    return 'Enerji tükendi. Güneş paneli ve Ay gecesi için Batarya dengesini erken kurmak gerekir.'
+  }
+
+  if (reason === 'oxygen') {
+    const lowEnergyDay = state.history.find(
+      (entry) => entry.dailyDelta && entry.dailyDelta.energy < -4,
+    )
+    if (state.resources.energy < 25 || lowEnergyDay) {
+      return 'Oksijen/su bitti çünkü enerji yetersizliği yaşam desteğini zayıflattı ve tüketim üretimi aştı. Yaşam destek ve enerjiyi dengede tutmak bunu önlerdi.'
+    }
+    return `Oksijen/su tükendi çünkü ${state.crewCount} astronotluk mürettebat tüketimi yaşam destek üretimini aştı. Yaşam destek modülünü yükseltmek bunu önlerdi.`
+  }
+
+  if (reason === 'food') {
+    const oxyPenaltyDay = state.history.find((e) => e.dailyDelta && e.dailyDelta.oxygen < 0)
+    if (state.resources.oxygen < 50 && oxyPenaltyDay) {
+      return `Gıda bitti çünkü ${oxyPenaltyDay.day}. günden itibaren düşen oksijen/su sera verimini düşürdü. Oksijen/suyu 50 üstünde tutup Serayı yükseltmek bunu önlerdi.`
+    }
+    return `Gıda tükendi çünkü sera üretimi ${state.crewCount} kişilik günlük tüketimi karşılayamadı. Serayı erken Sv.2 yapmak bunu önlerdi.`
+  }
+
+  if (reason === 'radiation') {
+    return 'Radyasyon koruması sıfırlandı çünkü Kalkan modülü günlük güneş radyasyonuna ve olaylara yetmedi. Kalkanı yükseltmek ve enerjiyi 25 üstünde tutmak bunu önlerdi.'
+  }
+
+  const causes: string[] = []
+  if (state.modules.exercise === 0) causes.push('Egzersiz ekipmanı hiç kurulmamıştı')
+  if (state.resources.radiation < 75) causes.push('düşük radyasyon koruması ek hasar verdi')
+  if (state.resources.oxygen < 50) causes.push('düşük oksijen/su sağlığı hızla düşürdü')
+  if (state.resources.food < 50) causes.push('yetersiz gıda mürettebatı zayıflattı')
+
+  if (causes.length > 0) {
+    return `Mürettebat sağlığı bitti çünkü ${causes.join(' ve ')}. Egzersiz ekipmanı kurup diğer kaynakları 50 üstünde tutmak bunu önlerdi.`
+  }
+  return 'Mürettebat sağlığı tükendi. Egzersiz ekipmanını geliştirmek ve radyasyon korumasını yüksek tutmak bunu önlerdi.'
 }
 
 function applyResourceDelta(
@@ -183,69 +407,190 @@ function applyResourceDelta(
   return { next, lossReason }
 }
 
-export function upgradeModule(state: GameState, moduleId: ModuleId): GameState {
+function updateDayLog(
+  history: DayLog[],
+  day: number,
+  updater: (entry: DayLog) => DayLog,
+): DayLog[] {
+  let found = false
+  const next = history.map((entry) => {
+    if (entry.day !== day) return entry
+    found = true
+    return updater(entry)
+  })
+  if (!found) {
+    next.push(updater({ day, isNight: isLunarNight(day), upgrades: [] }))
+  }
+  return next
+}
+
+export function startBuild(
+  state: GameState,
+  moduleId: ModuleId,
+  assignCrew: number,
+): GameState {
   if (state.status !== 'playing' || state.activeEvent !== null) {
     return state
   }
-
+  if (state.activeBuilds[moduleId]) {
+    return state
+  }
   const def = RULES.modules.find((m) => m.id === moduleId)
   if (!def) return state
-
   const currentLevel = state.modules[moduleId]
   if (currentLevel >= def.maxLevel || state.budget < def.cost) {
     return state
+  }
+  const idleCrew = getIdleCrewCount(state)
+  const crewToAssign = Math.max(0, Math.min(assignCrew, idleCrew))
+  if (crewToAssign <= 0) {
+    return state
+  }
+
+  const totalWork = getModuleWorkCost(def)
+  const nextBuild: ActiveBuild = {
+    moduleId,
+    targetLevel: currentLevel + 1,
+    remainingWork: totalWork,
+    totalWork,
+    assignedCrew: crewToAssign,
   }
 
   return {
     ...state,
     budget: state.budget - def.cost,
-    modules: {
-      ...state.modules,
-      [moduleId]: currentLevel + 1,
+    activeBuilds: {
+      ...state.activeBuilds,
+      [moduleId]: nextBuild,
     },
   }
 }
 
-export function nextDay(state: GameState, eventChance = 0.45): GameState {
+export function adjustBuildCrew(
+  state: GameState,
+  moduleId: ModuleId,
+  deltaCrew: number,
+): GameState {
+  if (state.status !== 'playing' || state.activeEvent !== null) {
+    return state
+  }
+  const existing = state.activeBuilds[moduleId]
+  if (!existing || deltaCrew === 0) return state
+
+  const idleCrew = getIdleCrewCount(state)
+  let nextAssigned = existing.assignedCrew
+  if (deltaCrew > 0) {
+    nextAssigned += Math.min(deltaCrew, idleCrew)
+  } else {
+    nextAssigned = Math.max(0, existing.assignedCrew + deltaCrew)
+  }
+
+  if (nextAssigned === existing.assignedCrew) return state
+
+  return {
+    ...state,
+    activeBuilds: {
+      ...state.activeBuilds,
+      [moduleId]: {
+        ...existing,
+        assignedCrew: nextAssigned,
+      },
+    },
+  }
+}
+
+export function upgradeModule(state: GameState, moduleId: ModuleId): GameState {
+  return startBuild(state, moduleId, 1)
+}
+
+export function nextDay(
+  state: GameState,
+  eventChance = DIFFICULTY_CONFIG[state.difficulty].eventChance,
+): GameState {
   if (state.status !== 'playing' || state.activeEvent !== null) {
     return state
   }
 
-  const delta = calculateDailyDelta(state.modules, state.day, state.resources)
+  const delta = calculateDailyDelta(
+    state.modules,
+    state.day,
+    state.resources,
+    state.crewCount,
+  )
   const { next: nextResources, lossReason } = applyResourceDelta(state.resources, delta)
+
+  // Aktif inşaatları atanan astronot sayısı kadar ilerlet ve bitenleri yükselt
+  const nextModules: ModuleLevels = { ...state.modules }
+  const nextActiveBuilds: Partial<Record<ModuleId, ActiveBuild>> = {}
+  const completedNotes: string[] = []
+
+  for (const build of Object.values(state.activeBuilds)) {
+    if (!build) continue
+    const remaining = build.remainingWork - build.assignedCrew
+    if (remaining <= 0) {
+      const def = RULES.modules.find((m) => m.id === build.moduleId)
+      const prevLevel = nextModules[build.moduleId]
+      nextModules[build.moduleId] = build.targetLevel
+      completedNotes.push(`${def?.name ?? build.moduleId} (Sv. ${prevLevel} → Sv. ${build.targetLevel})`)
+    } else {
+      nextActiveBuilds[build.moduleId] = {
+        ...build,
+        remainingWork: remaining,
+      }
+    }
+  }
+
+  const historyWithDelta = updateDayLog(state.history, state.day, (entry) => ({
+    ...entry,
+    dailyDelta: delta,
+    upgrades: [...entry.upgrades, ...completedNotes],
+  }))
 
   if (lossReason !== null) {
     return {
       ...state,
+      modules: nextModules,
+      activeBuilds: nextActiveBuilds,
       resources: nextResources,
       status: 'lost',
       lastDelta: delta,
       lossReason,
+      history: historyWithDelta,
     }
   }
-
   if (state.day >= RULES.maxDays) {
     return {
       ...state,
+      modules: nextModules,
+      activeBuilds: nextActiveBuilds,
       resources: nextResources,
       status: 'won',
       lastDelta: delta,
+      history: historyWithDelta,
     }
   }
 
   const nextDayNumber = state.day + 1
-  const shouldTriggerEvent = nextDayNumber >= 4 && EVENTS.length > 0 && Math.random() < eventChance
-  const pickedEvent = shouldTriggerEvent
-    ? EVENTS[Math.floor(Math.random() * EVENTS.length)]
-    : null
+  const scheduledStory = EARTH_MESSAGES.find((msg) => msg.day === nextDayNumber) ?? null
+  const shouldTriggerEvent =
+    !scheduledStory && nextDayNumber >= 4 && EVENTS.length > 0 && Math.random() < eventChance
+  const pickedEvent =
+    scheduledStory ??
+    (shouldTriggerEvent ? EVENTS[Math.floor(Math.random() * EVENTS.length)] : null)
 
   return {
     ...state,
     day: nextDayNumber,
+    modules: nextModules,
+    activeBuilds: nextActiveBuilds,
     resources: nextResources,
     budget: state.budget + RULES.dailyBudgetGain,
     activeEvent: pickedEvent,
     lastDelta: delta,
+    history: [
+      ...historyWithDelta,
+      { day: nextDayNumber, isNight: isLunarNight(nextDayNumber), upgrades: [] },
+    ],
   }
 }
 
@@ -260,13 +605,26 @@ export function resolveEvent(state: GameState, optionIndex: number): GameState {
   }
   const option = state.activeEvent.options[optionIndex]
   if (!option || !isOptionUnlocked(option, state.modules)) return state
+
   const { next: nextResources, lossReason } = applyResourceDelta(state.resources, option.effects)
+  const activeEvent = state.activeEvent
+
   return {
     ...state,
     resources: nextResources,
+    budget: Math.max(0, state.budget + (option.budgetDelta ?? 0)),
     activeEvent: null,
     lastDelta: option.effects,
     status: lossReason !== null ? 'lost' : state.status,
     lossReason,
+    history: updateDayLog(state.history, state.day, (entry) => ({
+      ...entry,
+      event: {
+        title: activeEvent.title,
+        chosenLabel: option.label,
+        explanation: option.explanation,
+        effects: option.effects,
+      },
+    })),
   }
 }

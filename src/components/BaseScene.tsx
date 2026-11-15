@@ -1,6 +1,9 @@
-import type { ReactNode } from 'react'
-import type { ModuleDef, ModuleId, ModuleLevels } from '../types'
+import { useEffect, useImperativeHandle, useRef, useState, type MouseEvent, type RefObject } from 'react'
+import type { ActiveBuild, ModuleDef, ModuleId, ModuleLevels, SceneNavigationHandle } from '../types'
 import { isLunarNight } from '../game/engine'
+import baseSceneImg from '../assets/game-base-scene.jpg'
+import astronautImg from '../assets/sprite-astronaut.png'
+import LunarMapScene from './LunarMapScene'
 
 interface BaseSceneProps {
   day: number
@@ -8,70 +11,36 @@ interface BaseSceneProps {
   lunarNightStartDay: number
   modules: ModuleLevels
   modulesDef: ModuleDef[]
+  activeBuilds?: Partial<Record<ModuleId, ActiveBuild>>
   budget: number
   disabled: boolean
+  highlightedModuleId?: ModuleId | null
+  viewMode?: 'map' | 'classic'
+  hideHeader?: boolean
+  navigationRef?: RefObject<SceneNavigationHandle | null>
   onSelectModule: (moduleId: ModuleId) => void
 }
 
-interface SlotProps {
+const HOTSPOTS: {
+  id: ModuleId
   label: string
-  level: number
-  def?: ModuleDef
-  budget: number
-  disabled: boolean
-  onClick: () => void
-  children: ReactNode
-}
+  left: string
+  width: string
+  height: string
+}[] = [
+  { id: 'lifeSupport', label: 'Yaşam destek', left: '1.5%', width: '21.5%', height: '58%' },
+  { id: 'greenhouse', label: 'Sera', left: '24%', width: '21.5%', height: '56%' },
+  { id: 'solar', label: 'Güneş paneli', left: '46%', width: '10.5%', height: '52%' },
+  { id: 'battery', label: 'Batarya', left: '57%', width: '7%', height: '24%' },
+  { id: 'exercise', label: 'Egzersiz', left: '64.5%', width: '15.5%', height: '50%' },
+  { id: 'shield', label: 'Kalkan', left: '81%', width: '17.5%', height: '56%' },
+]
 
-function SceneModuleSlot({
-  label,
-  level,
-  def,
-  budget,
-  disabled,
-  onClick,
-  children,
-}: SlotProps) {
-  const isMax = def ? level >= def.maxLevel : false
-  const canAfford = def ? budget >= def.cost : false
-
-  let arrowText = '↑ Kur'
-  if (isMax) {
-    arrowText = 'MAX'
-  } else if (level > 0) {
-    arrowText = `↑ ${def?.cost ?? 0}p`
-  } else if (def) {
-    arrowText = `↑ Kur · ${def.cost}p`
-  }
-
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="group relative flex flex-col items-center cursor-pointer disabled:cursor-default focus:outline-none"
-    >
-      {/* Hover / Focus Yükseltme Oku */}
-      <span
-        className={`mb-1 px-2 py-0.5 font-pixel text-xs border-2 shadow-[0_2px_0_#05070F] transition-all opacity-80 sm:opacity-0 sm:translate-y-1 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 sm:group-focus-visible:opacity-100 sm:group-focus-visible:translate-y-0 ${
-          isMax
-            ? 'bg-panel border-line text-muted'
-            : canAfford
-              ? 'bg-accent border-space text-space font-bold'
-              : 'bg-panel border-radiation/70 text-radiation'
-        }`}
-      >
-        {arrowText}
-      </span>
-
-      <span className="font-pixel text-xs bg-panel border-2 border-line group-hover:border-accent group-focus-visible:border-accent px-2 py-0.5 mb-2 transition-colors">
-        {label} · Sv.{level}
-      </span>
-
-      <div className="transition-transform group-hover:-translate-y-0.5">{children}</div>
-    </button>
-  )
-}
+// Yürüme alanı: sahnenin alt zemin şeridi (yüzde değerleri sahne boyutuna göre)
+const FEET_MIN = 1.5
+const FEET_MAX = 6.5
+const WALK_SPEED = 75 // sahne genişliğinin yüzdesi / saniye (en uzak nokta ~1,3 sn)
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
 export default function BaseScene({
   day,
@@ -79,174 +48,365 @@ export default function BaseScene({
   lunarNightStartDay,
   modules,
   modulesDef,
+  activeBuilds = {},
   budget,
   disabled,
+  highlightedModuleId = null,
+  viewMode: controlledViewMode,
+  hideHeader = false,
+  navigationRef,
   onSelectModule,
 }: BaseSceneProps) {
   const night = isLunarNight(day)
+  const [internalViewMode, setInternalViewMode] = useState<'map' | 'classic'>('map')
+  const viewMode = controlledViewMode ?? internalViewMode
+  const setViewMode = setInternalViewMode
+
+  // --- Klasik sahnede yürüyen astronot ---
+  const sceneRef = useRef<HTMLDivElement>(null)
+  const timerRef = useRef<number | null>(null)
+  const posRef = useRef({ x: 50, y: 4 })
+  const disabledRef = useRef(disabled)
+  const selectRef = useRef(onSelectModule)
+  const [pos, setPos] = useState({ x: 50, y: 4 })
+  const [facing, setFacing] = useState<1 | -1>(1)
+  const [walking, setWalking] = useState(false)
+  const [walkMs, setWalkMs] = useState(0)
+
+  useEffect(() => {
+    disabledRef.current = disabled
+    selectRef.current = onSelectModule
+  }, [disabled, onSelectModule])
+  useEffect(
+    () => () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current)
+    },
+    [],
+  )
+
+  const walkTo = (x: number, y: number, onArrive?: () => void) => {
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current)
+    const target = { x: clamp(x, 4, 96), y: clamp(y, FEET_MIN, FEET_MAX) }
+    const dx = target.x - posRef.current.x
+    const dy = target.y - posRef.current.y
+    const ms = clamp((Math.hypot(dx, dy * 0.5) / WALK_SPEED) * 1000, 0, 1600)
+    if (Math.abs(dx) > 0.5) setFacing(dx > 0 ? 1 : -1)
+    posRef.current = target
+    setPos(target)
+    setWalkMs(ms)
+    setWalking(ms > 0)
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null
+      setWalking(false)
+      onArrive?.()
+    }, ms)
+  }
+
+  const handleGroundClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (disabled) return
+    const rect = sceneRef.current?.getBoundingClientRect()
+    if (!rect) return
+    walkTo(
+      ((e.clientX - rect.left) / rect.width) * 100,
+      ((rect.bottom - e.clientY) / rect.height) * 100,
+    )
+  }
+
+  const handleSpotClick = (e: MouseEvent<HTMLButtonElement>, spot: (typeof HOTSPOTS)[number]) => {
+    // Klavye (Enter/Space) ile tetiklenirse beklemeden aç
+    if (e.detail === 0) {
+      onSelectModule(spot.id)
+      return
+    }
+    const centerX = parseFloat(spot.left) + parseFloat(spot.width) / 2
+    walkTo(centerX, 4, () => {
+      if (!disabledRef.current) selectRef.current(spot.id)
+    })
+  }
+
+  useImperativeHandle(viewMode === 'classic' ? navigationRef : undefined, () => ({
+    walkToModule: (moduleId: ModuleId) => {
+      if (disabledRef.current) return
+      const spot = HOTSPOTS.find((s) => s.id === moduleId)
+      if (!spot) return
+      const centerX = parseFloat(spot.left) + parseFloat(spot.width) / 2
+      walkTo(centerX, 4, () => {
+        if (!disabledRef.current) selectRef.current(spot.id)
+      })
+    },
+  }))
+  const isFirstNightDay = day === lunarNightStartDay
   const daysUntilNight = lunarNightStartDay - day
   const getDef = (id: ModuleId) => modulesDef.find((m) => m.id === id)
 
+  const batteryGain = (getDef('battery')?.perDay.energy ?? 5) * modules.battery
+
   let statusText = 'Ay Gündüzü · Güneş panelleri aktif'
-  let statusBorder = 'border-energy/60 text-energy'
+  let statusBorder = 'border-amber-400/50 text-amber-200'
 
   if (night) {
-    statusText = 'Ay Gecesi · Güneş panelleri kapalı!'
-    statusBorder = 'border-radiation text-radiation'
+    if (modules.battery > 0) {
+      statusText = isFirstNightDay
+        ? `Ay Gecesi Başladı · Batarya enerjisi devrede (+${batteryGain}/gün)`
+        : `Ay Gecesi · Batarya enerjisi devrede (+${batteryGain}/gün)`
+      statusBorder = 'border-emerald-400/80 text-emerald-200 shadow-[0_0_16px_rgba(52,211,153,0.28)]'
+    } else {
+      statusText = isFirstNightDay
+        ? 'Ay Gecesi Başladı · Güneş panelleri durdu (Batarya yok!)'
+        : 'Ay Gecesi · Güneş panelleri kapalı!'
+      statusBorder = 'border-orange-400 text-orange-200 shadow-[0_0_16px_rgba(251,146,60,0.25)]'
+    }
   } else if (daysUntilNight > 0 && daysUntilNight <= 4) {
     statusText = `Uyarı: Ay gecesi ${daysUntilNight} gün içinde`
-    statusBorder = 'border-radiation text-radiation'
+    statusBorder = 'border-orange-400 text-orange-200'
   }
+
+  const headerBar = (
+    <div className="relative z-[950] flex flex-wrap items-center justify-between gap-2.5 p-3.5 sm:p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="bg-amber-400 text-slate-950 font-bold px-4 py-1.5 rounded-lg shadow-[0_0_16px_rgba(251,191,36,0.45)] text-sm sm:text-base">
+          Gün {day} / {maxDays}
+        </div>
+
+        {/* Harita / Klasik Sahne Seçici */}
+        <div
+          role="group"
+          aria-label="Sahne Görünümü"
+          className="inline-flex rounded-lg border border-white/25 bg-[#09132A]/90 p-0.5 backdrop-blur-md"
+        >
+          <button
+            type="button"
+            onClick={() => setViewMode('map')}
+            aria-pressed={viewMode === 'map'}
+            className={`px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
+              viewMode === 'map'
+                ? 'bg-cyan-400 text-slate-950 shadow-sm'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            🗺️ 2.5D Harita
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('classic')}
+            aria-pressed={viewMode === 'classic'}
+            className={`px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
+              viewMode === 'classic'
+                ? 'bg-cyan-400 text-slate-950 shadow-sm'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            🏛️ Klasik Sahne
+          </button>
+        </div>
+      </div>
+
+      <div
+        className={`bg-[#09132A]/90 backdrop-blur-md text-xs sm:text-sm font-medium px-4 py-1.5 rounded-lg border transition-colors ${statusBorder}`}
+      >
+        {statusText}
+      </div>
+    </div>
+  )
 
   return (
     <section
       aria-label="Ay Üssü Sahnesi"
-      className={`relative border-[3px] border-line shadow-[0_6px_0_#05070F] overflow-clip transition-colors ${
-        night ? 'bg-[#060914]' : 'bg-[#0D1530]'
-      }`}
+      className={
+        hideHeader
+          ? 'relative w-full h-full overflow-x-auto overflow-y-clip bg-[#070E22]'
+          : 'relative rounded-2xl border border-white/40 shadow-[0_0_32px_rgba(255,255,255,0.10)] overflow-x-auto overflow-y-clip bg-[#070E22]'
+      }
     >
-      {/* Üst Bilgi Şeridi */}
-      <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 p-4">
-        <div className="bg-energy text-space font-pixel font-bold px-4 py-2 border-[3px] border-space shadow-[0_3px_0_#05070F] text-lg">
-          Gün {day} / {maxDays}
-        </div>
-
-        <div
-          className={`bg-panel/95 font-pixel text-sm px-4 py-2 border-[3px] shadow-[0_3px_0_#05070F] ${statusBorder}`}
-        >
-          {statusText}
-        </div>
-      </div>
-
-      {/* Gökyüzü ve Ay Yüzeyi */}
-      <div className="relative h-64 sm:h-72 flex flex-col justify-end px-4 sm:px-8 pb-6">
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 pointer-events-none opacity-80"
-          style={{
-            backgroundImage:
-              'radial-gradient(2px 2px at 12% 24%, #ffffff, transparent), radial-gradient(2px 2px at 28% 55%, #9AA6C7, transparent), radial-gradient(2px 2px at 46% 18%, #ffffff, transparent), radial-gradient(2px 2px at 64% 40%, #38BDF8, transparent), radial-gradient(2px 2px at 78% 22%, #ffffff, transparent), radial-gradient(2px 2px at 90% 52%, #FBBF24, transparent)',
-          }}
+      {viewMode === 'map' ? (
+        <LunarMapScene
+          night={night}
+          modules={modules}
+          modulesDef={modulesDef}
+          activeBuilds={activeBuilds}
+          budget={budget}
+          disabled={disabled}
+          highlightedModuleId={highlightedModuleId}
+          headerSlot={hideHeader ? undefined : headerBar}
+          navigationRef={navigationRef}
+          onSelectModule={onSelectModule}
         />
+      ) : (
+        <div
+          ref={sceneRef}
+          className={
+            hideHeader
+              ? 'relative min-w-[680px] w-full h-full'
+              : 'relative min-w-[680px] aspect-[16/8] w-full'
+          }
+        >
+          {/* Çizimli Ay Üssü Sahnesi */}
+          <img
+            src={baseSceneImg}
+            alt="Ay Üssü Modülleri"
+            fetchPriority="high"
+            className={`absolute inset-0 w-full h-full object-cover object-bottom transition-all duration-700 ${
+              night ? 'brightness-55 saturate-75' : 'brightness-100'
+            }`}
+          />
 
-        {/* Dünya / Güneş */}
-        <div aria-hidden="true" className="absolute right-8 top-4 flex items-center gap-4">
-          {!night && (
-            <div className="w-8 h-8 bg-energy border-2 border-yellow-200 shadow-[0_0_16px_rgba(251,191,36,0.65)]" />
+          {/* Ay Gecesi Ortam Karartması */}
+          {night && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-[#020617]/45 transition-opacity duration-700"
+            />
           )}
-          <div className="w-11 h-11 bg-[#2563EB] border-[3px] border-[#60A5FA] relative">
-            <div className="w-4 h-3 bg-[#4ADE80] absolute top-1 left-1" />
-            <div className="w-3 h-3 bg-[#4ADE80] absolute bottom-1 right-1" />
-          </div>
-        </div>
 
-        {/* Tıklanabilir Modüller Satırı */}
-        <div className="relative z-10 flex flex-wrap items-end justify-around gap-4">
-          <SceneModuleSlot
-            label="Güneş"
-            level={modules.solar}
-            def={getDef('solar')}
-            budget={budget}
-            disabled={disabled}
-            onClick={() => onSelectModule('solar')}
+          {/* Zemin şeridi: tıklanan noktaya astronot yürür */}
+          <div
+            aria-hidden="true"
+            onClick={handleGroundClick}
+            className={`absolute inset-x-0 bottom-0 z-[12] h-[8%] ${disabled ? '' : 'cursor-pointer'}`}
+          />
+
+          {/* Yürüyen astronot */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute z-[15]"
+            style={{
+              left: `${pos.x}%`,
+              bottom: `${pos.y}%`,
+              height: '17%',
+              aspectRatio: '177 / 260',
+              translate: '-50% 0',
+              transition: `left ${walkMs}ms linear, bottom ${walkMs}ms linear`,
+            }}
           >
-            <div className="flex items-end gap-1">
-              {Array.from({ length: modules.solar }).map((_, idx) => (
+            <div className="h-full w-full" style={{ transform: `scaleX(${facing})` }}>
+              <img
+                src={astronautImg}
+                alt=""
+                draggable={false}
+                className={`h-full w-full object-contain drop-shadow-[0_6px_6px_rgba(0,0,0,0.45)] ${
+                  walking ? 'astro-walking' : ''
+                } ${night ? 'brightness-75' : ''}`}
+              />
+            </div>
+          </div>
+
+          {/* Üst Bilgi Şeridi */}
+          {!hideHeader && headerBar}
+
+        {/* 6 Etkileşimli Yapı Alanı */}
+        {HOTSPOTS.map((spot) => {
+          const level = modules[spot.id]
+          const def = getDef(spot.id)
+          const build = activeBuilds[spot.id]
+          const isMax = def ? level >= def.maxLevel : false
+          const canAfford = def ? budget >= def.cost : false
+          const isUnbuiltExercise = spot.id === 'exercise' && level === 0
+          const hasEnergyShield = spot.id === 'shield' && level >= 3
+          const isGuided = highlightedModuleId === spot.id
+          const isBatteryActiveAtNight = night && spot.id === 'battery' && level > 0
+
+          let arrowText = '↑ Kur'
+          if (build) {
+            arrowText =
+              build.assignedCrew > 0
+                ? `👷 × ${build.assignedCrew} çalışıyor`
+                : '⏸ Duraklatıldı'
+          } else if (isMax) {
+            arrowText = 'MAX'
+          } else if (level > 0) {
+            arrowText = `↑ ${def?.cost ?? 0} puan`
+          } else if (def) {
+            arrowText = `↑ Kur · ${def.cost} puan`
+          }
+
+          const buildDone = build ? build.totalWork - build.remainingWork : 0
+          const buildEta =
+            build && build.assignedCrew > 0
+              ? `${Math.ceil(build.remainingWork / build.assignedCrew)} gün`
+              : 'Durdu'
+
+          return (
+            <button
+              key={spot.id}
+              type="button"
+              data-module-anchor={spot.id}
+              disabled={disabled}
+              onClick={(e) => handleSpotClick(e, spot)}
+              style={{
+                left: spot.left,
+                width: spot.width,
+                height: spot.height,
+                bottom: '3%',
+              }}
+              className="group absolute z-10 flex flex-col items-center justify-start cursor-pointer disabled:cursor-default focus:outline-none"
+            >
+              {/* Rehber Vurgusu veya Hover/Focus Oku */}
+              {isGuided ? (
+                <span className="tutorial-pulse mb-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-amber-200 bg-amber-400 text-slate-950 whitespace-nowrap">
+                  Şimdi dene · {arrowText}
+                </span>
+              ) : (
+                <span
+                  className={`mb-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border backdrop-blur-sm transition-all opacity-85 sm:opacity-0 sm:translate-y-1 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 sm:group-focus-visible:opacity-100 sm:group-focus-visible:translate-y-0 ${
+                    build
+                      ? 'bg-amber-400 border-amber-200 text-slate-950'
+                      : isMax
+                        ? 'bg-slate-900/90 border-slate-500 text-slate-300'
+                        : canAfford
+                          ? 'bg-cyan-400 border-cyan-200 text-slate-950 shadow-[0_0_12px_rgba(56,189,248,0.65)]'
+                          : 'bg-slate-900/90 border-amber-400/60 text-amber-300'
+                  }`}
+                >
+                  {arrowText}
+                </span>
+              )}
+
+              {/* Modül Seviye Etiketi */}
+              <span
+                className={`text-[11px] sm:text-xs font-semibold bg-[#09132A]/90 border rounded-md px-2.5 py-1 backdrop-blur-sm transition-colors whitespace-nowrap shadow-md ${
+                  build
+                    ? 'border-amber-300 text-amber-200 shadow-[0_0_14px_rgba(251,191,36,0.35)]'
+                    : isGuided
+                      ? 'border-amber-300 text-amber-200 shadow-[0_0_18px_rgba(251,191,36,0.45)]'
+                      : isBatteryActiveAtNight
+                        ? 'border-emerald-400/80 text-emerald-200 shadow-[0_0_14px_rgba(52,211,153,0.35)]'
+                        : 'border-white/50 group-hover:border-white group-focus-visible:border-white text-slate-100'
+                }`}
+              >
+                {spot.label} · Sv.{level}
+              </span>
+
+              {/* Aktif İnşaat İlerleme Rozeti */}
+              {build && (
+                <span className="mt-1 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold bg-amber-500/20 border border-amber-300/70 text-amber-200 whitespace-nowrap shadow-sm">
+                  🔨 {buildDone}/{build.totalWork} · 👷×{build.assignedCrew} · {buildEta}
+                </span>
+              )}
+
+              {/* Egzersiz Sv.0 Kesikli Kilit Çerçevesi */}
+              {isUnbuiltExercise && (
                 <div
-                  key={idx}
-                  className={`w-7 h-10 border-2 ${
-                    night
-                      ? 'bg-slate-800 border-slate-600 opacity-50'
-                      : 'bg-blue-900 border-energy'
+                  aria-hidden="true"
+                  className={`mt-2 w-[88%] flex-1 rounded-xl border-2 border-dashed bg-[#070E22]/60 transition-colors ${
+                    build || isGuided
+                      ? 'border-amber-300'
+                      : 'border-white/80 group-hover:border-white'
                   }`}
                 />
-              ))}
-            </div>
-          </SceneModuleSlot>
+              )}
 
-          <SceneModuleSlot
-            label="Yaşam destek"
-            level={modules.lifeSupport}
-            def={getDef('lifeSupport')}
-            budget={budget}
-            disabled={disabled}
-            onClick={() => onSelectModule('lifeSupport')}
-          >
-            <div className="relative w-24 h-14 bg-oxygen/20 border-[3px] border-oxygen rounded-t-full flex items-end justify-center pb-1">
-              <div className="w-4 h-6 bg-panel border-2 border-oxygen" />
-            </div>
-          </SceneModuleSlot>
-
-          {/* Pixel Astronot */}
-          <div aria-hidden="true" className="flex flex-col items-center mb-0.5">
-            <div className="w-4 h-4 bg-white border-2 border-line" />
-            <div className="w-5 h-5 bg-slate-200 border-2 border-line" />
-            <div className="flex gap-1">
-              <div className="w-2 h-2 bg-slate-400" />
-              <div className="w-2 h-2 bg-slate-400" />
-            </div>
-          </div>
-
-          <SceneModuleSlot
-            label="Sera"
-            level={modules.greenhouse}
-            def={getDef('greenhouse')}
-            budget={budget}
-            disabled={disabled}
-            onClick={() => onSelectModule('greenhouse')}
-          >
-            <div className="relative w-24 h-14 bg-food/20 border-[3px] border-food rounded-t-full flex items-end justify-around px-3 pb-1">
-              <div className="w-2 h-5 bg-food" />
-              <div className="w-2 h-7 bg-food" />
-              <div className="w-2 h-4 bg-food" />
-            </div>
-          </SceneModuleSlot>
-
-          <SceneModuleSlot
-            label="Kalkan"
-            level={modules.shield}
-            def={getDef('shield')}
-            budget={budget}
-            disabled={disabled}
-            onClick={() => onSelectModule('shield')}
-          >
-            <div
-              className={`w-10 h-14 border-[3px] flex items-center justify-center ${
-                modules.shield >= 2
-                  ? 'bg-radiation/25 border-radiation shadow-[0_0_14px_rgba(251,146,60,0.45)]'
-                  : 'bg-slate-700/40 border-slate-500'
-              }`}
-            >
-              <div className="w-3 h-8 bg-radiation/80" />
-            </div>
-          </SceneModuleSlot>
-
-          <SceneModuleSlot
-            label="Egzersiz"
-            level={modules.exercise}
-            def={getDef('exercise')}
-            budget={budget}
-            disabled={disabled}
-            onClick={() => onSelectModule('exercise')}
-          >
-            {modules.exercise > 0 ? (
-              <div className="w-14 h-11 bg-health/20 border-[3px] border-health flex items-center justify-center">
-                <div className="w-6 h-2 bg-health" />
-              </div>
-            ) : (
-              <div className="w-14 h-11 border-2 border-dashed border-health/60 bg-health/5 flex items-center justify-center font-pixel text-xs text-health">
-                + Kur
-              </div>
-            )}
-          </SceneModuleSlot>
+              {/* Kalkan Sv.3+ Parlayan Enerji Kemeri */}
+              {hasEnergyShield && (
+                <div
+                  aria-hidden="true"
+                  className="mt-2 w-[92%] flex-1 rounded-t-full border-t-2 border-x-2 border-orange-400/75 shadow-[0_0_24px_rgba(251,146,60,0.35)] pointer-events-none"
+                />
+              )}
+            </button>
+          )
+        })}
         </div>
-
-        {/* Ay Regolit Zemini */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 h-7 bg-[#2A324B] border-t-[3px] border-[#4B5882]"
-        />
-      </div>
+      )}
     </section>
   )
 }

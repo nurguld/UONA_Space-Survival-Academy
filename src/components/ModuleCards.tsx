@@ -16,6 +16,7 @@ const MODULE_COLORS: Record<ModuleId, string> = {
   greenhouse: 'var(--color-food)',
   shield: 'var(--color-radiation)',
   exercise: 'var(--color-health)',
+  battery: 'var(--color-energy)',
 }
 
 const RESOURCE_LABELS: Record<ResourceId, string> = {
