@@ -33,7 +33,7 @@ export default function Home() {
       <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 flex-1 flex flex-col">
         <Navbar />
 
-        <main className="my-auto py-8 sm:py-12 max-w-xl">
+        <main className="my-auto py-8 sm:py-12 max-w-2xl">
           {/* Başlık + Mission Trainer Rozeti */}
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-4xl sm:text-[3.4rem] font-extrabold tracking-tight text-white leading-none">
@@ -106,6 +106,14 @@ export default function Home() {
               className="px-5 min-h-11 inline-flex items-center justify-center rounded-xl text-sm font-semibold border border-slate-300/45 bg-[#0A1124]/80 hover:bg-[#131F3A] text-slate-100 backdrop-blur-md transition-colors"
             >
               Komutan Brifingi
+            </Link>
+
+            <Link
+              to="/hazirlik"
+              onClick={() => playClick()}
+              className="px-5 min-h-11 inline-flex items-center justify-center rounded-xl text-sm font-semibold border border-slate-300/45 bg-[#0A1124]/80 hover:bg-[#131F3A] text-slate-100 backdrop-blur-md transition-colors"
+            >
+              Laboratuvarlar
             </Link>
           </div>
         </main>

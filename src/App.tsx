@@ -1,13 +1,13 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import Home from './pages/Home'
 import Briefing from './pages/Briefing'
 import Game from './pages/gamePages/Game'
-import Result from './pages/gamePages/Result'
 import Resources from './pages/gamePages/Resources'
+import Result from './pages/gamePages/Result'
+import BuildLab from './pages/labPage/BuildLab'
+import LabsHub from './pages/labPage/lab'
 
 export default function App() {
-  const location = useLocation()
-
   return (
     <Routes>
       <Route path="/" element={<Home />} />
@@ -15,6 +15,8 @@ export default function App() {
       <Route path="/oyun" element={<Game />} />
       <Route path="/sonuc" element={<Result />} />
       <Route path="/kaynaklar" element={<Resources />} />
+      <Route path="/labs" element={<LabsHub />} />
+      <Route path="/labs/build" element={<BuildLab />} />
     </Routes>
   )
 }

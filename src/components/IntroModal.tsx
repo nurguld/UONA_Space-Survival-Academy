@@ -78,7 +78,7 @@ export default function IntroModal({ isOpen, onStart }: IntroModalProps) {
             type="button"
             autoFocus
             onClick={onStart}
-            className="px-7 min-h-12 rounded-xl text-base font-bold bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 shadow-[0_0_24px_rgba(251,191,36,0.45)] hover:brightness-110 cursor-pointer transition-all"
+            className="px-7 min-h-12 rounded-xl text-base font-bold bg-gradient-to-r from-amber-500 to-amber-400 text-white [text-shadow:0_1px_2px_rgba(120,53,15,0.35)] shadow-[0_0_24px_rgba(251,191,36,0.45)] hover:brightness-110 cursor-pointer transition-all"
           >
             Görev Başlıyor →
           </button>

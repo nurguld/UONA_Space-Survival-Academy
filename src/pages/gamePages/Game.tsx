@@ -644,7 +644,7 @@ export default function Game() {
               playNextDay()
               nextDay()
             }}
-            className="px-5 sm:px-6 h-12 rounded-xl text-sm sm:text-base font-extrabold uppercase tracking-wide bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-[0_0_26px_rgba(34,211,238,0.55)] hover:brightness-110 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer transition-all"
+            className="px-5 sm:px-6 h-12 rounded-xl text-sm sm:text-base font-extrabold uppercase tracking-wide bg-gradient-to-r from-[#0EA5D9] to-[#22C9EB] text-white shadow-[0_0_26px_rgba(34,211,238,0.5)] hover:brightness-110 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer transition-all"
           >
             Günü Bitir →
           </button>

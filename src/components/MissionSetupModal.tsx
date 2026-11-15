@@ -163,7 +163,7 @@ export default function MissionSetupModal({
             type="button"
             autoFocus
             onClick={handleConfirm}
-            className="px-7 min-h-11 rounded-xl text-sm sm:text-base font-bold bg-gradient-to-r from-sky-400 to-cyan-300 text-slate-950 shadow-[0_0_24px_rgba(56,189,248,0.4)] hover:brightness-110 cursor-pointer transition-all"
+            className="px-7 min-h-11 rounded-xl text-sm sm:text-base font-bold bg-gradient-to-r from-[#0EA5D9] to-[#22C9EB] text-white shadow-[0_0_24px_rgba(34,211,238,0.4)] hover:brightness-110 cursor-pointer transition-all"
           >
             Hikâyeye Geç →
           </button>

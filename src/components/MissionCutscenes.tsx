@@ -782,9 +782,6 @@ function LaunchCutsceneContent({
 
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 bg-[#09132B] border-t border-white/15">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-400/20 text-amber-200 border border-amber-300/40">
-              Sahne {sceneIndex + 1} / 5
-            </span>
             <p className="text-sm sm:text-base font-medium text-slate-100 leading-snug">
               {sceneDescriptions[sceneIndex]}
             </p>

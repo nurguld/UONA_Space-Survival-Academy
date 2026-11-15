@@ -5,6 +5,7 @@ const NAV_LINKS = [
   { to: '/', label: 'Ana sayfa' },
   { to: '/hazirlik', label: 'Brifing' },
   { to: '/oyun', label: 'Oyun' },
+  { to: '/labs', label: 'Laboratuvarlar' },
   { to: '/kaynaklar', label: 'Kaynaklar' },
 ]
 
@@ -23,7 +24,8 @@ export default function Navbar() {
 
       <nav aria-label="Ana menü" className="flex flex-wrap items-center gap-2 sm:gap-3">
         {NAV_LINKS.map((item) => {
-          const active = pathname === item.to
+          const active =
+            item.to === '/labs' ? pathname.startsWith('/labs') : pathname === item.to
           return (
             <Link
               key={item.to}
