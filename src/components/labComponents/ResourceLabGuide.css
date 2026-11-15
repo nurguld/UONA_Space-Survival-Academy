@@ -1541,6 +1541,108 @@
   min-height: 2.8rem;
 }
 
+.resource-depletion-backdrop {
+  position: fixed;
+  z-index: 300;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(3 8 22 / 76%);
+  backdrop-filter: blur(5px);
+}
+
+.resource-depletion-dialog {
+  position: relative;
+  width: min(100%, 340px);
+  padding: 1.25rem;
+  border: 1px solid rgb(255 104 123 / 72%);
+  border-radius: 0.9rem;
+  background:
+    radial-gradient(ellipse at 50% 0, rgb(255 75 99 / 13%), transparent 58%),
+    linear-gradient(145deg, #171d36, #0b1226);
+  color: #e8f1ff;
+  text-align: center;
+  box-shadow: 0 18px 60px rgb(0 0 0 / 55%), 0 0 24px rgb(255 75 99 / 15%);
+  animation: resource-warning-enter 180ms ease-out both;
+}
+
+.resource-depletion-close {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid #53617e;
+  border-radius: 0.45rem;
+  background: #192440;
+  color: #dceaff;
+}
+
+.resource-depletion-close svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.resource-depletion-close:focus-visible,
+.resource-depletion-confirm:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.resource-depletion-icon {
+  width: 2rem;
+  height: 2rem;
+  margin: 0 auto 0.4rem;
+  color: #ff8292;
+}
+
+.resource-depletion-kicker {
+  margin: 0 0 0.3rem;
+  color: #ff9aa6;
+  font: 800 0.62rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.14em;
+}
+
+.resource-depletion-dialog h3 {
+  margin: 0 0 0.45rem;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 850;
+}
+
+.resource-depletion-dialog > p:not(.resource-depletion-kicker) {
+  margin: 0;
+  color: #bdc9df;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.resource-depletion-confirm {
+  min-width: 7rem;
+  min-height: 2.5rem;
+  margin-top: 1rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid #ff8292;
+  border-radius: 0.55rem;
+  background: rgb(255 75 99 / 12%);
+  color: #ffdce1;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+}
+
+.resource-depletion-confirm:hover {
+  background: rgb(255 75 99 / 22%);
+}
+
+@keyframes resource-warning-enter {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .resource-lab .resource-complete-banner .resource-hud-button {
   min-height: 3.4rem;
 }
@@ -1566,8 +1668,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .resource-hotspot-icon,
-  .resource-lab .resource-hud-button {
+  .resource-lab .resource-hud-button,
+  .resource-depletion-dialog {
     transition: none;
+    animation: none;
   }
 }
 

@@ -13,6 +13,7 @@ export default function App() {
     <>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/labs" element={<Home initialView="labHub" />} />
         <Route path="/oyun" element={<Game />} />
         <Route path="/sonuc" element={<Result />} />
         <Route path="/kaynaklar" element={<Resources />} />

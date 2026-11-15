@@ -9,25 +9,31 @@ import EmergencyLab from '../components/labComponents/EmergencyLab'
 import AdvancedSystemsLab from '../components/labComponents/AdvancedSystemsLab'
 import { Droplet, AlertTriangle, Cpu, BookOpen, ArrowLeft } from 'lucide-react'
 
-export default function Home() {
+type HomeProps = {
+  initialView?: 'home' | 'labHub';
+}
+
+export default function Home({ initialView = 'home' }: HomeProps) {
   // 'home' -> Ana Sayfa
   // 'labHub' -> 4 Labın seçileceği ana menü kartları
   // 'resourceLab' -> Kaynak Labı
   // 'emergencyLab' -> Acil Durum Labı
-  const [activeView, setActiveView] = useState<'home' | 'labHub' | 'resourceLab' | 'emergencyLab' | 'advancedLab'>('home');
+  const [activeView, setActiveView] = useState<'home' | 'labHub' | 'resourceLab' | 'emergencyLab' | 'advancedLab'>(initialView);
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-4">
       <SpaceTransition transitionKey={activeView} />
       <Navbar />
 
-      {/* Geri Dön Butonu (Eğer ana sayfa dışında bir lab içindeysek görünür) */}
+      {/* Shared back button for the lab hub and embedded labs. */}
       {activeView !== 'home' && (
         <button
+          type="button"
+          aria-label="Back"
           onClick={() => setActiveView(activeView === 'labHub' ? 'home' : 'labHub')}
-          className="flex items-center gap-2 mt-6 mb-4 px-4 py-2 bg-slate-900 border border-slate-700 hover:border-cyan-500 text-slate-300 rounded-xl font-semibold text-sm transition"
+          className="flex min-h-9 items-center gap-2 mt-6 mb-4 px-3 bg-slate-900/85 border border-cyan-500/55 hover:border-cyan-400 hover:bg-cyan-500/15 text-cyan-100 hover:text-white font-extrabold tracking-widest text-[10px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2"
         >
-          <ArrowLeft className="w-4 h-4" /> Geri Dön
+          <ArrowLeft className="w-4 h-4" /> BACK
         </button>
       )}
 

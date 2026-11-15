@@ -70,9 +70,9 @@ export const MODULE_CONNECTION_RULES: ModuleConnectionRule[] = [
     id: "greenhouse-habitat-life-support",
     moduleId: "greenhouse",
     adjacentTo: ["habitat", "life-support"],
-    match: "all",
-    label: "Greenhouse ↔ Habitat + Life Support",
-    explanation: "NASA’s Veggie helps researchers grow plants on the space station. Our game puts the Greenhouse next to the Habitat and Life Support as a simple design rule.",
+    match: "any",
+    label: "Greenhouse ↔ Habitat or Life Support",
+    explanation: "NASA’s Veggie helps researchers grow plants on the space station. Our game places the Greenhouse next to the Habitat or Life Support to show how the systems support the crew.",
     source: VEGGIE_SOURCE,
     sourceUrl: VEGGIE_SOURCE_URL
   },
@@ -90,7 +90,7 @@ export const MODULE_CONNECTION_RULES: ModuleConnectionRule[] = [
 
 export const BUILD_MODULES = [
   {
-    id: "habitat", name: "Habitat", label: "Living quarters", icon: "⌂", energyDemand: 3, energyOutput: 0,
+    id: "habitat", name: "Habitat", label: "Living quarters", icon: "⌂", energyDemand: 3, energyOutput: 0, oxygenDemand: 2, oxygenOutput: 0,
     description: "The crew’s space home for living, working, and resting.",
     science: "The International Space Station is built from connected modules. Some are pressurized living and working spaces, with systems that help the crew stay safe.",
     source: "NASA — International Space Station",
@@ -99,7 +99,7 @@ export const BUILD_MODULES = [
     connectionSummary: "Connect Life Support, Airlock, and Radiation Shelter directly to the Habitat."
   },
   {
-    id: "life-support", name: "Life Support", label: "Life support", icon: "◉", energyDemand: 4, energyOutput: 0,
+    id: "life-support", name: "Life Support", label: "Life support", icon: "◉", energyDemand: 4, energyOutput: 0, oxygenDemand: 0, oxygenOutput: 8,
     description: "Helps manage the air and other things astronauts need.",
     science: "Astronauts need breathable air and water. Spacecraft life-support systems help manage the cabin environment so crews can live and work in space.",
     source: "NASA — ISS Research Explorer",
@@ -108,7 +108,7 @@ export const BUILD_MODULES = [
     connectionSummary: "Must touch the Habitat. The Water Recycler can also touch Life Support."
   },
   {
-    id: "solar-array", name: "Power", label: "Solar array", icon: "☼", energyDemand: 0, energyOutput: 10,
+    id: "solar-array", name: "Power", label: "Solar array", icon: "☼", energyDemand: 0, energyOutput: 10, oxygenDemand: 0, oxygenOutput: 0,
     description: "Catches sunlight and turns it into electricity.",
     science: "The International Space Station uses large solar arrays to make electricity from sunlight. In this game, a shadow can block a panel; real power depends on many mission conditions.",
     source: "NASA — International Space Station",
@@ -117,7 +117,7 @@ export const BUILD_MODULES = [
     connectionSummary: "Must touch at least one non-solar module in the Habitat network to represent a power connection."
   },
   {
-    id: "airlock", name: "Airlock", label: "Airlock", icon: "⇄", energyDemand: 1, energyOutput: 0,
+    id: "airlock", name: "Airlock", label: "Airlock", icon: "⇄", energyDemand: 1, energyOutput: 0, oxygenDemand: 1, oxygenOutput: 0,
     description: "A special doorway for astronauts going outside.",
     science: "The space station’s Quest airlock is used for spacewalks. An airlock lets astronauts go outside without opening the whole pressurized station to space.",
     source: "NASA — International Space Station",
@@ -126,7 +126,7 @@ export const BUILD_MODULES = [
     connectionSummary: "Must touch the Habitat so the crew can access the controlled surface exit."
   },
   {
-    id: "radiation-shield", name: "Radiation Shelter", label: "Radiation shelter", icon: "⬡", energyDemand: 1, energyOutput: 0,
+    id: "radiation-shield", name: "Radiation Shelter", label: "Radiation shelter", icon: "⬡", energyDemand: 1, energyOutput: 0, oxygenDemand: 1, oxygenOutput: 0,
     description: "A pretend safe nook for the crew in this building game.",
     science: "Space radiation can be a health risk, so NASA monitors it during missions. This game tile is only an idea for a protected area; it does not show real shielding or guarantee safety.",
     source: "NASA Space Radiation",
@@ -135,7 +135,7 @@ export const BUILD_MODULES = [
     connectionSummary: "Must touch the Habitat. This is a game layout rule for quick crew access, not NASA guidance."
   },
   {
-    id: "water-recycler", name: "Water Recycler", label: "Water recycler", icon: "≈", energyDemand: 2, energyOutput: 0,
+    id: "water-recycler", name: "Water Recycler", label: "Water recycler", icon: "≈", energyDemand: 2, energyOutput: 0, oxygenDemand: 0, oxygenOutput: 0,
     description: "Cleans used water so the crew can reuse it.",
     science: "The space station has a water recovery system. Cleaning and reusing water helps astronauts make their limited supplies last.",
     source: "NASA — ISS Research Explorer",
@@ -144,13 +144,13 @@ export const BUILD_MODULES = [
     connectionSummary: "If used, must touch Life Support to represent an integrated water-recovery loop."
   },
   {
-    id: "greenhouse", name: "Greenhouse", label: "Greenhouse", icon: "✿", energyDemand: 2, energyOutput: 0,
+    id: "greenhouse", name: "Greenhouse", label: "Greenhouse", icon: "✿", energyDemand: 2, energyOutput: 0, oxygenDemand: 0, oxygenOutput: 2,
     description: "A little space garden for growing and studying plants.",
     science: "NASA’s Veggie is a garden on the space station. Researchers use it to learn how plants grow in microgravity, and it can provide fresh food for astronauts.",
     source: "NASA — Veggie",
     sourceUrl: "https://science.nasa.gov/mission/veggie/",
     gameRule: "An optional system that consumes energy. It is not required for this mission, but can expand your habitat design.",
-    connectionSummary: "If used, must touch both Habitat and Life Support in this simplified game layout."
+    connectionSummary: "If used, must touch the Habitat or Life Support in this simplified game layout."
   }
 ] as const;
 

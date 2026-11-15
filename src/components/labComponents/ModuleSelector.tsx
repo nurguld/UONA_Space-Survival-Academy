@@ -7,9 +7,16 @@ import {
 type Props = {
   selected: ModuleId | null;
   onSelect: (id: ModuleId) => void;
+  onPointerStart: (
+    id: ModuleId,
+    sourceIndex: null,
+    x: number,
+    y: number,
+    pointerId: number
+  ) => void;
 };
 
-export default function ModuleSelector({ selected, onSelect }: Props) {
+export default function ModuleSelector({ selected, onSelect, onPointerStart }: Props) {
   const selectedModule = BUILD_MODULES.find((module) => module.id === selected);
   const relatedConnections = selected
     ? MODULE_CONNECTION_RULES.filter(
@@ -26,6 +33,10 @@ export default function ModuleSelector({ selected, onSelect }: Props) {
           className={selected === module.id ? "selected" : ""}
           aria-pressed={selected === module.id}
           onClick={() => onSelect(module.id)}
+          onPointerDown={(event) => {
+            if (event.button !== 0) return;
+            onPointerStart(module.id, null, event.clientX, event.clientY, event.pointerId);
+          }}
         >
           <span aria-hidden="true">{module.icon}</span>
           <strong>{module.name}</strong>

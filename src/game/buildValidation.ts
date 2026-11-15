@@ -18,20 +18,28 @@ export type ValidationResult = {
   score: number | null;
   blockingErrors: string[];
   connectionChecks: ConnectionCheck[];
+  engineeringNotes: string[];
 };
 
-const REQUIRED_MODULES: { id: ModuleId; label: string }[] = [
-  { id: "habitat", label: "Habitat module is missing." },
-  { id: "life-support", label: "Life support system is missing." },
-  { id: "solar-array", label: "Solar array is missing." },
-  { id: "airlock", label: "Airlock is missing." },
-  { id: "radiation-shield", label: "Radiation shelter is missing." }
+export const BUILD_GRID_SIZE = 4;
+
+const REQUIRED_MODULES: ModuleId[] = [
+  "habitat",
+  "life-support",
+  "solar-array",
+  "airlock",
+  "radiation-shield"
 ];
+const REQUIRED_HABITAT_CONNECTIONS = new Set([
+  "life-support-habitat",
+  "airlock-habitat",
+  "radiation-habitat"
+]);
 
 function isSunlit(grid: GridCell[], index: number) {
-  const column = index % 5;
-  for (let row = 0; row < Math.floor(index / 5); row += 1) {
-    if (grid[row * 5 + column] !== null) return false;
+  const column = index % BUILD_GRID_SIZE;
+  for (let row = 0; row < Math.floor(index / BUILD_GRID_SIZE); row += 1) {
+    if (grid[row * BUILD_GRID_SIZE + column] !== null) return false;
   }
   return true;
 }
@@ -44,13 +52,13 @@ function hasHabitatConnection(grid: GridCell[]) {
   const queue = [start];
   while (queue.length > 0) {
     const index = queue.shift()!;
-    const row = Math.floor(index / 5);
-    const column = index % 5;
+    const row = Math.floor(index / BUILD_GRID_SIZE);
+    const column = index % BUILD_GRID_SIZE;
     const neighbors = [
-      row > 0 ? index - 5 : -1,
-      row < 4 ? index + 5 : -1,
+      row > 0 ? index - BUILD_GRID_SIZE : -1,
+      row < BUILD_GRID_SIZE - 1 ? index + BUILD_GRID_SIZE : -1,
       column > 0 ? index - 1 : -1,
-      column < 4 ? index + 1 : -1
+      column < BUILD_GRID_SIZE - 1 ? index + 1 : -1
     ];
 
     for (const neighbor of neighbors) {
@@ -65,13 +73,13 @@ function hasHabitatConnection(grid: GridCell[]) {
 }
 
 function getAdjacentCells(grid: GridCell[], index: number) {
-  const row = Math.floor(index / 5);
-  const column = index % 5;
+  const row = Math.floor(index / BUILD_GRID_SIZE);
+  const column = index % BUILD_GRID_SIZE;
   return [
-    row > 0 ? index - 5 : -1,
-    row < 4 ? index + 5 : -1,
+    row > 0 ? index - BUILD_GRID_SIZE : -1,
+    row < BUILD_GRID_SIZE - 1 ? index + BUILD_GRID_SIZE : -1,
     column > 0 ? index - 1 : -1,
-    column < 4 ? index + 1 : -1
+    column < BUILD_GRID_SIZE - 1 ? index + 1 : -1
   ]
     .filter((neighbor) => neighbor >= 0)
     .map((neighbor) => grid[neighbor])
@@ -84,7 +92,7 @@ export function getModuleConnectionChecks(grid: GridCell[]): ConnectionCheck[] {
     const source = getBuildModule(rule.moduleId);
 
     if (sourceIndices.length === 0) {
-      const required = REQUIRED_MODULES.some(({ id }) => id === rule.moduleId);
+      const required = REQUIRED_MODULES.includes(rule.moduleId);
       return {
         id: rule.id,
         label: rule.label,
@@ -130,10 +138,20 @@ export function getModuleConnectionChecks(grid: GridCell[]): ConnectionCheck[] {
   });
 }
 
+export function getCriticalPlacementErrors(grid: GridCell[]): string[] {
+  const missingModules = REQUIRED_MODULES
+    .filter((id) => !grid.includes(id))
+    .map((id) => `${getBuildModule(id).name} is required.`);
+  const missingHabitatConnections = grid.includes("habitat")
+    ? getModuleConnectionChecks(grid)
+      .filter((check) => REQUIRED_HABITAT_CONNECTIONS.has(check.id) && check.status === "failed")
+      .map((check) => check.detail)
+    : [];
+
+  return [...missingModules, ...missingHabitatConnections];
+}
+
 export function validateBuild(grid: GridCell[]): ValidationResult {
-  const blockingErrors = REQUIRED_MODULES
-    .filter(({ id }) => !grid.includes(id))
-    .map(({ label }) => label);
   const sunlitPanels = grid.reduce(
     (total, cell, index) => total + (cell === "solar-array" && isSunlit(grid, index) ? 1 : 0),
     0
@@ -143,39 +161,55 @@ export function validateBuild(grid: GridCell[]): ValidationResult {
     (total, id) => total + (id ? getBuildModule(id).energyDemand : 0),
     0
   );
-
-  if (grid.includes("solar-array") && sunlitPanels === 0) {
-    blockingErrors.push("All solar arrays are in shadow. Move them to a column with a clear path to sunlight.");
-  }
+  const oxygenProduction = grid.reduce(
+    (total, id, index) => total + (id && (id !== "solar-array" || isSunlit(grid, index)) ? getBuildModule(id).oxygenOutput : 0),
+    0
+  );
+  const oxygenDemand = grid.reduce(
+    (total, id) => total + (id ? getBuildModule(id).oxygenDemand : 0),
+    0
+  );
 
   const { connected, total } = hasHabitatConnection(grid);
   const connectionChecks = getModuleConnectionChecks(grid);
-  blockingErrors.push(...connectionChecks
-    .filter((check) => check.status === "failed")
-    .map((check) => check.detail));
-
   const networkDisconnected = total > 0 && connected.size !== total;
-  if (networkDisconnected) {
-    blockingErrors.push(`${total - connected.size} placed module(s) are disconnected from the habitat network. Connect every module edge to edge.`);
-  }
-  if (energyProduction < energyDemand) {
-    blockingErrors.push(`Power shortage: the habitat needs ${energyDemand} energy units, but sunlit arrays produce ${energyProduction}.`);
-  }
-
-  const uniqueBlockingErrors = [...new Set(blockingErrors)];
-  const success = uniqueBlockingErrors.length === 0;
-  const score = success
-    ? 80 + (grid.includes("water-recycler") ? 10 : 0) + (grid.includes("greenhouse") ? 10 : 0)
-    : null;
-  const messages = success
-    ? [`Habitat is mission-ready. Energy balance: ${energyProduction} generated / ${energyDemand} required.`]
-    : uniqueBlockingErrors;
+  const powerDeficit = Math.max(0, energyDemand - energyProduction);
+  const oxygenDeficit = Math.max(0, oxygenDemand - oxygenProduction);
+  const shadowedPanels = grid.filter((cell) => cell === "solar-array").length - sunlitPanels;
+  const failedNonCriticalLinks = connectionChecks.filter(
+    (check) => check.status === "failed" && !REQUIRED_HABITAT_CONNECTIONS.has(check.id)
+  );
+  const disconnectedModules = networkDisconnected ? total - connected.size : 0;
+  const score = Math.max(0, Math.min(100,
+    80
+      + (grid.includes("water-recycler") ? 10 : 0)
+      + (grid.includes("greenhouse") ? 10 : 0)
+      - Math.min(20, powerDeficit * 5)
+      - Math.min(20, oxygenDeficit * 5)
+      - Math.min(20, shadowedPanels * 10)
+      - Math.min(15, disconnectedModules * 5)
+      - Math.min(15, failedNonCriticalLinks.length * 5)
+  ));
+  const engineeringNotes = [
+    ...(powerDeficit > 0 ? ["Add or uncover solar panels to meet power needs."] : []),
+    ...(oxygenDeficit > 0 ? ["Connect Life Support to provide enough oxygen."] : []),
+    ...(shadowedPanels > 0 ? ["Move shadowed solar panels into clear sunlight."] : []),
+    ...(disconnectedModules > 0 ? ["Connect every placed module to the habitat network."] : []),
+    ...failedNonCriticalLinks.map((check) => check.detail),
+    ...(!grid.includes("water-recycler") ? ["Add Water Recycler for +10 points."] : []),
+    ...(!grid.includes("greenhouse") ? ["Add Greenhouse for +10 points."] : [])
+  ];
+  const success = engineeringNotes.length === 0;
+  const messages = [
+    `Habitat score: ${score}/100. Power ${energyProduction}/${energyDemand}; oxygen ${oxygenProduction}/${oxygenDemand}.`
+  ];
 
   return {
     success,
     messages,
     score,
-    blockingErrors: uniqueBlockingErrors,
-    connectionChecks
+    blockingErrors: [],
+    connectionChecks,
+    engineeringNotes
   };
 }

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import ModuleSelector from "../../components/labComponents/ModuleSelector";
 import ModuleIllustration from "../../components/labComponents/ModuleIllustration";
 import BuildGrid, {
@@ -10,6 +11,8 @@ import {
   type ModuleId
 } from "../../data/buildModules";
 import {
+  BUILD_GRID_SIZE,
+  getCriticalPlacementErrors,
   getModuleConnectionChecks,
   validateBuild,
   type ValidationResult
@@ -19,7 +22,38 @@ import { useLabTransition } from "../../hooks/useLabTransition";
 
 import "./BuildLab.css";
 
-const GRID_SIZE = 25;
+const GRID_SIZE = BUILD_GRID_SIZE;
+const GRID_CELL_COUNT = GRID_SIZE * GRID_SIZE;
+const DRAG_THRESHOLD = 6;
+
+type PointerDrag = {
+  moduleId: ModuleId;
+  sourceIndex: number | null;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  active: boolean;
+};
+
+type DragCursor = {
+  icon: string;
+  name: string;
+  action: "PLACE" | "MOVE";
+  x: number;
+  y: number;
+};
+
+function getConnectionLabel(id: string) {
+  const labels: Record<string, string> = {
+    "life-support-habitat": "Life Support + Habitat",
+    "airlock-habitat": "Airlock + Habitat",
+    "radiation-habitat": "Shelter + Habitat",
+    "water-life-support": "Water + Life Support",
+    "greenhouse-habitat-life-support": "Garden + Habitat / Life Support",
+    "solar-habitat-network": "Power link"
+  };
+  return labels[id] ?? id;
+}
 
 export default function BuildLab() {
   const { activeSection: view, isRocketFlying, transitionTo: setView } =
@@ -29,16 +63,35 @@ export default function BuildLab() {
     useState<ModuleId | null>(null);
 
   const [grid, setGrid] = useState<GridCell[]>(
-    Array(GRID_SIZE).fill(null)
+    Array(GRID_CELL_COUNT).fill(null)
   );
 
   const [result, setResult] =
     useState<ValidationResult | null>(null);
+  const [connectionErrors, setConnectionErrors] = useState<string[]>([]);
   const [moveMode, setMoveMode] = useState(false);
   const [movingIndex, setMovingIndex] = useState<number | null>(null);
+  const [dragCursor, setDragCursor] = useState<DragCursor | null>(null);
+  const pointerDrag = useRef<PointerDrag | null>(null);
+  const suppressClick = useRef(false);
 
   const placedCount = grid.filter(Boolean).length;
   const liveConnectionChecks = getModuleConnectionChecks(grid);
+  const energyProduction = grid.reduce((total, cell, index) => {
+    if (cell !== "solar-array") return total;
+    const column = index % GRID_SIZE;
+    const row = Math.floor(index / GRID_SIZE);
+    const shadowed = Array.from({ length: row }, (_, previousRow) => grid[previousRow * GRID_SIZE + column])
+      .some((moduleId) => moduleId !== null);
+    return total + (shadowed ? 0 : BUILD_MODULES.find((module) => module.id === cell)!.energyOutput);
+  }, 0);
+  const energyDemand = grid.reduce((total, cell) => total + (cell ? BUILD_MODULES.find((module) => module.id === cell)!.energyDemand : 0), 0);
+  const oxygenProduction = grid.reduce((total, cell) => total + (cell ? BUILD_MODULES.find((module) => module.id === cell)!.oxygenOutput : 0), 0);
+  const oxygenDemand = grid.reduce((total, cell) => total + (cell ? BUILD_MODULES.find((module) => module.id === cell)!.oxygenDemand : 0), 0);
+
+  function closeConnectionErrors() {
+    setConnectionErrors([]);
+  }
 
   useEffect(() => {
     if (!infoModule) return;
@@ -56,6 +109,37 @@ export default function BuildLab() {
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, [infoModule]);
+
+  useEffect(() => {
+    if (connectionErrors.length === 0 && !result) return;
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeConnectionErrors();
+        setResult(null);
+      }
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [connectionErrors.length, result]);
+
+  function startPointerDrag(
+    moduleId: ModuleId,
+    sourceIndex: number | null,
+    x: number,
+    y: number,
+    pointerId: number
+  ) {
+    pointerDrag.current = {
+      moduleId,
+      sourceIndex,
+      pointerId,
+      startX: x,
+      startY: y,
+      active: false
+    };
+  }
 
   function placeModule(index: number) {
     if (moveMode) {
@@ -107,12 +191,97 @@ export default function BuildLab() {
     setResult(null);
   }
 
+  const handleDrop = useCallback((index: number, moduleId: ModuleId, sourceIndex: number | null) => {
+    if (sourceIndex !== null) {
+      if (index === sourceIndex) return;
+      setGrid((previous) => {
+        const next = [...previous];
+        [next[index], next[sourceIndex]] = [next[sourceIndex], next[index]];
+        return next;
+      });
+      setMoveMode(false);
+      setMovingIndex(null);
+      setSelected(null);
+      setResult(null);
+      return;
+    }
+
+    if (grid[index] !== null) return;
+    setGrid((previous) => previous.map((cell, cellIndex) => cellIndex === index ? moduleId : cell));
+    setSelected(moduleId);
+    setResult(null);
+  }, [grid]);
+
+  useEffect(() => {
+    function handlePointerMove(event: PointerEvent) {
+      const drag = pointerDrag.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+
+      const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+      if (!drag.active && distance < DRAG_THRESHOLD) return;
+
+      drag.active = true;
+      const module = BUILD_MODULES.find((item) => item.id === drag.moduleId)!;
+      setDragCursor({
+        icon: module.icon,
+        name: module.name,
+        action: drag.sourceIndex === null ? "PLACE" : "MOVE",
+        x: event.clientX,
+        y: event.clientY
+      });
+    }
+
+    function handlePointerUp(event: PointerEvent) {
+      const drag = pointerDrag.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+
+      pointerDrag.current = null;
+      setDragCursor(null);
+      if (!drag.active || event.type === "pointercancel") return;
+
+      suppressClick.current = true;
+      window.setTimeout(() => {
+        suppressClick.current = false;
+      }, 100);
+
+      const target = document.elementFromPoint(event.clientX, event.clientY);
+      const gridCell = target instanceof Element
+        ? target.closest<HTMLElement>("[data-grid-index]")
+        : null;
+      if (!gridCell) return;
+
+      handleDrop(Number(gridCell.dataset.gridIndex), drag.moduleId, drag.sourceIndex);
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+    };
+  }, [handleDrop]);
+
+  function validateHabitat() {
+    const placementErrors = getCriticalPlacementErrors(grid);
+    if (placementErrors.length > 0) {
+      setConnectionErrors(placementErrors);
+      setResult(null);
+      return;
+    }
+
+    setConnectionErrors([]);
+    setResult(validateBuild(grid));
+  }
+
   function resetBuild() {
-    setGrid(Array(GRID_SIZE).fill(null));
+    setGrid(Array(GRID_CELL_COUNT).fill(null));
     setSelected(null);
     setResult(null);
     setMoveMode(false);
     setMovingIndex(null);
+    setConnectionErrors([]);
   }
 
   return (
@@ -125,19 +294,18 @@ export default function BuildLab() {
             JUNIOR SPACE ACADEMY
           </span>
 
-          <span className="build-nav-label">
-            BUILD LAB / 01
-          </span>
+          <div className="build-nav-actions">
+            <Link className="build-back-button" to="/labs" aria-label="Back to labs">
+              ← BACK
+            </Link>
+            <span className="build-nav-label">BUILD LAB / 01</span>
+          </div>
         </nav>
 
         <section className="build-lab-panel">
         <header className="build-header">
           <div className="build-lab-heading">
-            <p className="build-eyebrow">LUNAR OUTPOST <span>·</span> ENGINEERING SIMULATION</p>
-            <h1>Lunar Habitat Build Lab</h1>
-            <p className="build-description">
-              Explore habitat systems, then build and validate your lunar outpost.
-            </p>
+            <h1>Habitat Build Lab</h1>
           </div>
           <div className="build-mode-tabs" role="tablist" aria-label="Build Lab sections">
             <button
@@ -149,7 +317,7 @@ export default function BuildLab() {
               className={view === "briefing" ? "active" : ""}
               onClick={() => setView("briefing")}
             >
-              <span aria-hidden="true">▤</span> LAB GUIDE &amp; OVERVIEW
+              <span aria-hidden="true">▤</span> OVERVIEW
             </button>
             <button
               type="button"
@@ -160,7 +328,7 @@ export default function BuildLab() {
               className={view === "construction" ? "active" : ""}
               onClick={() => setView("construction")}
             >
-              <span aria-hidden="true">▶</span> INTERACTIVE SIMULATION
+              <span aria-hidden="true">▶</span> BUILD
             </button>
           </div>
         </header>
@@ -176,7 +344,7 @@ export default function BuildLab() {
               <div>
                 <p className="build-eyebrow">ROVER RADIO / MESSAGE 01</p>
                 <h2 id="module-briefing-title">Build a home for the next Moon explorers</h2>
-                <p>A scout rover found a safe landing spot. Now the astronaut crew is on the way, and they need a habitat! Meet the space-station parts before you snap your outpost together.</p>
+                <p>Meet the parts, then build a safe Moon home.</p>
               </div>
               <span className="briefing-count">7 SPACE PARTS</span>
             </div>
@@ -249,7 +417,7 @@ export default function BuildLab() {
                           </article>
                         ))}
                         <small>
-                          Snap-together neighbors are a game rule. Real spacecraft connect systems with equipment and wiring, not a 5×5 tile map.
+                          Snap-together neighbors are a game rule. Real spacecraft connect systems with equipment and wiring, not a 4×4 tile map.
                         </small>
                       </div>
                       <div className="module-game-note">
@@ -283,35 +451,79 @@ export default function BuildLab() {
             <h2>MODULES</h2>
 
             <p className="build-hint">
-              Help the rover crew move in: choose a space part, then tap a tile to place it.
+              Drag or select a module to place it.
             </p>
 
             <ModuleSelector
               selected={selected}
-              onSelect={setSelected}
+              onSelect={(id) => {
+                if (suppressClick.current) return;
+                setSelected(id);
+              }}
+              onPointerStart={startPointerDrag}
             />
           </aside>
 
-          <section className="build-main">
+          <section className={`build-main${dragCursor ? " pointer-dragging" : ""}`}>
             <div className="build-section-header">
               <h2>BUILD AREA</h2>
 
               <span className="build-counter">
-                {placedCount} / {GRID_SIZE}
+                {placedCount} / {GRID_CELL_COUNT}
               </span>
             </div>
 
             <p className="build-hint">
-              Select a module, then an empty tile. Place modules edge to edge to connect them.
+              4 × 4 · Drag to place/move · Right-click to remove
             </p>
+
+            <section className="build-live-resources" aria-label="Live resource balance">
+              <div className={`build-resource-meter${energyProduction < energyDemand ? " deficit" : ""}`}>
+                <div className="build-resource-heading">
+                  <strong>POWER</strong>
+                  <span>{energyProduction} / {energyDemand}</span>
+                </div>
+                <div className="build-resource-track" role="progressbar" aria-label="Power production compared to demand" aria-valuemin={0} aria-valuemax={Math.max(energyProduction, energyDemand, 1)} aria-valuenow={energyProduction}>
+                  <span style={{ width: `${Math.min(100, energyProduction / Math.max(energyProduction, energyDemand, 1) * 100)}%` }} />
+                </div>
+                {energyProduction < energyDemand && <small>POWER LOW</small>}
+              </div>
+              <div className={`build-resource-meter oxygen${oxygenProduction < oxygenDemand ? " deficit" : ""}`}>
+                <div className="build-resource-heading">
+                  <strong>OXYGEN</strong>
+                  <span>{oxygenProduction} / {oxygenDemand}</span>
+                </div>
+                <div className="build-resource-track" role="progressbar" aria-label="Oxygen production compared to demand" aria-valuemin={0} aria-valuemax={Math.max(oxygenProduction, oxygenDemand, 1)} aria-valuenow={oxygenProduction}>
+                  <span style={{ width: `${Math.min(100, oxygenProduction / Math.max(oxygenProduction, oxygenDemand, 1) * 100)}%` }} />
+                </div>
+                {oxygenProduction < oxygenDemand && <small>OXYGEN LOW</small>}
+              </div>
+              <p>Game units</p>
+            </section>
 
             <div className="build-grid-wrapper">
               <BuildGrid
                 grid={grid}
-                onPlace={placeModule}
+                onPlace={(index) => {
+                  if (suppressClick.current) return;
+                  placeModule(index);
+                }}
                 movingIndex={movingIndex}
+                onPointerStart={startPointerDrag}
+                onContextRemove={removeModule}
               />
             </div>
+            {dragCursor && (
+              <div
+                className="build-drag-cursor"
+                style={{ left: dragCursor.x + 14, top: dragCursor.y + 14 }}
+                aria-hidden="true"
+              >
+                <span>{dragCursor.icon}</span>
+                <strong>{dragCursor.name}</strong>
+                <small>{dragCursor.action}</small>
+              </div>
+            )}
 
             <div className="build-actions">
               <button
@@ -323,13 +535,11 @@ export default function BuildLab() {
                   setSelected(null);
                 }}
               >
-                {moveMode ? "CANCEL MOVE" : "MOVE MODULE"}
+                {moveMode ? "CANCEL" : "MOVE"}
               </button>
               <button
                 className="build-primary-button"
-                onClick={() =>
-                  setResult(validateBuild(grid))
-                }
+                onClick={validateHabitat}
               >
                 VALIDATE HABITAT
               </button>
@@ -341,126 +551,20 @@ export default function BuildLab() {
                 RESET
               </button>
             </div>
-            <p className="build-hint" aria-live="polite">
-              {moveMode
-                ? movingIndex === null
-                ? "Select an occupied tile, then choose an empty destination."
-                : "Module selected. Choose an empty tile for its new position."
-                : "Use MOVE MODULE to reposition a module instead of rotating it."}
-            </p>
-
-            <div className="build-mission-panel">
-              <h3>MISSION BRIEF</h3>
-
-              <p>
-                Mission: Build the systems your crew needs to live safely on the Moon.
+            {moveMode && (
+              <p className="build-hint" aria-live="polite">
+                {movingIndex === null ? "Choose a module to move." : "Choose its destination."}
               </p>
-
-              <p>
-                Required: Habitat, Life Support, Power, Airlock, and Radiation Shelter.
-              </p>
-            </div>
-
-            {result && (
-              <div className={`build-result ${result.success ? "success" : "blocked"}`}>
-                <h3>
-                  {result.success
-                    ? "✓ VALIDATION PASSED"
-                    : "× BUILD BLOCKED"}
-                </h3>
-
-                {result.success ? (
-                  <>
-                    <p>{result.messages[0]}</p>
-                    <p className="mission-score">
-                      Mission score: <strong>{result.score} / 100</strong>
-                      <small>Optional Water Recycler and Greenhouse modules add bonus points.</small>
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="blocking-summary">
-                      {result.blockingErrors.length} critical issue{result.blockingErrors.length === 1 ? "" : "s"} must be fixed before scoring.
-                    </p>
-                    <ul className="blocking-error-list">
-                      {result.blockingErrors.map((error) => (
-                        <li key={error}>{error}</li>
-                      ))}
-                    </ul>
-                    <p className="score-locked">Score locked until all critical checks pass.</p>
-                  </>
-                )}
-                <ul className="connection-check-list" aria-label="System connection checks">
-                  {result.connectionChecks.map((check) => (
-                    <li className={`connection-check ${check.status}`} key={check.id}>
-                      <span aria-hidden="true">
-                        {check.status === "passed" ? "✓" : check.status === "failed" ? "!" : check.status === "optional" ? "—" : "·"}
-                      </span>
-                      <div>
-                        <strong>{check.label}</strong>
-                        <small>{check.detail}</small>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
             )}
 
-            {grid.some(Boolean) && (
-              <div className="build-tools">
-                <h3>REMOVE MODULE</h3>
-                <p className="build-hint">
-                  Select a position below to remove its module.
-                </p>
-
-                <div className="build-remove-list">
-                  {grid.map((cell, index) =>
-                    cell ? (
-                      <button
-                        key={index}
-                        onClick={() => removeModule(index)}
-                        title={`Remove ${cell}`}
-                      >
-                        {index + 1} ×
-                      </button>
-                    ) : null
-                  )}
-                </div>
-              </div>
-            )}
           </section>
 
           <aside className="build-info-sidebar">
-            <h2>MISSION OBJECTIVES</h2>
-
-            <div className="build-objective">
-              <span>01</span>
-              <p>Build a habitat.</p>
-            </div>
-
-            <div className="build-objective">
-              <span>02</span>
-              <p>Add life support.</p>
-            </div>
-
-            <div className="build-objective">
-              <span>03</span>
-              <p>Provide power.</p>
-            </div>
-
-            <div className="build-objective">
-              <span>04</span>
-              <p>Enable safe entry and exit.</p>
-            </div>
-
-            <div className="build-objective">
-              <span>05</span>
-              <p>Add radiation protection.</p>
-            </div>
+            <h2>REQUIRED MODULES</h2>
+            <p className="required-module-summary">Habitat · Life Support · Power · Airlock · Shelter</p>
 
             <section className="live-connections" aria-live="polite">
-              <h3>SYSTEM CONNECTIONS</h3>
-              <p>Required edge-to-edge links. Green means connected; amber means place or move a module.</p>
+              <h3>CONNECTIONS</h3>
               <ul className="connection-check-list">
                 {liveConnectionChecks.map((check) => (
                   <li className={`connection-check ${check.status}`} key={check.id}>
@@ -468,19 +572,59 @@ export default function BuildLab() {
                       {check.status === "passed" ? "✓" : check.status === "failed" ? "!" : check.status === "optional" ? "—" : "·"}
                     </span>
                     <div>
-                      <strong>{check.label}</strong>
-                      <small>{check.detail}</small>
+                      <strong>{getConnectionLabel(check.id)}</strong>
                     </div>
                   </li>
                 ))}
               </ul>
-              <small className="connection-source-note">
-                Tile connections are part of this building game. Real spacecraft use equipment and wiring instead of a tile map.
-              </small>
             </section>
           </aside>
 
         </div>
+        )}
+        {connectionErrors.length > 0 && (
+          <div className="build-error-backdrop" onClick={closeConnectionErrors} role="presentation">
+            <section
+              className="build-error-dialog"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="build-error-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button type="button" className="build-error-close" onClick={closeConnectionErrors} aria-label="Close placement errors" autoFocus>×</button>
+              <span className="build-error-icon" aria-hidden="true">!</span>
+              <p className="build-eyebrow">CONNECTION CHECK FAILED</p>
+              <h2 id="build-error-title">Required habitat setup</h2>
+              <ul>{connectionErrors.map((error) => <li key={error}>{error}</li>)}</ul>
+              <button type="button" className="build-primary-button" onClick={closeConnectionErrors}>BACK TO BUILD AREA</button>
+            </section>
+          </div>
+        )}
+        {result && (
+          <div className="build-error-backdrop" onClick={() => setResult(null)} role="presentation">
+            <section
+              className="build-error-dialog build-score-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="build-score-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button type="button" className="build-error-close" onClick={() => setResult(null)} aria-label="Close score details" autoFocus>×</button>
+              <span className="build-score-icon" aria-hidden="true">{result.score}</span>
+              <p className="build-eyebrow">BUILD REVIEW</p>
+              <h2 id="build-score-title">Mission score: {result.score}/100</h2>
+              <p>{result.messages[0]}</p>
+              <section className="build-engineering-notes">
+                <h4>{result.engineeringNotes.length > 0 ? "QUICK TIPS" : "GREAT WORK"}</h4>
+                <ul>
+                  {result.engineeringNotes.length > 0
+                    ? result.engineeringNotes.slice(0, 4).map((note) => <li key={note}>{note}</li>)
+                    : <li>All habitat systems are connected and resource needs are met.</li>}
+                </ul>
+              </section>
+              <button type="button" className="build-primary-button" onClick={() => setResult(null)}>BACK TO BUILD AREA</button>
+            </section>
+          </div>
         )}
         </section>
       </div>
